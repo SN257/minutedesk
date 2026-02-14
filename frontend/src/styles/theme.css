@@ -1,0 +1,22 @@
+/* Theme variables for slate/classic look */
+:root{
+  --color-primary: #64748b; /* primary.500 */
+  --color-primary-600: #475569;
+  --color-primary-700: #334155;
+  --color-accent: #94a3b8; /* primary.400 */
+  --color-bg: #ffffff;
+  --color-muted: #6b7280;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 1.2em rgba(100,117,139,0.18));
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover{
+  background-color: var(--color-primary-600);
+}
