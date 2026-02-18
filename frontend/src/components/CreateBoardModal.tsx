@@ -19,12 +19,18 @@ const CreateBoardModal: React.FC<Props> = ({ open, initialTitle = '', onClose, o
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold mb-2 text-gray-800">{submitText} Board</h3>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-md mb-4 focus:ring-2 focus:ring-slate-500 outline-none" placeholder="Board title" />
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2 bg-gray-100 rounded-md">Cancel</button>
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn" onClick={onClose}>
+      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-200 dark:border-slate-700 animate-scaleIn transition-colors" onClick={(e) => e.stopPropagation()}>
+        <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">{submitText} Board</h3>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full px-4 py-3 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl mb-5 focus:ring-2 focus:ring-slate-500 focus:border-slate-500 outline-none font-medium text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 transition-all"
+          placeholder="Enter board title..."
+          autoFocus
+        />
+        <div className="flex justify-end gap-3 text-sm">
+          <button onClick={onClose} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-semibold transition-all">Cancel</button>
           <button
             onClick={async () => {
               if (!title.trim()) return;
@@ -36,10 +42,10 @@ const CreateBoardModal: React.FC<Props> = ({ open, initialTitle = '', onClose, o
                 setLoading(false);
               }
             }}
-            className="px-4 py-2 bg-slate-700 text-white rounded-md"
+            className="px-5 py-2.5 bg-slate-800 dark:bg-slate-100 text-white dark:text-slate-900 hover:bg-slate-900 dark:hover:bg-white rounded-lg font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-50"
             disabled={loading}
           >
-            {submitText}
+            {loading ? 'Creating...' : submitText}
           </button>
         </div>
       </div>

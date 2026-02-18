@@ -5,6 +5,7 @@ import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { MeetingsProvider } from "./contexts/MeetingsContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 
 // Lazy load all page components to reduce initial bundle size
 // Pages are only loaded when their route is accessed
@@ -18,16 +19,17 @@ const Reports = lazy(() => import("./pages/Reports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Board = lazy(() => import("./pages/Board"));
 const WorkLogs = lazy(() => import("./pages/WorkLogs"));
+const Home = lazy(() => import("./pages/Home"));
 
 // Loading fallback component
 const LoadingFallback = () => (
-  <div className="flex items-center justify-center h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+  <div className="flex items-center justify-center h-full min-h-[400px] w-full bg-slate-50 dark:bg-slate-900 transition-colors">
     <div className="text-center">
       <div className="relative inline-block">
-        <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-slate-600 mx-auto"></div>
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-500/20 to-slate-700/20 blur-xl animate-pulse"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400 mx-auto"></div>
+        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-500/20 to-slate-700/20 dark:from-slate-400/10 dark:to-slate-600/10 blur-xl animate-pulse"></div>
       </div>
-      <p className="mt-6 text-slate-700 font-semibold text-lg">Loading...</p>
+      <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium text-base">Loading...</p>
     </div>
   </div>
 );
@@ -35,21 +37,29 @@ const LoadingFallback = () => (
 function App() {
   return (
     <AuthProvider>
-      <MeetingsProvider>
-        <BrowserRouter>
-          <Suspense fallback={<LoadingFallback />}>
+      <SettingsProvider>
+        <MeetingsProvider>
+          <BrowserRouter>
             <Routes>
               <Route
                 path="/"
-                element={<Navigate to="/login" replace />}
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Home />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
               />
 
               <Route
                 path="/login"
                 element={
-                  <AuthLayout>
-                    <Login />
-                  </AuthLayout>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <AuthLayout>
+                      <Login />
+                    </AuthLayout>
+                  </Suspense>
                 }
               />
 
@@ -58,7 +68,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <Dashboard />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -69,7 +81,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <AddMeeting />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AddMeeting />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -80,7 +94,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <AddMeetingForm />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AddMeetingForm />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -91,7 +107,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <AddMeetingForm />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <AddMeetingForm />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -102,7 +120,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <ViewMeeting />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ViewMeeting />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -113,18 +133,46 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <ScheduleMeeting />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard type="meetings" />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/meetings/schedule"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <ScheduleMeeting />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
               />
 
               <Route
+                path="/tasks"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard type="tasks" />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
                 path="/boards"
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <Board />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Board />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -135,19 +183,34 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <Board />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Board />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
               />
-
 
               <Route
                 path="/reports"
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <Reports />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard type="reports" />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/reports/insights"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Reports />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -158,7 +221,9 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <Settings />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Settings />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
@@ -169,16 +234,30 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <AppLayout>
-                      <WorkLogs />
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Dashboard type="worklogs" />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/work-logs/daily"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <WorkLogs />
+                      </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
                 }
               />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
-          </Suspense>
-        </BrowserRouter>
-      </MeetingsProvider>
+          </BrowserRouter>
+        </MeetingsProvider>
+      </SettingsProvider>
     </AuthProvider>
   );
 }

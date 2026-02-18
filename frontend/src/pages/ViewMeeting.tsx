@@ -239,10 +239,10 @@ const ViewMeeting = () => {
 
   if (loading) {
     return (
-      <div className="flex h-full flex-1 items-center justify-center py-20">
+      <div className="flex h-full flex-1 items-center justify-center py-20 bg-transparent dark:bg-slate-900 transition-colors">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-700"></div>
-          <p className="mt-6 text-gray-600 font-medium">Loading meeting details...</p>
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-slate-200 dark:border-slate-800 border-t-slate-700 dark:border-t-slate-400"></div>
+          <p className="mt-6 text-gray-600 dark:text-slate-400 font-medium">Loading meeting details...</p>
         </div>
       </div>
     );
@@ -250,12 +250,12 @@ const ViewMeeting = () => {
 
   if (!meeting) {
     return (
-      <div className="flex h-full flex-1 items-center justify-center py-20">
+      <div className="flex h-full flex-1 items-center justify-center py-20 bg-transparent dark:bg-slate-900 transition-colors">
         <div className="text-center">
-          <div className="text-gray-600 text-lg mb-4">Meeting not found or failed to load</div>
+          <div className="text-gray-600 dark:text-slate-400 text-lg mb-4">Meeting not found or failed to load</div>
           <button
             onClick={() => navigate("/add-meeting")}
-            className="px-6 py-2.5 bg-blue-700 text-white rounded-lg hover:bg-blue-800 transition-colors font-medium"
+            className="px-6 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium"
           >
             Back to Meetings
           </button>
@@ -476,7 +476,7 @@ const ViewMeeting = () => {
       <div>
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           {/* Header Bar - Hidden in Print, Responsive */}
-          <div className="print:hidden bg-slate-800 shadow-md rounded-2xl mb-0">
+          <div className="print:hidden bg-slate-800 dark:bg-slate-900 shadow-md rounded-2xl mb-0 transition-colors border border-slate-700">
             <div className="px-5 py-4 sm:px-6 sm:py-5">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
@@ -488,7 +488,7 @@ const ViewMeeting = () => {
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
                   <button
                     onClick={() => navigate(`/add-meeting/${meeting.id}/edit`)}
-                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-white text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base border border-slate-200 dark:border-slate-600"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -497,7 +497,7 @@ const ViewMeeting = () => {
                   </button>
                   <button
                     onClick={() => setShowPreview(true)}
-                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base"
+                    className="flex-1 sm:flex-none px-3 sm:px-5 py-2 sm:py-2.5 bg-slate-700 dark:bg-slate-800 text-white rounded-lg hover:bg-slate-800 dark:hover:bg-slate-700 transition-colors font-medium flex items-center justify-center gap-2 text-sm sm:text-base border border-slate-600"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -758,103 +758,103 @@ const ViewMeeting = () => {
             </div>
 
             {/* Meeting Info Card */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 mb-4 sm:mb-6 meeting-info-print print:shadow-none print:rounded-none">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-200 dark:border-slate-700 mb-4 sm:mb-6 meeting-info-print print:shadow-none print:rounded-none transition-colors">
               <div className="p-4 sm:p-6 lg:p-8 print:p-0 print:hidden">
                 <div className="flex flex-col sm:flex-row items-start justify-between mb-4 sm:mb-6 print:mb-4 gap-3">
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1 print:text-xl">{meeting.personName}</h2>
-                    <p className="text-sm sm:text-base text-gray-600 print:text-sm">{meeting.center}</p>
+                    <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100 mb-1 print:text-xl">{meeting.personName}</h2>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 print:text-sm">{meeting.center}</p>
                     {meeting.presentSantName && (
-                      <p className="text-sm sm:text-base text-gray-600 mt-1 print:text-sm">Present Sant: {meeting.presentSantName}</p>
+                      <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mt-1 print:text-sm">Present Sant: {meeting.presentSantName}</p>
                     )}
                   </div>
                   <div className="print:hidden flex items-center gap-2">
-                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-100 text-blue-700 rounded-lg font-medium text-xs sm:text-sm">
+                    <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-lg font-medium text-xs sm:text-sm transition-colors">
                       {meeting.meetingType}
                     </span>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-gray-200 print:grid-cols-3 print:gap-8 print:pt-4 print:border-t-0">
-                  <div className="flex items-center gap-3 print:block">
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                      <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3 print:block transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 print:hidden transition-colors border border-transparent dark:border-slate-600">
+                      <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Center</p>
-                      <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.center}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Center</p>
+                      <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.center}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 print:block">
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3 print:block transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 print:hidden transition-colors border border-transparent dark:border-slate-600">
+                      <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Date</p>
-                      <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{formatDate(meeting.date)}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Date</p>
+                      <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{formatDate(meeting.date)}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 print:block">
-                    <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                      <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-3 print:block transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 print:hidden">
+                      <svg className="w-5 h-5 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Time</p>
-                      <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.startTime} - {meeting.endTime}</p>
+                      <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Time</p>
+                      <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.startTime} - {meeting.endTime}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Additional fields for structured meetings */}
                 {meeting.meetingType !== "One o one" && (meeting.day || meeting.place || meeting.attendance) && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 mt-6 border-t border-gray-200 print:grid-cols-2 print:gap-8 print:pt-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 mt-6 border-t border-gray-200 dark:border-slate-700 print:grid-cols-2 print:gap-8 print:pt-4">
                     {meeting.day && (
                       <div className="flex items-center gap-3 print:block">
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                          <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 print:hidden transition-colors">
+                          <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Day</p>
-                          <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.day}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Day</p>
+                          <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.day}</p>
                         </div>
                       </div>
                     )}
 
                     {meeting.place && (
                       <div className="flex items-center gap-3 print:block">
-                        <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="w-10 h-10 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 print:hidden transition-colors">
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                           </svg>
                         </div>
                         <div>
-                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Place</p>
-                          <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.place}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Place</p>
+                          <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.place}</p>
                         </div>
                       </div>
                     )}
 
                     {meeting.attendance && (
-                      <div className="md:col-span-2 flex items-start gap-3 print:col-span-2 print:block">
-                        <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 print:hidden">
-                          <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="md:col-span-2 flex items-start gap-3 print:col-span-2 print:block transition-colors">
+                        <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 print:hidden">
+                          <svg className="w-5 h-5 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Attendance</p>
-                          <p className="text-sm text-gray-900 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.attendance}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-500 font-semibold uppercase tracking-wide print:text-[10px] print:mb-0.5">Attendance</p>
+                          <p className="text-sm text-gray-900 dark:text-slate-100 font-medium mt-0.5 print:text-xs print:mt-0">{meeting.attendance}</p>
                         </div>
                       </div>
                     )}
@@ -873,14 +873,14 @@ const ViewMeeting = () => {
             <div className="space-y-5 print:space-y-4">
               <h2 className="hidden print:block section-heading">Meeting Agenda & Minutes</h2>
               {meeting.notes.map((note: any, idx: number) => (
-                <div key={note.id} className="note-card bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div key={note.id} className="note-card bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 transition-colors">
                   <div className="flex items-start justify-between mb-4 print:mb-3">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-xl font-bold text-gray-900">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
                         {meeting.notes.length === 1 ? (note.title || 'Agenda') : (`Agenda ${idx + 1}${note.title ? ': ' + note.title : ''}`)}
                       </h3>
                       {note.important && (
-                        <span className="note-badge inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 text-orange-700 rounded-lg text-xs font-semibold">
+                        <span className="note-badge inline-flex items-center gap-1.5 px-3 py-1.5 bg-orange-100 dark:bg-orange-900/40 text-orange-700 dark:text-orange-400 rounded-lg text-xs font-semibold transition-colors">
                           <svg className="w-3.5 h-3.5 print:hidden" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6z" />
                           </svg>
@@ -888,7 +888,7 @@ const ViewMeeting = () => {
                         </span>
                       )}
                       {note.followUp && (
-                        <span className="note-badge follow-up inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">
+                        <span className="note-badge follow-up inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400 rounded-lg text-xs font-semibold transition-colors">
                           <svg className="w-3.5 h-3.5 print:hidden" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
                           </svg>
@@ -899,15 +899,15 @@ const ViewMeeting = () => {
                   </div>
 
                   <div className="note-points space-y-3 print:space-y-2">
-                    <div className="text-sm text-gray-500 font-medium mb-2">Minutes:</div>
+                    <div className="text-sm text-gray-500 dark:text-slate-500 font-medium mb-2">Minutes:</div>
 
                     {/* Show first point inline, remaining points start numbering at 2 */}
                     {note.points && note.points.length > 0 && (
-                      <div className="text-gray-800">
+                      <div className="text-gray-800 dark:text-slate-200">
                         <div className="mb-2 flex items-center gap-3">
                           <span className="font-medium">1.&nbsp;{note.points[0].text}</span>
                           {note.points[0].category && (
-                            <div className="category-pill ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                            <div className="category-pill ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors border border-slate-200 dark:border-slate-600">
                               {note.points[0].category}
                             </div>
                           )}
@@ -916,11 +916,11 @@ const ViewMeeting = () => {
                         {note.points.length > 1 && (
                           <ol className="list-decimal ml-6 space-y-2" start={2}>
                             {note.points.slice(1).map((p: any) => (
-                              <li key={p.id} className="text-gray-700 leading-relaxed text-base print:text-xs print:leading-normal">
+                              <li key={p.id} className="text-gray-700 dark:text-slate-300 leading-relaxed text-base print:text-xs print:leading-normal">
                                 <div className="flex items-start gap-3">
                                   <div className="flex-1">{p.text}</div>
                                   {p.category && (
-                                    <div className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 print:hidden">
+                                    <div className="ml-3 text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 print:hidden border border-slate-200 dark:border-slate-600">
                                       {p.category}
                                     </div>
                                   )}

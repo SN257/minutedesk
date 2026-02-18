@@ -33,12 +33,12 @@ type CardType = {
 
 // Predefined Labels & Colors (professional palette)
 const LABEL_COLORS = [
-  { name: 'Bug', color: 'bg-red-200', text: 'text-red-800', bg: 'bg-red-50' },
-  { name: 'Feature', color: 'bg-sky-200', text: 'text-sky-800', bg: 'bg-sky-50' },
-  { name: 'Design', color: 'bg-violet-200', text: 'text-violet-800', bg: 'bg-violet-50' },
-  { name: 'Research', color: 'bg-emerald-200', text: 'text-emerald-800', bg: 'bg-emerald-50' },
-  { name: 'Marketing', color: 'bg-amber-200', text: 'text-amber-800', bg: 'bg-amber-50' },
-  { name: 'Urgent', color: 'bg-pink-200', text: 'text-pink-800', bg: 'bg-pink-50' },
+  { name: 'Bug', color: 'bg-red-200 dark:bg-red-900/40', text: 'text-red-800 dark:text-red-200', bg: 'bg-red-50 dark:bg-red-900/20' },
+  { name: 'Feature', color: 'bg-sky-200 dark:bg-sky-900/40', text: 'text-sky-800 dark:text-sky-200', bg: 'bg-sky-50 dark:bg-sky-900/20' },
+  { name: 'Design', color: 'bg-violet-200 dark:bg-violet-900/40', text: 'text-violet-800 dark:text-violet-200', bg: 'bg-violet-50 dark:bg-violet-900/20' },
+  { name: 'Research', color: 'bg-emerald-200 dark:bg-emerald-900/40', text: 'text-emerald-800 dark:text-emerald-200', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
+  { name: 'Marketing', color: 'bg-amber-200 dark:bg-amber-900/40', text: 'text-amber-800 dark:text-amber-200', bg: 'bg-amber-50 dark:bg-amber-900/20' },
+  { name: 'Urgent', color: 'bg-pink-200 dark:bg-pink-900/40', text: 'text-pink-800 dark:text-pink-200', bg: 'bg-pink-50 dark:bg-pink-900/20' },
 ];
 
 // NOTE: priority color mapping removed (unused) to avoid TS unused-variable errors
@@ -521,14 +521,14 @@ const BoardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen premium-texture">
+      <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-900 transition-colors">
         <div className="text-center animate-scaleIn">
           <div className="relative inline-block">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-slate-600 mx-auto"></div>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-500/20 to-slate-700/20 blur-xl animate-pulse-slow"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 dark:border-slate-800 border-t-slate-600 dark:border-t-slate-400 mx-auto"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-500/20 to-slate-700/20 dark:from-slate-400/10 dark:to-slate-600/10 blur-xl animate-pulse-slow"></div>
           </div>
-          <p className="mt-6 text-slate-700 font-semibold text-lg">Loading workspace…</p>
-          <p className="mt-2 text-slate-500 text-sm">Preparing your boards</p>
+          <p className="mt-6 text-slate-700 dark:text-slate-300 font-semibold text-lg">Loading workspace…</p>
+          <p className="mt-2 text-slate-500 dark:text-slate-500 text-sm">Preparing your boards</p>
         </div>
       </div>
     );
@@ -537,19 +537,19 @@ const BoardPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto min-h-full flex flex-col">
       {/* Modern Header Section with Glassmorphism */}
-      <div className="bg-white shadow-sm rounded-2xl p-4 md:p-6 mb-4 md:mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 border-b-4 border-slate-700 animate-slideDown relative z-20">
+      <div className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl p-4 md:p-6 mb-4 md:mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 border-b-4 border-slate-700 dark:border-slate-600 animate-slideDown relative z-20 transition-colors">
         <div>
           {currentBoard ? (
             <div className="flex items-center gap-3">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">
                   {boards.find(b => b.id === currentBoard)?.title || 'Board'}
                 </h2>
-                <p className="text-sm sm:text-base text-slate-600 mt-2 font-medium">Manage your tasks and lists</p>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-2 font-medium">Manage your tasks and lists</p>
               </div>
               <button
                 onClick={() => { setEditingBoardId(currentBoard); setEditingBoardTitle(boards.find(b => b.id === currentBoard)?.title || ''); }}
-                className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all ml-2 hover:shadow-md"
+                className="p-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all ml-2 hover:shadow-md"
                 title="Edit board"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -559,8 +559,8 @@ const BoardPage: React.FC = () => {
             </div>
           ) : (
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Task Manager</h2>
-              <p className="text-sm sm:text-base text-slate-600 mt-1 font-medium">Organize your boards, lists, and tasks</p>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Task Manager</h2>
+              <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1 font-medium">Organize your boards, lists, and tasks</p>
             </div>
           )}
         </div>
@@ -573,9 +573,9 @@ const BoardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowBoardSort(s => !s)}
-                    className="w-full h-10 bg-white border-2 border-slate-300 rounded-lg px-3 pr-10 text-slate-900 font-semibold focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-30 transition-all cursor-pointer hover:bg-slate-50 hover:shadow-md text-left"
+                    className="w-full h-10 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-lg px-3 pr-10 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-30 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md text-left"
                   >
-                    <span className={boardSort ? 'text-slate-900' : 'text-slate-400'}>{boardSort === 'recent' ? 'Most Recent' : boardSort === 'oldest' ? 'Oldest' : boardSort === 'az' ? 'A-Z' : 'Z-A'}</span>
+                    <span className={boardSort ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}>{boardSort === 'recent' ? 'Most Recent' : boardSort === 'oldest' ? 'Oldest' : boardSort === 'az' ? 'A-Z' : 'Z-A'}</span>
                   </button>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-slate-600">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -584,11 +584,11 @@ const BoardPage: React.FC = () => {
                   </div>
                 </div>
                 {showBoardSort && (
-                  <div className="absolute z-20 w-full mt-2 bg-white border-2 border-slate-300 rounded-xl shadow-slate-xl animate-slideDown overflow-hidden">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl shadow-slate-xl animate-slideDown overflow-hidden transition-colors">
                     {([['recent', 'Most Recent'], ['oldest', 'Oldest'], ['az', 'A-Z'], ['za', 'Z-A']] as [any, string][]).map((opt, idx) => (
                       <div
                         key={opt[0]}
-                        className={`w-full text-left px-3 py-2.5 cursor-pointer transition-all ${idx === boardSortIndex ? 'bg-slate-600 text-white font-bold' : 'hover:bg-slate-100 text-slate-900 font-medium'}`}
+                        className={`w-full text-left px-3 py-2.5 cursor-pointer transition-all ${idx === boardSortIndex ? 'bg-slate-600 dark:bg-slate-700 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-slate-900 dark:text-slate-100 font-medium transition-colors'}`}
                         onMouseEnter={() => setBoardSortIndex(idx)}
                         onClick={() => { setBoardSort(opt[0]); setShowBoardSort(false); setBoardSortIndex(-1); }}
                       >
@@ -604,9 +604,9 @@ const BoardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowBoardFilter(s => !s)}
-                    className="w-full h-10 bg-white border-2 border-slate-300 rounded-lg px-3 pr-10 text-slate-900 font-semibold focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-30 transition-all cursor-pointer hover:bg-slate-50 hover:shadow-md text-left"
+                    className="w-full h-10 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-lg px-3 pr-10 text-slate-900 dark:text-slate-100 font-semibold focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-500 focus:ring-opacity-30 transition-all cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700 hover:shadow-md text-left"
                   >
-                    <span className={boardFilter ? 'text-slate-900' : 'text-slate-400'}>{boardFilter === 'all' ? 'All Boards' : boardFilter === 'withLists' ? 'With Lists' : 'Empty'}</span>
+                    <span className={boardFilter ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400 dark:text-slate-500'}>{boardFilter === 'all' ? 'All Boards' : boardFilter === 'withLists' ? 'With Lists' : 'Empty'}</span>
                   </button>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -615,11 +615,11 @@ const BoardPage: React.FC = () => {
                   </div>
                 </div>
                 {showBoardFilter && (
-                  <div className="absolute z-20 w-full mt-2 bg-white border-2 border-slate-300 rounded-xl shadow-slate-xl animate-slideDown overflow-hidden">
+                  <div className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 rounded-xl shadow-slate-xl animate-slideDown overflow-hidden">
                     {([['all', 'All Boards'], ['withLists', 'With Lists'], ['empty', 'Empty']] as [any, string][]).map((opt, idx) => (
                       <div
                         key={opt[0]}
-                        className={`w-full text-left px-3 py-2.5 cursor-pointer transition-all ${idx === boardFilterIndex ? 'bg-slate-600 text-white font-bold' : 'hover:bg-slate-100 text-slate-900 font-medium'}`}
+                        className={`w-full text-left px-3 py-2.5 cursor-pointer transition-all ${idx === boardFilterIndex ? 'bg-slate-600 dark:bg-slate-700 text-white font-bold' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-900 dark:text-slate-100 font-medium'}`}
                         onMouseEnter={() => setBoardFilterIndex(idx)}
                         onClick={() => { setBoardFilter(opt[0]); setShowBoardFilter(false); setBoardFilterIndex(-1); }}
                       >
@@ -638,7 +638,7 @@ const BoardPage: React.FC = () => {
                   placeholder="Search boards..."
                   value={boardSearchQuery}
                   onChange={(e) => setBoardSearchQuery(e.target.value)}
-                  className="h-10 pl-9 pr-3 border-2 border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none w-full transition-all hover:shadow-md"
+                  className="h-10 pl-9 pr-3 border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-500 focus:border-slate-600 dark:focus:border-slate-500 outline-none w-full transition-all hover:shadow-md"
                 />
               </div>
             </>
@@ -653,7 +653,7 @@ const BoardPage: React.FC = () => {
                   placeholder="Search cards..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-10 pl-9 pr-3 border-2 border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none w-full transition-all hover:shadow-md"
+                  className="h-10 pl-9 pr-3 border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-lg text-sm font-medium focus:ring-2 focus:ring-slate-500 focus:border-slate-600 dark:focus:border-slate-500 outline-none w-full transition-all hover:shadow-md"
                 />
               </div>
 
@@ -662,9 +662,9 @@ const BoardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowPriorityDropdown(s => !s)}
-                    className="w-full h-10 bg-white border-2 border-gray-300 rounded-lg px-3 pr-10 text-gray-900 font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 text-left"
+                    className="w-full h-10 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-3 pr-10 text-gray-900 dark:text-slate-100 font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 text-left"
                   >
-                    <span className={filterPriority ? 'text-gray-900' : 'text-gray-400'}>{filterPriority === 'all' ? 'All Priorities' : filterPriority}</span>
+                    <span className={filterPriority ? 'text-gray-900 dark:text-slate-100' : 'text-gray-400 dark:text-slate-500'}>{filterPriority === 'all' ? 'All Priorities' : filterPriority}</span>
                   </button>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -673,11 +673,11 @@ const BoardPage: React.FC = () => {
                   </div>
                 </div>
                 {showPriorityDropdown && (
-                  <div ref={priorityRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg">
+                  <div ref={priorityRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg overflow-hidden">
                     {(['all', 'low', 'medium', 'high', 'urgent'] as string[]).map((opt, idx) => (
                       <div
                         key={opt}
-                        className={`w-full text-left px-3 py-2 cursor-pointer ${idx === boardFilterIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-slate-100 text-gray-900'}`}
+                        className={`w-full text-left px-3 py-2 cursor-pointer ${idx === boardFilterIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-white font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100'}`}
                         onMouseEnter={() => setBoardFilterIndex(idx)}
                         onClick={() => { setFilterPriority(opt); setShowPriorityDropdown(false); setBoardFilterIndex(-1); }}
                       >
@@ -693,9 +693,9 @@ const BoardPage: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setShowLabelDropdown(s => !s)}
-                    className="w-full h-10 bg-white border-2 border-gray-300 rounded-lg px-3 pr-10 text-gray-900 font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 text-left"
+                    className="w-full h-10 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-3 pr-10 text-gray-900 dark:text-slate-100 font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 text-left"
                   >
-                    <span className={filterLabel ? 'text-gray-900' : 'text-gray-400'}>{filterLabel === 'all' ? 'All Labels' : filterLabel}</span>
+                    <span className={filterLabel ? 'text-gray-900 dark:text-slate-100' : 'text-gray-400 dark:text-slate-500'}>{filterLabel === 'all' ? 'All Labels' : filterLabel}</span>
                   </button>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -704,18 +704,18 @@ const BoardPage: React.FC = () => {
                   </div>
                 </div>
                 {showLabelDropdown && (
-                  <div ref={labelRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  <div ref={labelRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                     <div
-                      className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 text-gray-900 ${filterLabel === 'all' ? 'bg-slate-100 font-semibold' : ''}`}
+                      className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 ${filterLabel === 'all' ? 'bg-slate-100 dark:bg-slate-700 font-semibold' : ''}`}
                       onClick={() => { setFilterLabel('all'); setShowLabelDropdown(false); }}
                     >
                       All Labels
                     </div>
-                    <div className="h-px bg-slate-100 my-1" />
+                    <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
                     {LABEL_COLORS.map((label) => (
                       <div
                         key={label.name}
-                        className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 text-gray-900 ${filterLabel === label.name ? 'bg-slate-100 font-semibold' : ''}`}
+                        className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 ${filterLabel === label.name ? 'bg-slate-100 dark:bg-slate-700 font-semibold' : ''}`}
                         onClick={() => { setFilterLabel(label.name); setShowLabelDropdown(false); }}
                       >
                         {label.name}
@@ -734,11 +734,11 @@ const BoardPage: React.FC = () => {
       {/* Modern Edit Board Modal */}
       {editingBoardId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-40 animate-fadeIn" onClick={() => { setEditingBoardId(null); setEditingBoardTitle(''); }}>
-          <div className="glass-effect rounded-2xl p-6 w-full max-w-md shadow-slate-xl border-2 border-slate-200 animate-scaleIn" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold mb-4 text-slate-900">Edit Board</h3>
-            <input value={editingBoardTitle} onChange={(e) => setEditingBoardTitle(e.target.value)} className="w-full px-4 py-3 border-2 border-slate-300 rounded-lg mb-5 focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none font-medium text-slate-900" />
-            <div className="flex justify-end gap-3">
-              <button onClick={() => { setEditingBoardId(null); setEditingBoardTitle(''); }} className="px-5 py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-semibold transition-all">Cancel</button>
+          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-slate-xl border-2 border-slate-200 dark:border-slate-700 animate-scaleIn" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold mb-4 text-slate-900 dark:text-slate-100">Edit Board</h3>
+            <input value={editingBoardTitle} onChange={(e) => setEditingBoardTitle(e.target.value)} className="w-full px-4 py-3 border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg mb-5 focus:ring-2 focus:ring-slate-500 focus:border-slate-600 dark:focus:border-slate-500 outline-none font-medium text-slate-900 dark:text-slate-100" />
+            <div className="flex justify-end gap-3 text-sm">
+              <button onClick={() => { setEditingBoardId(null); setEditingBoardTitle(''); }} className="px-5 py-2.5 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg font-semibold transition-all">Cancel</button>
               <button onClick={async () => {
                 if (!editingBoardTitle.trim()) return;
                 try {
@@ -762,13 +762,13 @@ const BoardPage: React.FC = () => {
           {boards.length === 0 ? (
             <div className="flex-1 flex items-center justify-center py-12">
               <div className="text-center animate-slideUp max-w-lg">
-                <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  <svg className="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-24 h-24 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  <svg className="w-12 h-12 text-gray-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">No boards yet</h3>
-                <p className="text-gray-600 mb-6">Create your first board to organize tasks and projects.</p>
+                <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">No boards yet</h3>
+                <p className="text-gray-600 dark:text-slate-400 mb-6">Create your first board to organize tasks and projects.</p>
                 <button
                   onClick={async () => {
                     setShowCreateModal(true);
@@ -819,7 +819,7 @@ const BoardPage: React.FC = () => {
                       <div
                         key={board.id}
                         onClick={() => setCurrentBoard(board.id)}
-                        className="bg-white rounded-xl p-5 flex flex-col border border-slate-200 hover:border-slate-400 hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden group h-44"
+                        className="bg-white dark:bg-slate-800 rounded-xl p-5 flex flex-col border border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden group h-44"
                       >
                         {/* Top accent line */}
                         <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-slate-800 to-slate-900"></div>
@@ -827,7 +827,7 @@ const BoardPage: React.FC = () => {
                         {/* Header with menu */}
                         <div className="flex items-start justify-between mb-4">
                           <div className="flex-1">
-                            <h3 className="text-slate-900 font-bold text-lg mb-1 line-clamp-2 group-hover:text-slate-700 transition-colors">
+                            <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-1 line-clamp-2 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
                               {board.title}
                             </h3>
                           </div>
@@ -836,20 +836,20 @@ const BoardPage: React.FC = () => {
                           <div className="relative ml-2 flex-shrink-0">
                             <button
                               onClick={(e) => { e.stopPropagation(); setShowBoardMenu(showBoardMenu === board.id ? null : board.id); }}
-                              className="p-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                               title="Board options"
                             >
-                              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01" />
                               </svg>
                             </button>
                             {showBoardMenu === board.id && (
-                              <div className="absolute right-0 mt-2 w-40 bg-white rounded-lg shadow-xl border border-slate-200 z-20 overflow-hidden animate-slideDown" onClick={(e) => e.stopPropagation()}>
+                              <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-20 overflow-hidden animate-slideDown" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   onClick={async () => { setEditingBoardId(board.id); setEditingBoardTitle(board.title); setShowBoardMenu(null); }}
-                                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 font-medium text-slate-900 transition-colors text-sm"
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-slate-900 dark:text-slate-100 transition-colors text-sm border-b border-slate-100 dark:border-slate-700"
                                 >
-                                  Edit
+                                  Edit Board
                                 </button>
                                 <button
                                   onClick={async () => {
@@ -863,9 +863,9 @@ const BoardPage: React.FC = () => {
                                       showSnackbar('Failed to delete board', 'error');
                                     }
                                   }}
-                                  className="w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 font-medium transition-colors text-sm"
+                                  className="w-full text-left px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold transition-colors text-sm"
                                 >
-                                  Delete
+                                  Delete Board
                                 </button>
                               </div>
                             )}
@@ -879,13 +879,13 @@ const BoardPage: React.FC = () => {
                           <div className="flex items-center gap-4">
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                              <span className="text-xs text-slate-600 font-medium">
+                              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                                 {boardListCounts[board.id] || 0} {(boardListCounts[board.id] || 0) === 1 ? 'list' : 'lists'}
                               </span>
                             </div>
                             <div className="flex items-center gap-1.5">
                               <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                              <span className="text-xs text-slate-600 font-medium">
+                              <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
                                 Active
                               </span>
                             </div>
@@ -893,8 +893,8 @@ const BoardPage: React.FC = () => {
                         </div>
 
                         {/* Stats row */}
-                        <div className="flex items-center gap-3 pt-3 border-t border-slate-100">
-                          <div className="flex items-center gap-2 text-slate-600">
+                        <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
@@ -902,7 +902,7 @@ const BoardPage: React.FC = () => {
                           </div>
 
                           {board.createdAt && (
-                            <div className="flex items-center gap-2 text-slate-500">
+                            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-500">
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
@@ -916,14 +916,14 @@ const BoardPage: React.FC = () => {
                       onClick={async () => {
                         setShowCreateModal(true);
                       }}
-                      className="bg-white rounded-xl p-5 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 cursor-pointer hover:border-slate-500 hover:bg-slate-50 transition-all duration-300 h-44 group"
+                      className="bg-white dark:bg-slate-800 rounded-xl p-5 flex flex-col items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700 cursor-pointer hover:border-slate-500 dark:hover:border-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-300 h-44 group"
                     >
-                      <div className="w-14 h-14 rounded-full bg-slate-100 group-hover:bg-slate-200 text-slate-700 flex items-center justify-center mb-3 transition-all">
+                      <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-700 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 text-slate-700 dark:text-slate-300 flex items-center justify-center mb-3 transition-all">
                         <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
                       </div>
-                      <div className="text-base font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">Create new board</div>
+                      <div className="text-base font-semibold text-slate-700 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">Create new board</div>
                     </div>
                   </div>
                 );
@@ -934,13 +934,13 @@ const BoardPage: React.FC = () => {
       ) : lists.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-12 bg-transparent">
           <div className="text-center animate-slideUp max-w-lg">
-            <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
-              <svg className="w-12 h-12 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-24 h-24 bg-gray-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <svg className="w-12 h-12 text-gray-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-2xl font-semibold text-gray-900 mb-2">No lists yet</h3>
-            <p className="text-gray-600 mb-6">Create your first list to organize work and projects.</p>
+            <h3 className="text-2xl font-semibold text-gray-900 dark:text-slate-100 mb-2">No lists yet</h3>
+            <p className="text-gray-600 dark:text-slate-400 mb-6">Create your first list to organize work and projects.</p>
             {currentBoard && (
               <button
                 onClick={async () => {
@@ -963,21 +963,21 @@ const BoardPage: React.FC = () => {
               const listCards = filteredCards(allCards);
               const hasFilters = searchQuery || filterPriority !== 'all' || filterLabel !== 'all';
               return (
-                <div key={list.id} className="w-80 flex-shrink-0 glass-effect rounded-2xl shadow-slate-lg flex flex-col overflow-hidden relative border-2 border-slate-200 animate-fadeIn">
+                <div key={list.id} className="w-80 flex-shrink-0 bg-white dark:bg-slate-800/40 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md flex flex-col overflow-hidden relative border border-slate-200 dark:border-slate-700/50 animate-fadeIn transition-all duration-300">
                   {/* Modern List Header with Gradient */}
-                  <div className="px-4 md:px-5 py-4 bg-gradient-to-r from-slate-800 to-slate-900 rounded-t-2xl">
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-white text-base md:text-lg truncate mr-2">{list.title}</h3>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs bg-white text-slate-900 px-3 py-1.5 rounded-full font-bold shadow-md">
+                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base truncate mr-2">{list.title}</h3>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-bold">
                           {listCards.length}
                         </span>
                         <button
                           onClick={() => deleteList(list.id)}
-                          className="text-white hover:text-red-300 transition-all p-1.5 bg-white/10 hover:bg-white/20 rounded-lg backdrop-blur-sm"
+                          className="text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 transition-all p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
                           title="Delete list"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
                         </button>
@@ -990,8 +990,7 @@ const BoardPage: React.FC = () => {
                       <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        className={`p-4 space-y-3 transition-all relative flex-1 overflow-auto custom-scrollbar max-h-[calc(100vh-280px)] ${snapshot.isDraggingOver ? 'bg-slate-100' : 'bg-gradient-slate'
-                          }`}
+                        className={`p-3 space-y-2.5 transition-all relative flex-1 overflow-auto custom-scrollbar max-h-[calc(100vh-280px)] ${snapshot.isDraggingOver ? 'bg-slate-100/50 dark:bg-slate-800/30' : 'bg-transparent'}`}
                       >
                         {listCards.map((card, idx) => (
                           <Draggable key={card.id} draggableId={String(card.id)} index={idx} isDragDisabled={hasFilters}>
@@ -1000,8 +999,8 @@ const BoardPage: React.FC = () => {
                                 ref={provided2.innerRef}
                                 {...provided2.draggableProps}
                                 {...provided2.dragHandleProps}
-                                className={`bg-white rounded-xl shadow-md hover:shadow-slate-lg transition-all cursor-pointer border-2 ${snapshot2.isDragging ? 'shadow-slate-xl ring-2 ring-slate-400 border-slate-400' : 'border-slate-200 hover:border-slate-300'
-                                  } relative group overflow-hidden card-hover`}
+                                className={`bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer border ${snapshot2.isDragging ? 'shadow-lg ring-2 ring-slate-400/50 border-slate-400 dark:border-slate-500' : 'border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600'
+                                  } relative group overflow-hidden`}
                                 style={{ ...provided2.draggableProps.style }}
                               >
                                 <div
@@ -1053,13 +1052,13 @@ const BoardPage: React.FC = () => {
                                             </svg>
                                           </span>
                                         ) : (
-                                          <span className="w-5 h-5 rounded-full bg-white border-2 border-slate-400 hover:border-slate-600 inline-flex items-center justify-center transition-colors">
+                                          <span className="w-5 h-5 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-400 dark:border-slate-600 hover:border-slate-600 dark:hover:border-slate-400 inline-flex items-center justify-center transition-colors">
                                           </span>
                                         )}
                                       </button>
                                     </div>
 
-                                    <div onClick={() => openCard(card)} className={`flex-1 font-semibold text-sm truncate transition-all ${card.completed ? 'line-through text-slate-400' : 'text-slate-900 group-hover:translate-x-1'}`}>
+                                    <div onClick={() => openCard(card)} className={`flex-1 font-semibold text-sm truncate transition-all ${card.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100 group-hover:translate-x-1'}`}>
                                       {card.title}
                                     </div>
 
@@ -1078,7 +1077,7 @@ const BoardPage: React.FC = () => {
                                         }
                                       }}
                                       title="Delete card"
-                                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                                      className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all flex-shrink-0"
                                     >
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1087,15 +1086,15 @@ const BoardPage: React.FC = () => {
                                   </div>
 
                                   {hoveredCard === card.id && (
-                                    <div className="absolute left-full top-0 ml-4 w-64 bg-white border-2 border-slate-200 rounded-xl shadow-slate-lg p-4 z-30">
+                                    <div className="absolute left-full top-0 ml-4 w-64 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-slate-lg p-4 z-30">
                                       <div className="flex items-center justify-between mb-3">
-                                        <div className="font-bold text-sm text-slate-900">{card.title}</div>
-                                        <div className="text-xs text-slate-600 font-medium">{card.dueDate || ''}</div>
+                                        <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{card.title}</div>
+                                        <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">{card.dueDate || ''}</div>
                                       </div>
-                                      {card.description && <div className="text-sm text-slate-700 mb-3 line-clamp-3 font-medium whitespace-pre-line">{card.description}</div>}
+                                      {card.description && <div className="text-sm text-slate-700 dark:text-slate-300 mb-3 line-clamp-3 font-medium whitespace-pre-line">{card.description}</div>}
                                       <div className="flex items-center gap-2 flex-wrap">
                                         {(card.labels || []).map((l: string) => (
-                                          <span key={l} className="px-2.5 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-semibold">{l}</span>
+                                          <span key={l} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-semibold">{l}</span>
                                         ))}
                                       </div>
                                     </div>
@@ -1113,7 +1112,7 @@ const BoardPage: React.FC = () => {
                   </Droppable>
 
                   {/* Modern Add Card Form */}
-                  <div className="p-4 bg-white/50 backdrop-blur-sm rounded-b-2xl border-t-2 border-slate-200">
+                  <div className="p-3 bg-slate-50/50 dark:bg-slate-900/20 border-t border-slate-200 dark:border-slate-700/50">
                     {openAddInputFor === String(list.id) ? (
                       <form
                         onSubmit={async (e) => {
@@ -1128,17 +1127,19 @@ const BoardPage: React.FC = () => {
                       >
                         <input
                           ref={(el) => { addInputRefs.current[String(list.id)] = el; }}
-                          placeholder="Enter card title and press Enter"
-                          className="w-full px-4 py-2.5 border-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none text-sm font-semibold bg-white shadow-sm"
+                          placeholder="What needs to be done?"
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 rounded-lg focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 outline-none text-sm font-medium text-slate-900 dark:text-slate-100 shadow-sm transition-all"
+                          autoFocus
                           onBlur={() => setOpenAddInputFor(null)}
                         />
                       </form>
                     ) : (
                       <button
                         onClick={() => setOpenAddInputFor(String(list.id))}
-                        className="w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold text-slate-700 hover:bg-white hover:shadow-md transition-all border-2 border-dashed border-slate-300 hover:border-slate-400"
+                        className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-all flex items-center gap-2"
                       >
-                        + Add a card
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                        Add a card
                       </button>
                     )}
                   </div>
@@ -1148,21 +1149,21 @@ const BoardPage: React.FC = () => {
             })}
 
             {/* Modern Add List Button */}
-            <div className="w-72 sm:w-72 md:w-80 lg:w-80 flex-shrink-0">
+            <div className="w-80 flex-shrink-0">
               <button
-                className="w-full h-40 glass-effect border-2 border-dashed border-slate-300 rounded-2xl transition-all flex flex-col items-center justify-center gap-3 text-slate-700 font-bold shadow-slate hover:shadow-slate-lg hover:border-slate-400 hover:bg-white card-hover"
+                className="w-full h-32 bg-slate-200/20 dark:bg-slate-800/20 hover:bg-slate-200/40 dark:hover:bg-slate-800/40 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group"
                 onClick={async () => {
                   const l = await createListApi(currentBoard!, { title: 'New List' });
                   setLists(s => [...s, l]);
                   setCards(c => ({ ...c, [l.id]: [] }));
                 }}
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 text-white flex items-center justify-center shadow-lg">
-                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
                 </div>
-                <span className="text-base">Add New List</span>
+                <span className="text-sm font-bold tracking-tight">Add New List</span>
               </button>
             </div>
           </div>
@@ -1186,7 +1187,7 @@ const BoardPage: React.FC = () => {
       {
         showCard && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center overflow-y-auto z-50 py-4 animate-fadeIn" onClick={() => setShowCard(null)}>
-            <div className="bg-white w-full max-w-5xl rounded-3xl shadow-3xl relative flex flex-col min-h-[520px] max-h-[85vh] mx-4 text-slate-800 " onClick={(e) => e.stopPropagation()}>
+            <div className="bg-white dark:bg-slate-800 w-full max-w-5xl rounded-3xl shadow-3xl relative flex flex-col min-h-[520px] max-h-[85vh] mx-4 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition-colors" onClick={(e) => e.stopPropagation()}>
 
               {/* Cover Background or Default Header Spacer */}
               {showCard.coverColor ? (
@@ -1484,10 +1485,10 @@ const BoardPage: React.FC = () => {
                         const newArchived = !showCard.archived;
                         await updateCardField('archived', newArchived);
                       }}
-                      className="w-6 h-6 rounded-full border-2 border-slate-300 hover:bg-slate-100 cursor-pointer flex items-center justify-center transition-colors"
+                      className="w-6 h-6 rounded-full border-2 border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer flex items-center justify-center transition-colors"
                     >
                       {showCard.archived && (
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                         </svg>
                       )}
@@ -1498,11 +1499,11 @@ const BoardPage: React.FC = () => {
                       value={showCard.title}
                       onChange={(e) => setShowCard(prev => prev ? { ...prev, title: e.target.value } : prev)}
                       onBlur={(e) => updateCardField('title', e.target.value)}
-                      className="w-full bg-transparent text-slate-700 focus:text-slate-800 font-semibold text-xl border-none outline-none p-0 focus:ring-0 placeholder-slate-400"
+                      className="w-full bg-transparent text-slate-700 dark:text-slate-100 focus:text-slate-800 dark:focus:text-white font-semibold text-xl border-none outline-none p-0 focus:ring-0 placeholder-slate-400 dark:placeholder-slate-500 transition-colors"
                       placeholder="Card title"
                     />
-                    <div className="text-xs text-slate-700 mt-1">
-                      in list <span className="underline decoration-slate-300 decoration-dotted">To Do</span>
+                    <div className="text-xs text-slate-700 dark:text-slate-400 mt-1">
+                      in list <span className="underline decoration-slate-300 dark:decoration-slate-600 decoration-dotted">{lists.find(l => (cards[l.id] || []).some(c => c.id === showCard.id))?.title || 'To Do'}</span>
                     </div>
                   </div>
                 </div>
@@ -1513,14 +1514,14 @@ const BoardPage: React.FC = () => {
                   <div className="relative" ref={priorityBtnRef}>
                     <button
                       onClick={() => setShowPriorityModal(!showPriorityModal)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded border border-slate-700 transition-colors shadow-sm"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                       Priority
                     </button>
                     {showPriorityModal && (
-                      <DropdownContent wrapperRef={priorityBtnRef} className="bg-white border border-slate-200 shadow-xl rounded-xl p-2 animate-scaleIn" widthClass="w-56">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase px-2 py-1 mb-1">Set Priority</h4>
+                      <DropdownContent wrapperRef={priorityBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-2 animate-scaleIn transition-colors" widthClass="w-56">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase px-2 py-1 mb-1">Set Priority</h4>
                         <div className="space-y-1">
                           {[{ val: 'low', label: 'Low', color: 'bg-green-100 text-green-800' },
                           { val: 'medium', label: 'Medium', color: 'bg-yellow-100 text-yellow-800' },
@@ -1532,10 +1533,10 @@ const BoardPage: React.FC = () => {
                                 await updateCardField('priority', p.val);
                                 setShowPriorityModal(false);
                               }}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors flex items-center justify-between ${showCard.priority === p.val ? 'bg-slate-50' : ''}`}
+                              className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center justify-between ${showCard.priority === p.val ? 'bg-slate-50 dark:bg-slate-700/50' : ''}`}
                             >
-                              <span className={`px-2 py-0.5 rounded ${p.color}`}>{p.label}</span>
-                              {showCard.priority === p.val && <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                              <span className={`px-2 py-0.5 rounded ${p.color} dark:bg-opacity-20`}>{p.label}</span>
+                              {showCard.priority === p.val && <svg className="w-4 h-4 text-slate-600 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
                             </button>
                           ))}
                         </div>
@@ -1547,14 +1548,14 @@ const BoardPage: React.FC = () => {
                   <div className="relative" ref={labelsBtnRef}>
                     <button
                       onClick={() => setShowLabelsModal(!showLabelsModal)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded border border-slate-700 transition-colors shadow-sm"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                       Labels
                     </button>
                     {showLabelsModal && (
-                      <DropdownContent wrapperRef={labelsBtnRef} className="bg-white border border-slate-200 shadow-xl rounded-xl p-3 animate-scaleIn" widthClass="w-72">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-2">Labels</h4>
+                      <DropdownContent wrapperRef={labelsBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 animate-scaleIn transition-colors" widthClass="w-72">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Labels</h4>
                         <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto custom-scrollbar">
                           {LABEL_COLORS.map(label => {
                             const isSelected = (showCard.labels || []).includes(label.name);
@@ -1584,25 +1585,25 @@ const BoardPage: React.FC = () => {
                   <div className="relative" ref={datesBtnRef}>
                     <button
                       onClick={() => setShowDatePicker(!showDatePicker)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded border border-slate-700 transition-colors shadow-sm"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Dates
                     </button>
                     {showDatePicker && (
-                      <DropdownContent wrapperRef={datesBtnRef} className="bg-white border border-slate-200 shadow-xl rounded-xl p-4 animate-scaleIn" widthClass="w-72">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Due Date</h4>
+                      <DropdownContent wrapperRef={datesBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-4 animate-scaleIn transition-colors" widthClass="w-72">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">Due Date</h4>
                         <input
                           type="date"
                           value={showCard.dueDate || ''}
                           onChange={async (e) => {
                             await updateCardField('dueDate', e.target.value || null);
                           }}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none font-medium text-slate-900 text-sm mb-3"
+                          className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-slate-900 dark:text-slate-100 outline-none font-medium text-sm mb-3"
                         />
                         <button
                           onClick={() => setShowDatePicker(false)}
-                          className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold text-sm transition-colors"
+                          className="w-full px-3 py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-lg font-semibold text-sm transition-colors border border-slate-700 dark:border-slate-600"
                         >
                           Done
                         </button>
@@ -1616,7 +1617,7 @@ const BoardPage: React.FC = () => {
                       if (next) setTimeout(() => document.getElementById('checklist-input')?.focus(), 0);
                       return next;
                     })}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded border border-slate-700 transition-colors shadow-sm"
+                    className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     Checklist
@@ -1626,27 +1627,27 @@ const BoardPage: React.FC = () => {
                   <div className="relative" ref={membersBtnRef}>
                     <button
                       onClick={() => setShowMembersModal(!showMembersModal)}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-sm font-medium rounded border border-slate-700 transition-colors shadow-sm"
+                      className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       Members
                     </button>
                     {showMembersModal && (
-                      <DropdownContent wrapperRef={membersBtnRef} className="bg-white border border-slate-200 shadow-xl rounded-xl p-4 animate-scaleIn" widthClass="w-72">
-                        <h4 className="text-xs font-bold text-slate-500 uppercase mb-3">Assign Member</h4>
+                      <DropdownContent wrapperRef={membersBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-4 animate-scaleIn transition-colors" widthClass="w-72">
+                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3">Assign Member</h4>
                         <input
                           type="text"
-                          placeholder="Search members or enter ID..."
+                          placeholder="Search members..."
                           value={showCard.assignee || ''}
                           onChange={async (e) => {
                             await updateCardField('assignee', e.target.value || null);
                           }}
-                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-600 outline-none font-medium text-slate-900 text-sm mb-3"
+                          className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-600 dark:focus:border-slate-500 outline-none font-medium text-slate-900 dark:text-slate-100 text-sm mb-3"
                           autoFocus
                         />
                         <button
                           onClick={() => setShowMembersModal(false)}
-                          className="w-full px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg font-semibold text-sm transition-colors"
+                          className="w-full px-3 py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-lg font-semibold text-sm transition-colors"
                         >
                           Done
                         </button>
@@ -1659,7 +1660,7 @@ const BoardPage: React.FC = () => {
                 {showCard.labels && showCard.labels.length > 0 && (
                   <div className="pl-8 flex flex-wrap gap-2">
                     {showCard.labels.map(label => {
-                      const labelInfo = LABEL_COLORS.find(l => l.name === label) || { name: label, color: 'bg-gray-200', text: 'text-gray-800' };
+                      const labelInfo = LABEL_COLORS.find(l => l.name === label) || { name: label, color: 'bg-slate-200 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
                       return (
                         <span key={label} className={`${labelInfo.color} ${labelInfo.text} px-3 py-1 rounded-full text-xs font-semibold`}>
                           {label}
@@ -1671,7 +1672,7 @@ const BoardPage: React.FC = () => {
 
                 {/* Display due date */}
                 {showCard.dueDate && (
-                  <div className={`pl-8 flex items-center gap-2 text-sm ${new Date(showCard.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) && !showCard.completed ? 'text-red-600 font-bold' : 'text-slate-700'}`}>
+                  <div className={`pl-8 flex items-center gap-2 text-sm ${new Date(showCard.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) && !showCard.completed ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     <span className="font-medium">Due: {new Date(showCard.dueDate).toLocaleDateString()}{new Date(showCard.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) && !showCard.completed ? ' (Overdue)' : ''}</span>
                   </div>
@@ -1679,7 +1680,7 @@ const BoardPage: React.FC = () => {
 
                 {/* Description */}
                 <div className="pl-8">
-                  <div className="flex items-center gap-3 mb-2 text-slate-800 font-bold text-lg">
+                  <div className="flex items-center gap-3 mb-2 text-slate-800 dark:text-slate-100 font-bold text-lg transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
                     Description
                   </div>
@@ -1688,7 +1689,7 @@ const BoardPage: React.FC = () => {
                     onChange={(e) => setShowCard(prev => prev ? { ...prev, description: e.target.value } : prev)}
                     onBlur={(e) => updateCardField('description', e.target.value || null)}
                     placeholder="Add a more detailed description..."
-                    className="w-full bg-white hover:bg-slate-50 focus:bg-white border border-slate-300 focus:border-slate-500 rounded-lg p-3 outline-none min-h-[96px] text-slate-800 text-sm resize-y transition-all placeholder-slate-400"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl p-4 outline-none min-h-[120px] text-slate-800 dark:text-slate-200 text-sm resize-y transition-all placeholder-slate-400 dark:placeholder-slate-500 focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 shadow-sm"
                   />
                 </div>
 
@@ -1719,16 +1720,18 @@ const BoardPage: React.FC = () => {
 
                 {/* Discussion */}
                 <div className="pl-8">
-                  <div className="flex items-center gap-3 mb-4 text-slate-800 font-bold text-lg">
+                  <div className="flex items-center gap-3 mb-4 text-slate-800 dark:text-slate-100 font-bold text-lg transition-colors">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     Comments
                   </div>
 
                   <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 border border-slate-300 flex items-center justify-center text-xs font-bold">ME</div>
+                    <div className="flex-shrink-0">
+                      <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 flex items-center justify-center text-xs font-bold shadow-sm">ME</div>
+                    </div>
                     <div className="flex-1">
                       <input
-                        className="w-full bg-white border border-slate-300 rounded px-3 py-2 text-slate-800 text-sm placeholder-slate-400 outline-none focus:border-slate-500 transition-colors"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-4 py-2 text-slate-800 dark:text-slate-200 text-sm placeholder-slate-400 dark:placeholder-slate-500 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 transition-all shadow-sm"
                         placeholder="Write a comment..."
                         onKeyDown={async (e) => {
                           if (e.key === 'Enter') {
@@ -1740,18 +1743,21 @@ const BoardPage: React.FC = () => {
                           }
                         }}
                       />
+                      <p className="text-[10px] text-slate-500 dark:text-slate-500 mt-1.5 ml-1">Press Enter to post</p>
                     </div>
                   </div>
                   <div className="space-y-4 mt-6">
                     {(comments[showCard.id] || []).map(c => (
-                      <div key={c.id} className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-700 border border-slate-300 flex items-center justify-center text-xs font-bold">{c.userId?.charAt(0)}</div>
+                      <div key={c.id} className="flex gap-3 animate-fadeIn">
+                        <div className="flex-shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-xs font-bold shadow-sm">{c.userId?.charAt(0)}</div>
+                        </div>
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-bold text-slate-700 text-sm">{c.userId}</span>
-                            <span className="text-xs text-slate-700">{new Date(c.createdAt).toLocaleDateString()}</span>
+                          <div className="flex items-center gap-2 mb-1.5">
+                            <span className="font-bold text-slate-900 dark:text-slate-100 text-sm">{c.userId}</span>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-500 font-medium">{new Date(c.createdAt).toLocaleDateString()}</span>
                           </div>
-                          <div className="p-3 bg-white rounded shadow-sm text-slate-700 text-sm border border-slate-50 inline-block">{c.text}</div>
+                          <div className="px-4 py-2.5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm text-slate-700 dark:text-slate-300 text-sm border border-slate-100 dark:border-slate-800 inline-block leading-relaxed">{c.text}</div>
                         </div>
                       </div>
                     ))}

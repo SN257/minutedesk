@@ -176,10 +176,10 @@ const WorkLogs = () => {
             <div className="relative" ref={ref}>
                 <button
                     onClick={() => setOpen((s) => !s)}
-                    className="p-2 hover:bg-slate-100 rounded-lg transition-all"
+                    className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all"
                     title="Select date"
                 >
-                    <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <rect x="3" y="4" width="18" height="18" rx="2" ry="2" strokeWidth={2} stroke="currentColor" fill="none" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 2v4M16 2v4M3 10h18" />
                     </svg>
@@ -225,7 +225,7 @@ const WorkLogs = () => {
                                                 onClick={() => day && !isFuture && selectDate(day)}
                                                 disabled={!day || isFuture}
                                                 aria-disabled={!day || isFuture}
-                                                className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${isSelected ? (isToday ? 'bg-white text-slate-800 shadow-sm border' : 'bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md') : isFuture ? 'text-slate-300 opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'}`}
+                                                className={`h-9 w-9 flex items-center justify-center rounded-full transition-all ${isSelected ? (isToday ? 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 shadow-sm border dark:border-slate-700' : 'bg-gradient-to-r from-slate-800 to-slate-700 text-white shadow-md') : isFuture ? 'text-slate-300 dark:text-slate-600 opacity-40 cursor-not-allowed' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200'}`}
                                             >
                                                 <span className="text-sm font-medium">{day || ''}</span>
                                             </button>
@@ -235,8 +235,8 @@ const WorkLogs = () => {
                             ))}
                         </div>
                         <div className="mt-3 flex items-center justify-between text-sm">
-                            <button onClick={() => { setDate(localISODate(new Date())); setOpen(false); }} className="px-3 py-1 bg-slate-800 text-white rounded-lg hover:opacity-90">Today</button>
-                            <div className="text-right text-xs text-white">Select a date to load work log</div>
+                            <button onClick={() => { setDate(localISODate(new Date())); setOpen(false); }} className="px-3 py-1 bg-slate-800 dark:bg-slate-700 text-white rounded-lg hover:opacity-90">Today</button>
+                            <div className="text-right text-xs text-slate-500 dark:text-slate-400">Select a date to load work log</div>
                         </div>
                     </div>
                 )}
@@ -245,13 +245,13 @@ const WorkLogs = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 -m-6 p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 dark:from-slate-900 dark:via-slate-800 dark:to-slate-950 -m-6 p-6 transition-colors">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Header - Match Task Manager Style */}
-                <div className="bg-white shadow-sm rounded-2xl p-4 md:p-6 mb-4 md:mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 border-b-4 border-slate-700 animate-slideDown relative z-20">
+                <div className="bg-white dark:bg-slate-800 shadow-sm rounded-2xl p-4 md:p-6 mb-4 md:mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 border-b-4 border-slate-700 dark:border-slate-600 animate-slideDown relative z-20 transition-colors">
                     <div>
-                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">Daily Work Log</h2>
-                        <p className="text-sm sm:text-base text-slate-600 mt-1 font-medium">Track your progress and plan ahead</p>
+                        <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight">Daily Work Log</h2>
+                        <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 mt-1 font-medium">Track your progress and plan ahead</p>
                     </div>
 
                     <div className="flex items-center gap-2 md:gap-3 w-full md:w-auto">
@@ -262,17 +262,17 @@ const WorkLogs = () => {
                 {loading ? (
                     <div className="flex flex-col items-center justify-center py-20">
                         <div className="relative">
-                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-slate-700"></div>
+                            <div className="animate-spin rounded-full h-16 w-16 border-4 border-slate-200 dark:border-slate-700 border-t-slate-700 dark:border-t-slate-300"></div>
                             <div className="absolute inset-0 rounded-full bg-slate-500/20 blur-xl animate-pulse"></div>
                         </div>
-                        <p className="mt-4 text-slate-500 font-medium">Loading your work log...</p>
+                        <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium">Loading your work log...</p>
                     </div>
                 ) : (
                     <>
                         {/* Main Content Grid */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Today's Work Card */}
-                            <div className="group bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-300">
+                            <div className="group bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-2xl transition-all duration-300">
                                 <div className="bg-gradient-to-br from-slate-700 to-slate-900 p-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -301,7 +301,7 @@ const WorkLogs = () => {
                                                 if (todayOnLeave) setTodayOnLeave(false);
                                                 else { setTodayOnLeave(true); setTodayHoliday(false); }
                                             }}
-                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${todayOnLeave ? 'bg-amber-100 text-amber-800 shadow-sm' : 'bg-slate-100 text-slate-700 hover:shadow'}`}
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${todayOnLeave ? 'bg-amber-100 dark:bg-amber-400 text-amber-800 dark:text-amber-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:shadow'}`}
                                         >
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5v14" /></svg>
                                             <span>On Leave</span>
@@ -314,7 +314,7 @@ const WorkLogs = () => {
                                                 if (todayHoliday) setTodayHoliday(false);
                                                 else { setTodayHoliday(true); setTodayOnLeave(false); }
                                             }}
-                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${todayHoliday ? 'bg-cyan-100 text-cyan-800 shadow-sm' : 'bg-slate-100 text-slate-700 hover:shadow'}`}
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${todayHoliday ? 'bg-cyan-100 dark:bg-cyan-400 text-cyan-800 dark:text-cyan-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:shadow'}`}
                                         >
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="12" cy="12" r="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
                                             <span>Holiday</span>
@@ -348,20 +348,20 @@ const WorkLogs = () => {
                                                             }
                                                         }}
                                                         placeholder="Add an item (press Enter to add new)"
-                                                        className="flex-1 h-10 py-0 border-b border-slate-200 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
+                                                        className="flex-1 h-10 py-0 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
                                                     />
                                                 </div>
                                             ))}
-                                            <button onClick={() => setTodayItems(s => [...s, ''])} className="text-sm text-slate-500 mt-2">+ Add line</button>
+                                            <button onClick={() => setTodayItems(s => [...s, ''])} className="text-sm text-slate-500 dark:text-slate-400 mt-2">+ Add line</button>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-slate-500 italic">{todayOnLeave ? 'Marked: On Leave' : todayHoliday ? 'Marked: Holiday' : 'No entries'}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400 italic">{todayOnLeave ? 'Marked: On Leave' : todayHoliday ? 'Marked: Holiday' : 'No entries'}</div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Tomorrow's Plan Card */}
-                            <div className="group bg-white/90 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 overflow-hidden hover:shadow-2xl transition-all duration-300">
+                            <div className="group bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 overflow-hidden hover:shadow-2xl transition-all duration-300">
                                 <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-6">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
@@ -390,7 +390,7 @@ const WorkLogs = () => {
                                                 if (tomorrowOnLeave) setTomorrowOnLeave(false);
                                                 else { setTomorrowOnLeave(true); setTomorrowHoliday(false); }
                                             }}
-                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${tomorrowOnLeave ? 'bg-amber-100 text-amber-800 shadow-sm' : 'bg-slate-100 text-slate-700 hover:shadow'}`}
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${tomorrowOnLeave ? 'bg-amber-100 dark:bg-amber-400 text-amber-800 dark:text-amber-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:shadow'}`}
                                         >
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5v14" /></svg>
                                             <span>On Leave</span>
@@ -403,7 +403,7 @@ const WorkLogs = () => {
                                                 if (tomorrowHoliday) setTomorrowHoliday(false);
                                                 else { setTomorrowHoliday(true); setTomorrowOnLeave(false); }
                                             }}
-                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${tomorrowHoliday ? 'bg-cyan-100 text-cyan-800 shadow-sm' : 'bg-slate-100 text-slate-700 hover:shadow'}`}
+                                            className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium transition ${tomorrowHoliday ? 'bg-cyan-100 dark:bg-cyan-400 text-cyan-800 dark:text-cyan-900 shadow-sm' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:shadow'}`}
                                         >
                                             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="12" cy="12" r="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg>
                                             <span>Holiday</span>
@@ -437,14 +437,14 @@ const WorkLogs = () => {
                                                             }
                                                         }}
                                                         placeholder="Add an item (press Enter to add new)"
-                                                        className="flex-1 h-10 py-0 border-b border-slate-200 bg-transparent text-slate-800 placeholder-slate-400 focus:outline-none"
+                                                        className="flex-1 h-10 py-0 border-b border-slate-200 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none"
                                                     />
                                                 </div>
                                             ))}
-                                            <button onClick={() => setTomorrowItems(s => [...s, ''])} className="text-sm text-slate-500 mt-2">+ Add line</button>
+                                            <button onClick={() => setTomorrowItems(s => [...s, ''])} className="text-sm text-slate-500 dark:text-slate-400 mt-2">+ Add line</button>
                                         </div>
                                     ) : (
-                                        <div className="text-sm text-slate-500 italic">{tomorrowOnLeave ? 'Marked: On Leave' : tomorrowHoliday ? 'Marked: Holiday' : 'No entries'}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400 italic">{tomorrowOnLeave ? 'Marked: On Leave' : tomorrowHoliday ? 'Marked: Holiday' : 'No entries'}</div>
                                     )}
                                 </div>
                             </div>
@@ -452,7 +452,7 @@ const WorkLogs = () => {
 
                         {/* Quick Stats */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 p-5">
+                            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-5 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl flex items-center justify-center">
                                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -460,13 +460,13 @@ const WorkLogs = () => {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-slate-800">{wordCount.today + wordCount.tomorrow}</div>
-                                        <div className="text-sm text-slate-500">Total Words</div>
+                                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{wordCount.today + wordCount.tomorrow}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400">Total Words</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 p-5">
+                            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-5 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-gradient-to-br from-slate-700 to-slate-900 rounded-xl flex items-center justify-center">
                                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -474,13 +474,13 @@ const WorkLogs = () => {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-slate-800">{todayWork.split('\n').filter(line => line.trim()).length}</div>
-                                        <div className="text-sm text-slate-500">Tasks Completed</div>
+                                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{todayWork.split('\n').filter(line => line.trim()).length}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400">Tasks Completed</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="bg-white/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 p-5">
+                            <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 p-5 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="w-12 h-12 bg-gradient-to-br from-slate-500 to-slate-700 rounded-xl flex items-center justify-center">
                                         <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -488,8 +488,8 @@ const WorkLogs = () => {
                                         </svg>
                                     </div>
                                     <div>
-                                        <div className="text-2xl font-bold text-slate-800">{tomorrowWork.split('\n').filter(line => line.trim()).length}</div>
-                                        <div className="text-sm text-slate-500">Planned Tasks</div>
+                                        <div className="text-2xl font-bold text-slate-800 dark:text-slate-100">{tomorrowWork.split('\n').filter(line => line.trim()).length}</div>
+                                        <div className="text-sm text-slate-500 dark:text-slate-400">Planned Tasks</div>
                                     </div>
                                 </div>
                             </div>

@@ -156,21 +156,21 @@ const AddMeeting = () => {
 
     return (
       <div className={`relative ${className || ''}`} ref={ref as any}>
-        <button type="button" onClick={() => setOpen(v => !v)} className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left flex items-center justify-between">
-          <span className="truncate text-gray-700">{value ? formatDisplay(value) : 'Select date'}</span>
-          <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button type="button" onClick={() => setOpen(v => !v)} className="w-full bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-md px-3 py-2 text-sm text-left flex items-center justify-between transition-colors">
+          <span className="truncate text-gray-700 dark:text-slate-200">{value ? formatDisplay(value) : 'Select date'}</span>
+          <svg className="w-4 h-4 text-gray-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
         </button>
         {open && (
-          <div className="absolute right-0 top-full z-40 mt-1 bg-white border border-gray-200 rounded-md shadow-lg p-3 w-64">
+          <div className="absolute right-0 top-full z-40 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg p-3 w-64 transition-colors">
             <div className="flex items-center justify-between mb-2">
-              <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))} className="px-2 py-1 rounded hover:bg-gray-100">◀</button>
-              <div className="text-sm font-medium">{viewDate.toLocaleString(undefined, { month: 'long' })} {viewDate.getFullYear()}</div>
-              <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))} className="px-2 py-1 rounded hover:bg-gray-100">▶</button>
+              <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))} className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 transition-colors">◀</button>
+              <div className="text-sm font-medium text-gray-900 dark:text-slate-100">{viewDate.toLocaleString(undefined, { month: 'long' })} {viewDate.getFullYear()}</div>
+              <button type="button" onClick={() => setViewDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))} className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-200 transition-colors">▶</button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-xs text-center text-gray-500 mb-1">
-              {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d} className="py-1">{d}</div>)}
+            <div className="grid grid-cols-7 gap-1 text-xs text-center text-gray-500 dark:text-slate-400 mb-1">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d} className="py-1">{d}</div>)}
             </div>
             <div className="grid grid-cols-7 gap-1 text-sm">
               {cells.map((dt, i) => {
@@ -184,10 +184,10 @@ const AddMeeting = () => {
                     key={i}
                     type="button"
                     onClick={() => { onChange(iso); setOpen(false); }}
-                    className={`py-1 rounded ${isSelected ? 'bg-slate-700 text-white' : 'hover:bg-slate-100'} flex items-center justify-center`}
+                    className={`py-1 rounded ${isSelected ? 'bg-slate-700 dark:bg-slate-600 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-300'} flex items-center justify-center transition-colors`}
                     aria-current={isToday}
                   >
-                    <span className={`${isToday ? 'inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-slate-700' : ''}`}>{dt.getDate()}</span>
+                    <span className={`${isToday ? 'inline-flex items-center justify-center w-7 h-7 rounded-full border-2 border-slate-700 dark:border-slate-400' : ''}`}>{dt.getDate()}</span>
                   </button>
                 );
               })}
@@ -876,11 +876,11 @@ const AddMeeting = () => {
 
       // Create new points for remaining items and insert them after the current point
       const newPoints = items.slice(1).map((val) => ({
-          id: String(Date.now() + Math.random()),
-          text: val,
-          category: 'Information' as const,
-          assignee: '',
-          deadline: ''
+        id: String(Date.now() + Math.random()),
+        text: val,
+        category: 'Information' as const,
+        assignee: '',
+        deadline: ''
       }));
 
       if (newPoints.length > 0) {
@@ -898,7 +898,7 @@ const AddMeeting = () => {
   const createMeetingTasks = async () => {
     // Collect all points with assignee and deadline from Decision/Lesson categories
     const assignedPoints: Array<{ point: Point; noteTitle: string }> = [];
-    
+
     notes.forEach((note) => {
       note.points.forEach((point) => {
         if (
@@ -941,7 +941,7 @@ const AddMeeting = () => {
         // Get or create "Meeting Task" board for this user
         let userBoards = await getBoardsForUser(assignedUser.id);
         let meetingTaskBoard = userBoards.find((b: any) => b.title === 'Meeting Task');
-        
+
         if (!meetingTaskBoard) {
           meetingTaskBoard = await createBoardForUser(assignedUser.id, { title: 'Meeting Task' });
         }
@@ -951,7 +951,7 @@ const AddMeeting = () => {
 
         // Find or create a list with the assignee's name
         let userList = lists.find((l: any) => l.title === assigneeName);
-        
+
         if (!userList) {
           userList = await createListApiSystem(meetingTaskBoard.id, { title: assigneeName });
           lists.push(userList);
@@ -975,7 +975,7 @@ const AddMeeting = () => {
                 description: cardDescription,
                 dueDate: point.deadline,
                 assignee: assignedUser.id,
-                  notifySelf: assignedUser.id === user?.id,
+                notifySelf: assignedUser.id === user?.id,
               });
               // update point to reference new card id
               point.taskId = newCard.id;
@@ -1070,7 +1070,7 @@ const AddMeeting = () => {
       }
     }
 
-      const payload: any = {
+    const payload: any = {
       center: !isOneOnOne ? center : undefined,
       personName: !isOneOnOne ? personName : undefined,
       date: !isOneOnOne ? date : undefined,
@@ -1176,24 +1176,24 @@ const AddMeeting = () => {
       {loading ? (
         <div className="flex items-center justify-center h-full flex-1 py-20">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-slate-700"></div>
-            <p className="mt-6 text-gray-600 font-medium">Loading meeting...</p>
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-slate-200 dark:border-slate-800 border-t-slate-700 dark:border-t-slate-400"></div>
+            <p className="mt-6 text-gray-600 dark:text-slate-400 font-medium">Loading meeting...</p>
           </div>
         </div>
       ) : (
         <>
           {/* Header Section - Responsive */}
-          <div className="bg-white border-b-4 border-slate-600 rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{id && id !== 'new' ? 'Edit' : 'Add'} Meeting Minutes</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">Record minutes and key points from the meeting below</p>
+          <div className="bg-white dark:bg-slate-800 border-b-4 border-slate-600 rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6 transition-colors">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-slate-100">{id && id !== 'new' ? 'Edit' : 'Add'} Meeting Minutes</h2>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-slate-400 mt-1">Record minutes and key points from the meeting below</p>
           </div>
 
           <form onSubmit={handleSave} className="space-y-4 sm:space-y-6">
             {/* Meeting Type Selection - Always First */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-              <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Meeting Type & Template</h3>
-                <p className="text-xs sm:text-sm text-gray-600 mt-1">Select a type to prefill fields and the minutes structure</p>
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+              <div className="bg-gray-50 dark:bg-slate-900/50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-slate-700">
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-slate-100">Meeting Type & Template</h3>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1">Select a type to prefill fields and the minutes structure</p>
               </div>
 
               <div className="p-6">
@@ -1201,7 +1201,7 @@ const AddMeeting = () => {
                   {/* Meeting Type */}
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Meeting Type</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Meeting Type</label>
                       <div className="relative" ref={typeDropdownRef}>
                         <button
                           type="button"
@@ -1209,9 +1209,9 @@ const AddMeeting = () => {
                           onKeyDown={handleTypeButtonKeyDown}
                           aria-expanded={showTypeDropdown}
                           aria-controls="type-listbox"
-                          className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-4 pr-10 text-gray-900 text-sm font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 text-left"
+                          className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-4 pr-10 text-gray-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 text-left"
                         >
-                          <span className={meetingType ? "text-gray-900" : "text-gray-400"}>{meetingType || "Select meeting type..."}</span>
+                          <span className={meetingType ? "text-gray-900 dark:text-slate-100" : "text-gray-400 dark:text-slate-500"}>{meetingType || "Select meeting type..."}</span>
                         </button>
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 h-full">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1220,14 +1220,14 @@ const AddMeeting = () => {
                         </div>
 
                         {showTypeDropdown && (
-                          <div id="type-listbox" role="listbox" ref={typeListContainerRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                          <div id="type-listbox" role="listbox" ref={typeListContainerRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                             {meetingTypes.map((type, idx) => (
                               <div
                                 key={type}
                                 role="option"
                                 aria-selected={meetingType === type}
                                 ref={(el) => { typeListRefs.current[idx] = el; }}
-                                className={`w-full text-left px-4 py-3 cursor-pointer ${idx === typeHighlightedIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-slate-100 text-gray-900'}`}
+                                className={`w-full text-left px-4 py-3 cursor-pointer ${idx === typeHighlightedIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-gray-900 dark:text-slate-300'}`}
                                 onMouseEnter={() => setTypeHighlightedIndex(idx)}
                                 onMouseDown={() => { setMeetingType(type); setShowTypeDropdown(false); setTypeHighlightedIndex(-1); }}
                               >
@@ -1241,16 +1241,16 @@ const AddMeeting = () => {
 
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
                       <div className="flex-1">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Scheduled Meeting (optional)</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Scheduled Meeting (optional)</label>
                         <div className="relative" ref={scheduledDropdownRef}>
                           <button
                             type="button"
                             onClick={() => setShowScheduledDropdown((s) => !s)}
                             aria-expanded={showScheduledDropdown}
                             aria-controls="scheduled-listbox"
-                            className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-4 pr-10 text-gray-900 text-sm font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 text-left"
+                            className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-4 pr-10 text-gray-900 dark:text-slate-100 text-sm font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 text-left"
                           >
-                            <span className={selectedScheduledId ? 'text-gray-900' : 'text-gray-400'}>
+                            <span className={selectedScheduledId ? 'text-gray-900 dark:text-slate-100' : 'text-gray-400 dark:text-slate-500'}>
                               {selectedScheduledId ? (() => {
                                 const m = scheduledMeetings.find((x) => String(x.id) === String(selectedScheduledId));
                                 return m ? `${m.date} • ${m.startTime} - ${m.endTime} • ${m.center}` : 'Select scheduled meeting...';
@@ -1264,20 +1264,20 @@ const AddMeeting = () => {
                           </div>
 
                           {showScheduledDropdown && (
-                            <div id="scheduled-listbox" role="listbox" ref={scheduledListContainerRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                            <div id="scheduled-listbox" role="listbox" ref={scheduledListContainerRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                               {scheduledLoading ? (
-                                <div className="px-4 py-3 text-gray-500">Loading...</div>
+                                <div className="px-4 py-3 text-gray-500 dark:text-slate-400">Loading...</div>
                               ) : !meetingType ? (
-                                <div className="px-4 py-3 text-gray-500">Please select a meeting type first</div>
+                                <div className="px-4 py-3 text-gray-500 dark:text-slate-400">Please select a meeting type first</div>
                               ) : filteredScheduledMeetings.length === 0 ? (
-                                <div className="px-4 py-3 text-gray-500">No scheduled meetings for this type</div>
+                                <div className="px-4 py-3 text-gray-500 dark:text-slate-400">No scheduled meetings for this type</div>
                               ) : (
                                 filteredScheduledMeetings.map((m, idx) => (
                                   <div
                                     key={m.id}
                                     role="option"
                                     ref={(el) => { scheduledListRefs.current[idx] = el; }}
-                                    className={`w-full text-left px-4 py-3 cursor-pointer ${idx === scheduledHighlightedIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-slate-100 text-gray-900'}`}
+                                    className={`w-full text-left px-4 py-3 cursor-pointer ${idx === scheduledHighlightedIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-gray-900 dark:text-slate-300'}`}
                                     onMouseEnter={() => setScheduledHighlightedIndex(idx)}
                                     onMouseDown={() => { handleSelectScheduled(String(m.id)); setShowScheduledDropdown(false); setScheduledHighlightedIndex(-1); }}
                                   >
@@ -1294,7 +1294,7 @@ const AddMeeting = () => {
                           <button
                             type="button"
                             onClick={clearSelectedScheduled}
-                            className="h-12 sm:h-14 w-10 flex items-center justify-center bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                            className="h-12 sm:h-14 w-10 flex items-center justify-center bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
                             aria-label="Clear scheduled meeting selection"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1313,10 +1313,10 @@ const AddMeeting = () => {
 
             {/* Meeting Details Card - Shows only after type is selected */}
             {meetingType && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200">
-                  <h3 className="text-base sm:text-lg font-semibold text-gray-900">Meeting Details</h3>
-                  <p className="text-xs sm:text-sm text-gray-600 mt-1">Basic information about the meeting</p>
+              <div className="bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-200 dark:border-slate-700 transition-colors">
+                <div className="bg-gray-50 dark:bg-slate-900/50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-slate-700">
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-slate-100">Meeting Details</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400 mt-1">Basic information about the meeting</p>
                 </div>
 
                 <div className="p-4 sm:p-6">
@@ -1324,7 +1324,7 @@ const AddMeeting = () => {
                     {/* Person Name - Only for One o one */}
                     {meetingType === "One o one" && (
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                           <span>Person Name</span>
                           {isPrefilledFromScheduled && (
                             <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1338,14 +1338,14 @@ const AddMeeting = () => {
                           onChange={(e) => setPersonName(e.target.value)}
                           placeholder="Enter full name"
                           readOnly={isPrefilledFromScheduled}
-                          className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-white text-gray-900 border-gray-300'} border-2 rounded-lg px-4 py-3 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
+                          className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-500 border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700'} border-2 rounded-lg px-4 py-3 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
                         />
                       </div>
                     )}
 
                     {/* Center Select */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">
                         <span>Center</span>
                         {isPrefilledFromScheduled && (
                           <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1373,7 +1373,7 @@ const AddMeeting = () => {
                           aria-expanded={showCenterDropdown}
                           aria-controls="center-listbox"
                           readOnly={isPrefilledFromScheduled}
-                          className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-white text-gray-900 border-gray-300'} border-2 rounded-lg px-4 py-3 pr-10 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-text`}
+                          className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-500 border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700'} border-2 rounded-lg px-4 py-3 pr-10 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-text`}
                         />
                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1382,7 +1382,7 @@ const AddMeeting = () => {
                         </div>
 
                         {showCenterDropdown && !isPrefilledFromScheduled && (
-                          <div id="center-listbox" role="listbox" ref={centerListContainerRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                          <div id="center-listbox" role="listbox" ref={centerListContainerRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                             {filteredCenters.length > 0 ? (
                               filteredCenters.map((c, idx) => (
                                 <div
@@ -1390,7 +1390,7 @@ const AddMeeting = () => {
                                   role="option"
                                   aria-selected={center === c}
                                   ref={(el) => { centerListRefs.current[idx] = el; }}
-                                  className={`w-full text-left px-4 py-3 cursor-pointer ${idx === centerHighlightedIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-slate-100 text-gray-900'}`}
+                                  className={`w-full text-left px-4 py-3 cursor-pointer ${idx === centerHighlightedIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-gray-900 dark:text-slate-300'}`}
                                   onMouseEnter={() => setCenterHighlightedIndex(idx)}
                                   onMouseDown={() => { setCenter(formatCenterName(c)); setShowCenterDropdown(false); setCenterSearch(""); setCenterHighlightedIndex(-1); }}
                                 >
@@ -1398,7 +1398,7 @@ const AddMeeting = () => {
                                 </div>
                               ))
                             ) : (
-                              <div className="px-4 py-3 text-gray-500 text-sm">No centers found</div>
+                              <div className="px-4 py-3 text-gray-500 dark:text-slate-400 text-sm">No centers found</div>
                             )}
                           </div>
                         )}
@@ -1407,20 +1407,20 @@ const AddMeeting = () => {
 
                     {/* Date */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">Date {isPrefilledFromScheduled && (<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11h14v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8z" /></svg>)}</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">Date {isPrefilledFromScheduled && (<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11h14v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8z" /></svg>)}</label>
                       <input
                         type="date"
                         value={date}
                         onChange={(e) => { if (!isPrefilledFromScheduled) setDate(e.target.value); }}
                         readOnly={isPrefilledFromScheduled}
-                        className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-white text-gray-900 border-gray-300'} border-2 rounded-lg px-4 py-3 focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
+                        className={`w-full ${isPrefilledFromScheduled ? 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-slate-500 border-gray-200 dark:border-slate-700' : 'bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-gray-300 dark:border-slate-700'} border-2 rounded-lg px-4 py-3 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
                       />
                     </div>
 
                     {/* Day - Only for structured meetings */}
                     {meetingType !== "One o one" && (
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">Day {isPrefilledFromScheduled && (<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11h14v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8z" /></svg>)}</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2 flex items-center gap-2">Day {isPrefilledFromScheduled && (<svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c1.657 0 3-1.343 3-3V6a3 3 0 10-6 0v2c0 1.657 1.343 3 3 3z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 11h14v8a2 2 0 01-2 2H7a2 2 0 01-2-2v-8z" /></svg>)}</label>
                         <div className="relative" ref={dayDropdownRef}>
                           <button
                             type="button"
@@ -1428,9 +1428,9 @@ const AddMeeting = () => {
                             onKeyDown={handleDayButtonKeyDown}
                             aria-expanded={showDayDropdown}
                             aria-controls="day-listbox"
-                            className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 pr-10 text-gray-900 font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 text-left"
+                            className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 pr-10 text-gray-900 dark:text-slate-100 font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-800 text-left"
                           >
-                            <span className={day ? "text-gray-900" : "text-gray-400"}>{day || "Select day..."}</span>
+                            <span className={day ? "text-gray-900 dark:text-slate-100" : "text-gray-400 dark:text-slate-500"}>{day || "Select day..."}</span>
                           </button>
                           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1439,14 +1439,14 @@ const AddMeeting = () => {
                           </div>
 
                           {showDayDropdown && (
-                            <div id="day-listbox" role="listbox" ref={dayListContainerRef} className="absolute z-20 w-full mt-2 bg-white border-2 border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                            <div id="day-listbox" role="listbox" ref={dayListContainerRef} className="absolute z-20 w-full mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                               {daysOfWeek.map((dayOption, idx) => (
                                 <div
                                   key={dayOption}
                                   role="option"
                                   aria-selected={day === dayOption}
                                   ref={(el) => { dayListRefs.current[idx] = el; }}
-                                  className={`w-full text-left px-4 py-3 cursor-pointer ${idx === dayHighlightedIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-slate-100 text-gray-900'}`}
+                                  className={`w-full text-left px-4 py-3 cursor-pointer ${idx === dayHighlightedIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700/50 text-gray-900 dark:text-slate-300'}`}
                                   onMouseEnter={() => setDayHighlightedIndex(idx)}
                                   onMouseDown={() => { setDay(dayOption); setShowDayDropdown(false); setDayHighlightedIndex(-1); }}
                                 >
@@ -1461,35 +1461,35 @@ const AddMeeting = () => {
 
                     {/* Time Range - Start */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Start Time</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Start Time</label>
                       <input
                         type="time"
                         value={startTime}
                         onChange={(e) => setStartTime(e.target.value)}
-                        className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
+                        className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 text-gray-900 dark:text-slate-100 font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
                       />
                     </div>
 
                     {/* Time Range - End */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">End Time</label>
+                      <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">End Time</label>
                       <input
                         type="time"
                         value={endTime}
                         onChange={(e) => setEndTime(e.target.value)}
-                        className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-medium focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
+                        className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 text-gray-900 dark:text-slate-100 font-medium focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
                       />
                     </div>
 
                     {/* Place - Only for structured meetings */}
                     {meetingType !== "One o one" && (
                       <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Place</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Place</label>
                         <input
                           value={place}
                           onChange={(e) => setPlace(e.target.value)}
                           placeholder="Enter meeting location"
-                          className={`w-full bg-white text-gray-900 border-2 border-gray-300 rounded-lg px-4 py-3 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
+                          className={`w-full bg-white dark:bg-slate-900 text-gray-900 dark:text-slate-100 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors`}
                         />
                       </div>
                     )}
@@ -1497,19 +1497,19 @@ const AddMeeting = () => {
                     {/* Attendance - Only for structured meetings */}
                     {meetingType !== "One o one" && (
                       <div className="lg:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Attendance (Who is present in meeting)</label>
-                        <div className="w-full bg-white border-2 border-gray-300 rounded-lg px-3 py-2 focus-within:border-slate-600 focus-within:ring-2 focus-within:ring-slate-600 focus-within:ring-opacity-20 transition-colors min-h-[48px]">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Attendance (Who is present in meeting)</label>
+                        <div className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 focus-within:border-slate-600 dark:focus-within:border-slate-500 focus-within:ring-2 focus-within:ring-slate-600 focus-within:ring-opacity-20 transition-colors min-h-[48px]">
                           <div className="flex flex-wrap gap-2 items-center">
                             {attendance.map((name, index) => (
                               <span
                                 key={index}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 text-slate-800 rounded-full text-sm font-medium"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-full text-sm font-medium transition-colors"
                               >
                                 {name}
                                 <button
                                   type="button"
                                   onClick={() => removeAttendee(index)}
-                                  className="hover:bg-slate-300 rounded-full p-0.5 transition-colors"
+                                  className="hover:bg-slate-300 dark:hover:bg-slate-600 rounded-full p-0.5 transition-colors"
                                 >
                                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1533,15 +1533,15 @@ const AddMeeting = () => {
                                 }}
                                 onFocus={() => { if (attendanceSuggestions.length > 0) setShowAttendanceSuggestions(true); }}
                                 placeholder={attendance.length === 0 ? "Type name and press Enter or comma to add..." : "Add more..."}
-                                className="w-full bg-transparent border-none px-1 py-1 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 font-medium"
+                                className="w-full bg-transparent border-none px-1 py-1 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 font-medium"
                               />
 
                               {showAttendanceSuggestions && attendanceSuggestions.length > 0 && (
-                                <div className="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-30 max-h-44 overflow-auto">
+                                <div className="absolute left-0 right-0 mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md shadow-lg z-30 max-h-44 overflow-auto">
                                   {attendanceSuggestions.map((sugg, idx) => (
                                     <div
                                       key={sugg + idx}
-                                      className={`px-3 py-2 cursor-pointer ${idx === attendanceHighlightedIndex ? 'bg-slate-200 text-slate-900 font-semibold' : 'hover:bg-gray-50'}`}
+                                      className={`px-3 py-2 cursor-pointer ${idx === attendanceHighlightedIndex ? 'bg-slate-200 dark:bg-slate-700 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50 text-gray-900 dark:text-slate-300'}`}
                                       onMouseDown={() => { addAttendee(sugg); setShowAttendanceSuggestions(false); }}
                                       onMouseEnter={() => setAttendanceHighlightedIndex(idx)}
                                     >
@@ -1560,13 +1560,13 @@ const AddMeeting = () => {
                     {/* Present Sant Name - Only for structured meetings */}
                     {meetingType !== "One o one" && (
                       <div className="lg:col-span-2">
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Present Sant Name</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-2">Present Sant Name</label>
                         <input
                           type="text"
                           value={presentSantName}
                           onChange={(e) => setPresentSantName(e.target.value)}
                           placeholder="Enter Present Sant Name"
-                          className="w-full bg-white border-2 border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:border-slate-600 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
+                          className="w-full bg-white dark:bg-slate-900 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 text-gray-900 dark:text-slate-100 font-medium placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors"
                         />
                       </div>
                     )}
@@ -1579,18 +1579,18 @@ const AddMeeting = () => {
                       <button
                         type="button"
                         onClick={addNote}
-                        className="px-6 py-2.5 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 transition-colors shadow-sm"
+                        className="px-6 py-2.5 bg-slate-700 dark:bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 transition-colors shadow-sm"
                       >
                         Add Agenda
                       </button>
                     </div>
 
                     {notes.map((note, noteIdx) => (
-                      <div key={note.id} className="bg-gray-50 border-2 border-gray-300 rounded-2xl p-5">
+                      <div key={note.id} className="bg-gray-50 dark:bg-slate-900/50 border-2 border-gray-300 dark:border-slate-700 rounded-2xl p-5 transition-colors">
                         <div className="flex justify-between items-center mb-4">
                           <div className="flex-1">
                             {isPrefilledFromScheduled ? (
-                              <div className="text-base font-bold text-gray-900">{note.title || `Agenda ${noteIdx + 1}`}</div>
+                              <div className="text-base font-bold text-gray-900 dark:text-slate-100">{note.title || `Agenda ${noteIdx + 1}`}</div>
                             ) : (
                               <div>
                                 {titleEditMode.current[note.id] ? (
@@ -1613,11 +1613,11 @@ const AddMeeting = () => {
                                       forceRerender((v) => v + 1);
                                     }}
                                     placeholder={`Agenda ${noteIdx + 1}`}
-                                    className="w-full text-base font-bold text-gray-900 bg-transparent focus:outline-none"
+                                    className="w-full text-base font-bold text-gray-900 dark:text-slate-100 bg-transparent focus:outline-none placeholder-gray-400 dark:placeholder-slate-500"
                                   />
                                 ) : (
                                   <div
-                                    className="text-base font-bold text-gray-900 cursor-text"
+                                    className="text-base font-bold text-gray-900 dark:text-slate-100 cursor-text"
                                     onClick={() => {
                                       titleEditMode.current[note.id] = true;
                                       forceRerender((v) => v + 1);
@@ -1649,7 +1649,7 @@ const AddMeeting = () => {
                               type="button"
                               onClick={() => removeNote(note.id)}
                               aria-label="Remove agenda"
-                              className="p-1 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                              className="p-1 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -1661,7 +1661,7 @@ const AddMeeting = () => {
 
                         <div className="space-y-2 mb-4">
                           {note.points.map((point) => (
-                            <div key={point.id} className="bg-white border border-gray-300 rounded-lg px-4 py-2.5">
+                            <div key={point.id} className="bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-lg px-4 py-2.5 transition-colors">
                               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                                 <div className="flex items-center gap-3 flex-1 min-w-0">
                                   <div className="flex-shrink-0 text-slate-700 font-semibold text-2xl leading-none" aria-hidden="true">➟</div>
@@ -1675,13 +1675,13 @@ const AddMeeting = () => {
                                     onCompositionStart={() => setIsComposing(true)}
                                     onCompositionEnd={() => setIsComposing(false)}
                                     placeholder="Enter point and press Enter for new line..."
-                                    className="flex-1 bg-transparent border-none px-0 py-0 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 font-medium min-w-0"
+                                    className="flex-1 bg-transparent border-none px-0 py-0 text-gray-900 dark:text-slate-100 placeholder-gray-400 dark:placeholder-slate-500 focus:outline-none focus:ring-0 font-medium min-w-0"
                                   />
                                   {note.points.length > 1 && (
                                     <button
                                       type="button"
                                       onClick={() => removePoint(note.id, point.id)}
-                                      className="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                      className="flex-shrink-0 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors"
                                       aria-label="Remove point"
                                     >
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1692,12 +1692,12 @@ const AddMeeting = () => {
                                 </div>
 
                                 <div className="flex items-center gap-2 mt-2 sm:mt-0">
-                                  <div className="text-xs font-medium text-gray-600">Type</div>
+                                  <div className="text-xs font-medium text-gray-600 dark:text-slate-400">Type</div>
                                   <div className="relative" ref={pointDropdownRef}>
                                     <button
                                       type="button"
                                       onClick={() => setShowPointDropdown((s) => s === `${note.id}:${point.id}` ? null : `${note.id}:${point.id}`)}
-                                      className="bg-white border-2 border-gray-300 rounded-lg px-3 py-2 text-sm font-medium text-gray-800 flex items-center gap-2 focus:outline-none"
+                                      className="bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-gray-800 dark:text-slate-200 flex items-center gap-2 focus:outline-none hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
                                     >
                                       <span>{point.category || 'Information'}</span>
                                       <svg className="w-4 h-4 text-gray-500 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1706,11 +1706,11 @@ const AddMeeting = () => {
                                     </button>
 
                                     {showPointDropdown === `${note.id}:${point.id}` && (
-                                      <div className="absolute right-0 mt-2 w-44 bg-white border-2 border-gray-300 rounded-lg shadow-lg z-30">
+                                      <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-lg shadow-lg z-30">
                                         {['Information', 'Decision', 'Lesson'].map((opt) => (
                                           <div
                                             key={opt}
-                                            className={`px-3 py-2 cursor-pointer ${point.category === opt ? 'bg-slate-200 font-semibold' : 'hover:bg-slate-100'}`}
+                                            className={`px-3 py-2 cursor-pointer ${point.category === opt ? 'bg-slate-200 dark:bg-slate-700/50 text-slate-900 dark:text-slate-100 font-semibold' : 'hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-300'}`}
                                             onMouseDown={() => { updatePoint(note.id, point.id, point.text, opt as any); setShowPointDropdown(null); }}
                                           >
                                             {opt}
@@ -1725,12 +1725,12 @@ const AddMeeting = () => {
                               {(point.category === 'Decision' || point.category === 'Lesson') && (
                                 <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                                   <div>
-                                    <label className="block text-xs text-gray-500 mb-1">Assignee</label>
+                                    <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Assignee</label>
                                     <div className="relative" ref={assigneeDropdownRef}>
                                       <button
                                         type="button"
                                         onClick={() => setShowAssigneeDropdown((s) => s === `${note.id}:${point.id}` ? null : `${note.id}:${point.id}`)}
-                                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-2 text-sm text-left flex items-center justify-between"
+                                        className="w-full bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-700 rounded-md px-3 py-2 text-sm text-left flex items-center justify-between text-gray-900 dark:text-slate-100"
                                       >
                                         <span className="truncate">{point.assignee || 'Unassigned'}</span>
                                         <svg className="w-4 h-4 text-gray-500 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1739,9 +1739,9 @@ const AddMeeting = () => {
                                       </button>
 
                                       {showAssigneeDropdown === `${note.id}:${point.id}` && (
-                                        <div className="absolute left-0 right-0 mt-2 bg-white border-2 border-gray-300 rounded-md shadow-lg z-30 max-h-48 overflow-auto">
+                                        <div className="absolute left-0 right-0 mt-2 bg-white dark:bg-slate-800 border-2 border-gray-300 dark:border-slate-700 rounded-md shadow-lg z-30 max-h-48 overflow-auto">
                                           <div
-                                            className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                                            className="px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 transition-colors"
                                             onMouseDown={() => { updatePointField(note.id, point.id, 'assignee', ''); setShowAssigneeDropdown(null); }}
                                           >
                                             Unassigned
@@ -1750,21 +1750,21 @@ const AddMeeting = () => {
                                             users.map((u) => (
                                               <div
                                                 key={u.id}
-                                                className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                                                className="px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 transition-colors"
                                                 onMouseDown={() => { updatePointField(note.id, point.id, 'assignee', u.name || u.email || u.id); setShowAssigneeDropdown(null); }}
                                               >
                                                 {u.name || u.email || u.id}
                                               </div>
                                             ))
                                           ) : (
-                                            <div className="px-3 py-2 text-gray-400">No users</div>
+                                            <div className="px-3 py-2 text-gray-400 dark:text-slate-500">No users</div>
                                           )}
                                         </div>
                                       )}
                                     </div>
                                   </div>
                                   <div>
-                                    <label className="block text-xs text-gray-500 mb-1">Deadline</label>
+                                    <label className="block text-xs text-gray-500 dark:text-slate-400 mb-1">Deadline</label>
                                     <div className="relative">
                                       <DatePicker
                                         value={point.deadline || ''}
@@ -1779,15 +1779,15 @@ const AddMeeting = () => {
                           ))}
                         </div>
 
-                        <div className="flex items-center gap-4 pt-3 border-t border-gray-300">
+                        <div className="flex items-center gap-4 pt-3 border-t border-gray-300 dark:border-slate-700 transition-colors">
                           <label className="inline-flex items-center cursor-pointer">
                             <input
                               type="checkbox"
                               checked={note.important}
                               onChange={(e) => updateNote(note.id, { important: e.target.checked })}
-                              className="w-4 h-4 rounded border-gray-300 text-slate-700 focus:ring-slate-600 cursor-pointer"
+                              className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-slate-700 dark:bg-slate-900 focus:ring-slate-600 cursor-pointer transition-colors"
                             />
-                            <span className="ml-2 text-sm font-medium text-gray-700">Mark as Important</span>
+                            <span className="ml-2 text-sm font-medium text-gray-700 dark:text-slate-300">Mark as Important</span>
                           </label>
 
                           <label className="inline-flex items-center cursor-pointer">
@@ -1795,35 +1795,34 @@ const AddMeeting = () => {
                               type="checkbox"
                               checked={note.followUp}
                               onChange={(e) => updateNote(note.id, { followUp: e.target.checked })}
-                              className="w-4 h-4 rounded border-gray-300 text-slate-700 focus:ring-slate-600 cursor-pointer"
+                              className="w-4 h-4 rounded border-gray-300 dark:border-slate-700 text-slate-700 dark:bg-slate-900 focus:ring-slate-600 cursor-pointer transition-colors"
                             />
-                            <span className="ml-2 text-sm font-medium text-gray-700">Requires Follow-up</span>
+                            <span className="ml-2 text-sm font-medium text-gray-700 dark:text-slate-300">Mark as Follow-up</span>
                           </label>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Submit Section */}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-6 sm:mt-8 pt-6 border-t border-gray-200 dark:border-slate-700 transition-colors">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/add-meeting")}
+                    className="px-6 py-3 border-2 border-gray-300 dark:border-slate-700 rounded-xl font-bold text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-all flex items-center justify-center"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-8 py-3 bg-slate-700 dark:bg-slate-600 text-white font-bold rounded-xl hover:bg-slate-800 dark:hover:bg-slate-500 transition-all shadow-md flex items-center justify-center"
+                  >
+                    {id && id !== 'new' ? 'Update Meeting' : 'Save Minutes'}
+                  </button>
+                </div>
               </div>
             )}
-
-            {/* Action Buttons */}
-            <div className="flex items-center justify-between bg-white rounded-2xl shadow-sm border border-gray-200 px-6 py-4">
-              <button
-                type="button"
-                onClick={() => window.history.back()}
-                className="px-5 py-2.5 bg-white border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 transition-colors"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="px-6 py-2.5 bg-slate-700 text-white font-semibold rounded-lg hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 transition-colors shadow-sm"
-              >
-                {id && id !== 'new' ? 'Update' : 'Save'} Minutes
-              </button>
-            </div>
           </form>
         </>
       )}
