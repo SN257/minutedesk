@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
-const Home = () => {
+const Platform = () => {
     const navigate = useNavigate();
 
     return (
@@ -10,13 +10,12 @@ const Home = () => {
             <div className="fixed inset-0 z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[120px] rounded-full animate-blob" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full animate-blob animation-delay-2000" />
-                <div className="absolute top-[20%] right-[10%] w-[30%] h-[30%] bg-purple-600/10 blur-[100px] rounded-full animate-blob animation-delay-4000" />
             </div>
 
             <div className="relative z-10 flex flex-col min-h-screen">
                 <Header
                     navItems={[
-                        { label: 'Platform', href: '/platform', isRoute: true },
+                        { label: 'Platform', href: '/platform', isRoute: true, active: true },
                         { label: 'Launchpad', href: '/launchpad', isRoute: true },
                         { label: 'Capabilities', href: '/capabilities', isRoute: true },
                         { label: 'About', href: '/about', isRoute: true },
@@ -28,7 +27,7 @@ const Home = () => {
                 />
 
                 {/* Hero */}
-                <section data-section-theme="white" className="relative overflow-hidden bg-white flex-1" style={{ minHeight: 'calc(100vh - 72px)', scrollMarginTop: '72px' }}>
+                <section data-section-theme="white" className="relative overflow-hidden bg-white" style={{ minHeight: 'calc(100vh - 72px)', scrollMarginTop: '72px' }}>
                     <div className="absolute inset-0">
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(148,163,184,0.05),transparent_50%)]" />
                         <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(100,116,139,0.05),transparent_50%)]" />
@@ -50,24 +49,21 @@ const Home = () => {
                                 Elevate Your Team's
                                 <span className="block mt-3 bg-gradient-to-r from-slate-700 via-slate-900 to-slate-700 bg-clip-text text-transparent">Productivity</span>
                             </h1>
-
                             <p className="text-xl md:text-2xl text-slate-600 leading-relaxed mb-12 max-w-3xl mx-auto font-light">
                                 The complete workspace solution that brings meetings, projects, and analytics together in one powerful platform.
                             </p>
-
                             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-12">
-                                <button onClick={() => navigate('/platform')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
+                                <button onClick={() => navigate('/meetings')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
                                     <span className="relative z-10 flex items-center gap-3">
-                                        Explore Platform
+                                        Launch Platform
                                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </span>
                                     <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
-                                <button onClick={() => navigate('/launchpad')} className="px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
-                                    Open Launchpad
+                                <button className="px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
+                                    Schedule Demo
                                 </button>
                             </div>
-
                             <div className="flex flex-wrap justify-center items-center gap-x-12 gap-y-6 text-slate-500">
                                 {[
                                     { icon: 'M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z', label: 'Bank-Level Security' },
@@ -91,7 +87,6 @@ const Home = () => {
                 @keyframes blob{0%{transform:scale(1) translate(0,0)}33%{transform:scale(1.1) translate(30px,-50px)}66%{transform:scale(.9) translate(-20px,20px)}100%{transform:scale(1) translate(0,0)}}
                 .animate-blob{animation:blob 7s infinite}
                 .animation-delay-2000{animation-delay:2s}
-                .animation-delay-4000{animation-delay:4s}
                 @keyframes dropdown{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
                 .animate-dropdown{animation:dropdown .18s cubic-bezier(.16,1,.3,1) forwards}
                 ::-webkit-scrollbar{width:0}
@@ -100,4 +95,4 @@ const Home = () => {
     );
 };
 
-export default Home;
+export default Platform;

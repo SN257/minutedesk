@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AuthLayout from "./layouts/AuthLayout";
 import AppLayout from "./layouts/AppLayout";
 import { AuthProvider } from "./contexts/AuthContext";
 import { MeetingsProvider } from "./contexts/MeetingsContext";
@@ -20,6 +19,12 @@ const Settings = lazy(() => import("./pages/Settings"));
 const Board = lazy(() => import("./pages/Board"));
 const WorkLogs = lazy(() => import("./pages/WorkLogs"));
 const Home = lazy(() => import("./pages/Home"));
+const Platform = lazy(() => import("./pages/Platform"));
+const Launchpad = lazy(() => import("./pages/Launchpad"));
+const Capabilities = lazy(() => import("./pages/Capabilities"));
+const About = lazy(() => import("./pages/About"));
+const Support = lazy(() => import("./pages/Support"));
+const Documentation = lazy(() => import("./pages/Documentation"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -53,12 +58,76 @@ function App() {
               />
 
               <Route
+                path="/platform"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Platform />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/launchpad"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Launchpad />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/capabilities"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Capabilities />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/about"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <About />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/docs"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Documentation />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/support"
+                element={
+                  <ProtectedRoute>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <Support />
+                    </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/login"
                 element={
                   <Suspense fallback={<LoadingFallback />}>
-                    <AuthLayout>
-                      <Login />
-                    </AuthLayout>
+                    <Login />
                   </Suspense>
                 }
               />
