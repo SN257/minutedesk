@@ -1,9 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const Launchpad = () => {
-    const navigate = useNavigate();
 
     const launchApp = (path: string) => {
         window.open(`${path}?launch=true`, '_blank');
