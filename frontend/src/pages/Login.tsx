@@ -27,7 +27,7 @@ const Login = () => {
         try {
             await apiLogin({ email, password });
             await refreshUser();
-            navigate("/dashboard");
+            navigate("/");
         } catch (err: any) {
             setError(err.message || "Invalid credentials. Please try again.");
         } finally {

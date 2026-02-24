@@ -1,9 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const Platform = () => {
-    const navigate = useNavigate();
+
 
     return (
         <div className="relative min-h-screen bg-[#030712] text-white selection:bg-white/20 overflow-x-hidden">
@@ -53,7 +52,7 @@ const Platform = () => {
                                 The complete workspace solution that brings meetings, projects, and analytics together in one powerful platform.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-12">
-                                <button onClick={() => navigate('/meetings')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
+                                <button onClick={() => window.open('/user-dashboard', '_blank')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
                                     <span className="relative z-10 flex items-center gap-3">
                                         Launch Platform
                                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>

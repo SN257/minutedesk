@@ -1,9 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
 
 const Home = () => {
-    const navigate = useNavigate();
+
 
     return (
         <div className="relative min-h-screen bg-[#030712] text-white selection:bg-white/20 overflow-x-hidden">
@@ -56,15 +55,18 @@ const Home = () => {
                             </p>
 
                             <div className="flex flex-col sm:flex-row gap-5 justify-center items-center mb-12">
-                                <button onClick={() => navigate('/platform')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
+                                <button onClick={() => window.open('/user-dashboard', '_blank')} className="group relative px-10 py-5 bg-slate-900 text-white font-bold text-lg rounded-2xl overflow-hidden shadow-2xl hover:shadow-slate-900/30 transition-all hover:scale-105">
                                     <span className="relative z-10 flex items-center gap-3">
-                                        Explore Platform
+                                        Go to Dashboard
                                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                                     </span>
                                     <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
-                                <button onClick={() => navigate('/launchpad')} className="px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
-                                    Open Launchpad
+                                <button onClick={() => window.open('mailto:sales@minutedesk.com?subject=Book a Demo', '_blank')} className="group px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
+                                    <span className="flex items-center gap-3">
+                                        Book a Demo
+                                        <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    </span>
                                 </button>
                             </div>
 

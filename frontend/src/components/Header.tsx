@@ -255,7 +255,7 @@ const Header = ({ navItems, secondaryNavItems }: HeaderProps) => {
                                             </button>
 
                                             <button
-                                                onClick={() => { navigate('/meetings'); setProfileDropdownOpen(false); }}
+                                                onClick={() => { navigate('/user-dashboard'); setProfileDropdownOpen(false); }}
                                                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors group"
                                             >
                                                 <span className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-slate-200 flex items-center justify-center transition-colors flex-shrink-0">
@@ -342,7 +342,7 @@ const Header = ({ navItems, secondaryNavItems }: HeaderProps) => {
                         ))}
                         <div className="pt-2">
                             <button
-                                onClick={() => { navigate('/meetings'); setMobileMenuOpen(false); }}
+                                onClick={() => { navigate('/user-dashboard'); setMobileMenuOpen(false); }}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition-all"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

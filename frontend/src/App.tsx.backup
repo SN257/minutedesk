@@ -17,10 +17,11 @@ const AddMeeting = lazy(() => import("./pages/MeetingMinutes"));
 const AddMeetingForm = lazy(() => import("./pages/AddMeetingForm"));
 const ViewMeeting = lazy(() => import("./pages/ViewMeeting"));
 const ScheduleMeeting = lazy(() => import("./pages/ScheduleMeeting"));
-const MeetingReports = lazy(() => import("./pages/MeetingReports"));
+const Reports = lazy(() => import("./pages/MeetingReports"));
 const Settings = lazy(() => import("./pages/Settings"));
 const Board = lazy(() => import("./pages/Board"));
 const WorkLogs = lazy(() => import("./pages/WorkLogs"));
+const MeetingReports = lazy(() => import("./pages/MeetingReports"));
 const TaskReports = lazy(() => import("./pages/TaskReports"));
 const WorkLogReports = lazy(() => import("./pages/WorkLogReports"));
 const Home = lazy(() => import("./pages/Home"));
@@ -31,7 +32,6 @@ const About = lazy(() => import("./pages/About"));
 const Support = lazy(() => import("./pages/Support"));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
-const Insights = lazy(() => import("./pages/Insights"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -312,7 +312,7 @@ function App() {
                   <ProtectedRoute>
                     <AppLayout>
                       <Suspense fallback={<LoadingFallback />}>
-                        <Insights />
+                        <MeetingReports />
                       </Suspense>
                     </AppLayout>
                   </ProtectedRoute>
@@ -323,9 +323,11 @@ function App() {
                 path="/settings"
                 element={
                   <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Settings />
-                    </Suspense>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Settings />
+                      </Suspense>
+                    </AppLayout>
                   </ProtectedRoute>
                 }
               />
