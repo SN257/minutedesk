@@ -54,20 +54,21 @@ async function bootstrap() {
     console.warn('connect-pg-simple not available, falling back to in-memory session store. Install connect-pg-simple to persist sessions across restarts.');
   }
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
+
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
       resave: false,
       saveUninitialized: false,
       store: store as any,
+      proxy: true,
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        secure: isProduction,
-        sameSite: isProduction ? 'none' : 'lax',
+        secure: true, // Always true for cross-origin
+        sameSite: 'none', // Always 'none' for cross-origin
       },
-      ...(isProduction && process.env.TRUST_PROXY ? { proxy: true } : {}),
     }),
   );
 
