@@ -20,7 +20,7 @@ const Settings = () => {
   } = useSettings();
 
   const [activeSection, setActiveSection] = useState<'account' | 'security' | 'notifications' | 'preferences' | 'privacy'>('account');
-  const [_settingsSaved, setSettingsSaved] = useState(false);
+  const [, setSettingsSaved] = useState(false);
 
   const [ddOpen, setDdOpen] = useState(false);
   const [appsOpen, setAppsOpen] = useState(false);
