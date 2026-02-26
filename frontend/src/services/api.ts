@@ -3,6 +3,27 @@ if (API_URL && !API_URL.startsWith('http') && !API_URL.startsWith('/')) {
   API_URL = `https://${API_URL}`;
 }
 
+// Token management for cross-domain auth
+const TOKEN_KEY = 'minutedesk_token';
+export const getToken = (): string | null => localStorage.getItem(TOKEN_KEY);
+export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
+
+// Returns auth headers with Bearer token if available
+const authHeaders = (): Record<string, string> => {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+// Wrapper around fetch that automatically adds auth token
+const authFetch = (url: string, options: RequestInit = {}): Promise<Response> => {
+  const headers = {
+    ...authHeaders(),
+    ...(options.headers || {}),
+  };
+  return fetch(url, { ...options, credentials: 'include', headers });
+};
+
 interface LoginCredentials {
   email: string;
   password: string;
@@ -21,7 +42,7 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include', // Important for session cookies
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(credentials),
   });
 
@@ -31,15 +52,20 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
   }
 
   const data = await response.json();
+  // Store token for cross-domain auth
+  if (data.token) {
+    setToken(data.token);
+  }
   return data.user;
 };
 
 // Check if user is authenticated
 export const isAuthenticated = async (): Promise<boolean> => {
   try {
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await authFetch(`${API_URL}/auth/me`, {
       method: 'GET',
-      credentials: 'include',
+      credentials: 'include', headers: { ...authHeaders() },
+      headers: { ...authHeaders() },
     });
 
     if (!response.ok) {
@@ -47,7 +73,6 @@ export const isAuthenticated = async (): Promise<boolean> => {
     }
 
     const user = await response.json();
-    // User is authenticated if endpoint returns a user object (not null)
     return user !== null && user !== undefined;
   } catch {
     return false;
@@ -56,12 +81,12 @@ export const isAuthenticated = async (): Promise<boolean> => {
 
 // Create meeting
 export const createMeeting = async (meetingData: any): Promise<any> => {
-  const response = await fetch(`${API_URL}/meetings`, {
+  const response = await authFetch(`${API_URL}/meetings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(meetingData),
   });
 
@@ -75,12 +100,12 @@ export const createMeeting = async (meetingData: any): Promise<any> => {
 
 // Update meeting
 export const updateMeeting = async (id: string, meetingData: any): Promise<any> => {
-  const response = await fetch(`${API_URL}/meetings/${id}`, {
+  const response = await authFetch(`${API_URL}/meetings/${id}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(meetingData),
   });
 
@@ -95,9 +120,8 @@ export const updateMeeting = async (id: string, meetingData: any): Promise<any> 
 // Get current user
 export const getCurrentUser = async (): Promise<User | null> => {
   try {
-    const response = await fetch(`${API_URL}/auth/me`, {
+    const response = await authFetch(`${API_URL}/auth/me`, {
       method: 'GET',
-      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -112,17 +136,17 @@ export const getCurrentUser = async (): Promise<User | null> => {
 
 // Logout function
 export const logout = async (): Promise<void> => {
-  await fetch(`${API_URL}/auth/logout`, {
+  await authFetch(`${API_URL}/auth/logout`, {
     method: 'POST',
-    credentials: 'include',
   });
+  clearToken();
 };
 
 // Get all meetings
 export const getMeetings = async (): Promise<any[]> => {
-  const response = await fetch(`${API_URL}/meetings`, {
+  const response = await authFetch(`${API_URL}/meetings`, {
     method: 'GET',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -135,9 +159,9 @@ export const getMeetings = async (): Promise<any[]> => {
 
 // Get single meeting by id
 export const getMeeting = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/meetings/${id}`, {
+  const response = await authFetch(`${API_URL}/meetings/${id}`, {
     method: 'GET',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -150,9 +174,9 @@ export const getMeeting = async (id: string): Promise<any> => {
 
 // Delete a meeting by id
 export const deleteMeeting = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/meetings/${id}`, {
+  const response = await authFetch(`${API_URL}/meetings/${id}`, {
     method: 'DELETE',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -166,9 +190,9 @@ export const deleteMeeting = async (id: string): Promise<void> => {
 
 // Search users for autocomplete (query param)
 export const searchUsers = async (query: string): Promise<Array<{ id: string; name?: string }>> => {
-  const response = await fetch(`${API_URL}/users?query=${encodeURIComponent(query)}`, {
+  const response = await authFetch(`${API_URL}/users?query=${encodeURIComponent(query)}`, {
     method: 'GET',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -180,9 +204,9 @@ export const searchUsers = async (query: string): Promise<Array<{ id: string; na
 
 // Get all users
 export const getAllUsers = async (): Promise<Array<{ id: string; name?: string; email?: string }>> => {
-  const response = await fetch(`${API_URL}/users`, {
+  const response = await authFetch(`${API_URL}/users`, {
     method: 'GET',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
 
   if (!response.ok) {
@@ -194,12 +218,12 @@ export const getAllUsers = async (): Promise<Array<{ id: string; name?: string; 
 
 // Create scheduled meeting (saves to scheduled_meetings table, not meetings table)
 export const createScheduledMeeting = async (scheduledMeetingData: any): Promise<any> => {
-  const response = await fetch(`${API_URL}/scheduled-meetings`, {
+  const response = await authFetch(`${API_URL}/scheduled-meetings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(scheduledMeetingData),
   });
 
@@ -239,7 +263,7 @@ export const getScheduledMeetings = async (startDate?: string, endDate?: string,
 
 // Get a single scheduled meeting by id
 export const getScheduledMeeting = async (id: string): Promise<any> => {
-  const response = await fetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, { method: 'GET', credentials: 'include' });
+  const response = await authFetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, { method: 'GET', credentials: 'include' });
   if (!response.ok) {
     const text = await response.text().catch(() => null);
     let message = 'Failed to fetch scheduled meeting';
@@ -256,10 +280,10 @@ export const getScheduledMeeting = async (id: string): Promise<any> => {
 
 // Update a scheduled meeting
 export const updateScheduledMeeting = async (id: string, data: any): Promise<any> => {
-  const response = await fetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, {
+  const response = await authFetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -271,9 +295,9 @@ export const updateScheduledMeeting = async (id: string, data: any): Promise<any
 
 // Delete a scheduled meeting
 export const deleteScheduledMeeting = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, {
+  const response = await authFetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -295,7 +319,7 @@ export type Task = {
 };
 
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await fetch(`${API_URL}/tasks`, { method: 'GET', credentials: 'include' });
+  const response = await authFetch(`${API_URL}/tasks`, { method: 'GET', credentials: 'include' });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to fetch tasks');
@@ -304,10 +328,10 @@ export const getTasks = async (): Promise<Task[]> => {
 };
 
 export const createTask = async (data: { title: string; description?: string; dueDate?: string; }): Promise<Task> => {
-  const response = await fetch(`${API_URL}/tasks`, {
+  const response = await authFetch(`${API_URL}/tasks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -318,10 +342,10 @@ export const createTask = async (data: { title: string; description?: string; du
 };
 
 export const createTaskForUser = async (userId: string, data: { title: string; description?: string; dueDate?: string; }): Promise<Task> => {
-  const response = await fetch(`${API_URL}/tasks/for-user/${encodeURIComponent(userId)}`, {
+  const response = await authFetch(`${API_URL}/tasks/for-user/${encodeURIComponent(userId)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -332,20 +356,20 @@ export const createTaskForUser = async (userId: string, data: { title: string; d
 };
 
 export const getBoardsForUser = async (userId: string) => {
-  const response = await fetch(`${API_URL}/boards/for-user/${encodeURIComponent(userId)}`, {
+  const response = await authFetch(`${API_URL}/boards/for-user/${encodeURIComponent(userId)}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) throw new Error('Failed to get boards for user');
   return response.json();
 };
 
 export const createBoardForUser = async (userId: string, data: { title: string }) => {
-  const response = await fetch(`${API_URL}/boards/for-user/${encodeURIComponent(userId)}`, {
+  const response = await authFetch(`${API_URL}/boards/for-user/${encodeURIComponent(userId)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to create board for user');
@@ -353,20 +377,20 @@ export const createBoardForUser = async (userId: string, data: { title: string }
 };
 
 export const getListsApiSystem = async (boardId: string) => {
-  const response = await fetch(`${API_URL}/boards/system/${encodeURIComponent(boardId)}/lists`, {
+  const response = await authFetch(`${API_URL}/boards/system/${encodeURIComponent(boardId)}/lists`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) throw new Error('Failed to get lists');
   return response.json();
 };
 
 export const createListApiSystem = async (boardId: string, data: { title: string }) => {
-  const response = await fetch(`${API_URL}/boards/system/${encodeURIComponent(boardId)}/lists`, {
+  const response = await authFetch(`${API_URL}/boards/system/${encodeURIComponent(boardId)}/lists`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to create list');
@@ -374,10 +398,10 @@ export const createListApiSystem = async (boardId: string, data: { title: string
 };
 
 export const createCardApiSystem = async (listId: string, data: { title: string; description?: string; dueDate?: string; assignee?: string; notifySelf?: boolean }) => {
-  const response = await fetch(`${API_URL}/boards/system/lists/${encodeURIComponent(listId)}/cards`, {
+  const response = await authFetch(`${API_URL}/boards/system/lists/${encodeURIComponent(listId)}/cards`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to create card');
@@ -385,10 +409,10 @@ export const createCardApiSystem = async (listId: string, data: { title: string;
 };
 
 export const updateCardApiSystem = async (cardId: string, data: Partial<{ title: string; description?: string; dueDate?: string; assignee?: string; notifySelf?: boolean }>) => {
-  const response = await fetch(`${API_URL}/boards/system/cards/${encodeURIComponent(cardId)}`, {
+  const response = await authFetch(`${API_URL}/boards/system/cards/${encodeURIComponent(cardId)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) throw new Error('Failed to update card');
@@ -396,37 +420,37 @@ export const updateCardApiSystem = async (cardId: string, data: Partial<{ title:
 };
 
 export const deleteCardApiSystem = async (cardId: string) => {
-  const response = await fetch(`${API_URL}/boards/system/cards/${encodeURIComponent(cardId)}`, {
+  const response = await authFetch(`${API_URL}/boards/system/cards/${encodeURIComponent(cardId)}`, {
     method: 'DELETE',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) throw new Error('Failed to delete card');
   return response.json();
 };
 
 export const getNotifications = async () => {
-  const response = await fetch(`${API_URL}/notifications`, {
+  const response = await authFetch(`${API_URL}/notifications`, {
     method: 'GET',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) throw new Error('Failed to fetch notifications');
   return response.json();
 };
 
 export const markNotificationRead = async (id: string) => {
-  const response = await fetch(`${API_URL}/notifications/${encodeURIComponent(id)}/read`, {
+  const response = await authFetch(`${API_URL}/notifications/${encodeURIComponent(id)}/read`, {
     method: 'PUT',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) throw new Error('Failed to mark notification read');
   return response.json();
 };
 
 export const updateTask = async (id: string, data: Partial<{ title: string; description?: string; dueDate?: string; completed: boolean; status?: 'todo' | 'inprogress' | 'done' }>): Promise<Task> => {
-  const response = await fetch(`${API_URL}/tasks/${encodeURIComponent(id)}`, {
+  const response = await authFetch(`${API_URL}/tasks/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     body: JSON.stringify(data),
   });
   if (!response.ok) {
@@ -437,9 +461,9 @@ export const updateTask = async (id: string, data: Partial<{ title: string; desc
 };
 
 export const deleteTask = async (id: string): Promise<void> => {
-  const response = await fetch(`${API_URL}/tasks/${encodeURIComponent(id)}`, {
+  const response = await authFetch(`${API_URL}/tasks/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -449,43 +473,43 @@ export const deleteTask = async (id: string): Promise<void> => {
 
 // Boards API
 export const createBoardApi = async (data: { title: string }) => {
-  const res = await fetch(`${API_URL}/boards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create board');
   return res.json();
 };
 
 export const getBoardsApi = async () => {
-  const res = await fetch(`${API_URL}/boards`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch boards');
   return res.json();
 };
 
 export const getListsApi = async (boardId: string) => {
-  const res = await fetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch lists');
   return res.json();
 };
 
 export const createListApi = async (boardId: string, data: { title: string }) => {
-  const res = await fetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create list');
   return res.json();
 };
 
 export const createCardApi = async (listId: string, data: { title: string; description?: string; dueDate?: string }) => {
-  const res = await fetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create card');
   return res.json();
 };
 
 export const getCardsApi = async (listId: string) => {
-  const res = await fetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch cards');
   return res.json();
 };
 
 export const getAllCardsApi = async () => {
-  const res = await fetch(`${API_URL}/boards/cards/all`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/all`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch all cards');
   return res.json();
 };
@@ -501,88 +525,88 @@ export const getAllCardsForReportsApi = async (cardIds?: string[]) => {
 
 
 export const getCardApi = async (cardId: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch card');
   return res.json();
 };
 
 export const updateCardApi = async (cardId: string, data: Partial<{ title: string; description?: string; dueDate?: string; checklist?: any; priority?: string; labels?: string[]; assignee?: string; coverColor?: string; archived?: boolean }>) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to update card');
   return res.json();
 };
 
 export const moveCardApi = async (cardId: string, toListId: string, toOrder: number) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/move`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toListId, toOrder }) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/move`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toListId, toOrder }) });
   if (!res.ok) throw new Error('Failed to move card');
   return res.json();
 };
 
 export const addCommentApi = async (cardId: string, text: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
   if (!res.ok) throw new Error('Failed to add comment');
   return res.json();
 };
 
 export const getCommentsApi = async (cardId: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch comments');
   return res.json();
 };
 
 export const deleteCardApi = async (cardId: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'DELETE', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to delete card');
   return res.json();
 };
 
 export const archiveCardApi = async (cardId: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/archive`, { method: 'PUT', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/archive`, { method: 'PUT', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to archive card');
   return res.json();
 };
 
 export const deleteListApi = async (listId: string) => {
-  const res = await fetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}`, { method: 'DELETE', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to delete list');
   return res.json();
 };
 
 export const duplicateCardApi = async (cardId: string) => {
-  const res = await fetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/duplicate`, { method: 'POST', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/duplicate`, { method: 'POST', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to duplicate card');
   return res.json();
 };
 
 export const updateBoardApi = async (boardId: string, data: Partial<{ title: string }>) => {
-  const res = await fetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to update board');
   return res.json();
 };
 
 export const getDailyWorkWarnings = async (): Promise<any[]> => {
-  const res = await fetch(`${API_URL}/boards/daily-work/warnings`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/daily-work/warnings`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to fetch daily work warnings');
   return res.json();
 };
 
 export const isYesterdayWorkLogMissing = async (): Promise<{ missing: boolean; date: string }> => {
-  const res = await fetch(`${API_URL}/work-logs/missing/yesterday`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/work-logs/missing/yesterday`, { method: 'GET', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to check missing work log');
   return res.json();
 };
 
 export const deleteBoardApi = async (boardId: string) => {
-  const res = await fetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'DELETE', credentials: 'include' });
   if (!res.ok) throw new Error('Failed to delete board');
   return res.json();
 };
 
 // User Settings API
 export const updateUserProfile = async (data: { name?: string; email?: string }) => {
-  const res = await fetch(`${API_URL}/users/profile`, {
+  const res = await authFetch(`${API_URL}/users/profile`, {
     method: 'PUT',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -594,9 +618,9 @@ export const updateUserProfile = async (data: { name?: string; email?: string })
 };
 
 export const changeUserPassword = async (data: { currentPassword: string; newPassword: string }) => {
-  const res = await fetch(`${API_URL}/users/change-password`, {
+  const res = await authFetch(`${API_URL}/users/change-password`, {
     method: 'POST',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
@@ -608,7 +632,7 @@ export const changeUserPassword = async (data: { currentPassword: string; newPas
 };
 // Work Logs API
 export const getWorkLogApi = async (date: string) => {
-  const res = await fetch(`${API_URL}/work-logs/${date}`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/work-logs/${date}`, { method: 'GET', credentials: 'include' });
   if (!res.ok) {
     const text = await res.text().catch(() => null);
     let msg = 'Failed to fetch work log';
@@ -634,9 +658,9 @@ export const saveWorkLogApi = async (data: {
   tomorrowOnLeave?: boolean;
   tomorrowHoliday?: boolean;
 }) => {
-  const res = await fetch(`${API_URL}/work-logs`, {
+  const res = await authFetch(`${API_URL}/work-logs`, {
     method: 'POST',
-    credentials: 'include',
+    credentials: 'include', headers: { ...authHeaders() },
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
