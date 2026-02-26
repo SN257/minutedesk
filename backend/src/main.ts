@@ -66,8 +66,8 @@ async function bootstrap() {
   );
 
   const port = process.env.PORT || 3001;
-  await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  console.log(`Application is running on: http://0.0.0.0:${port}`);
 
   // Schedule daily worklog reminders at 07:00 server time
   const notifSvc = app.get(NotificationsService);
