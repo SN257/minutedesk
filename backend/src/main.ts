@@ -14,9 +14,15 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend
-  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
+  const envCors = process.env.CORS_ORIGIN || '';
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'https://minutedesk.vercel.app',
+    ...envCors.split(',').map((o) => o.trim()).filter((o) => o)
+  ];
+
   app.enableCors({
-    origin: corsOrigin.split(',').map(o => o.trim()), // Support multiple origins via comma-separated list
+    origin: allowedOrigins,
     credentials: true,
   });
 
