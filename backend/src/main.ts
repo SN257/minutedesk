@@ -14,8 +14,9 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend
+  const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
   app.enableCors({
-    origin: 'http://localhost:5173', // Vite default port
+    origin: corsOrigin.split(',').map(o => o.trim()), // Support multiple origins via comma-separated list
     credentials: true,
   });
 
@@ -37,13 +38,17 @@ async function bootstrap() {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const connectPgSimple = require('connect-pg-simple');
     const PgSession = connectPgSimple(session);
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
+    });
     store = new PgSession({ pool, tableName: 'session', createTableIfMissing: true });
     console.log('Using Postgres session store for express-session');
   } catch (err) {
     console.warn('connect-pg-simple not available, falling back to in-memory session store. Install connect-pg-simple to persist sessions across restarts.');
   }
 
+  const isProduction = process.env.NODE_ENV === 'production';
   app.use(
     session({
       secret: process.env.SESSION_SECRET || 'your-secret-key',
@@ -53,9 +58,10 @@ async function bootstrap() {
       cookie: {
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        secure: isProduction,
+        sameSite: isProduction ? 'none' : 'lax',
       },
+      ...(isProduction && process.env.TRUST_PROXY ? { proxy: true } : {}),
     }),
   );
 
