@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '/api');
+let API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '/api');
+if (API_URL && !API_URL.startsWith('http') && !API_URL.startsWith('/')) {
+  API_URL = `https://${API_URL}`;
+}
 
 interface LoginCredentials {
   email: string;
