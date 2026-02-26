@@ -11,7 +11,7 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
     const navigate = useNavigate();
-    const { refreshUser } = useAuth();
+    const { setUser } = useAuth();
 
     useEffect(() => {
         // Trigger mount animations
@@ -25,8 +25,9 @@ const Login = () => {
         setLoading(true);
 
         try {
-            await apiLogin({ email, password });
-            await refreshUser();
+            const loggedInUser = await apiLogin({ email, password });
+            // Set user directly from login response to avoid cross-site cookie issues
+            setUser(loggedInUser);
             navigate("/");
         } catch (err: any) {
             setError(err.message || "Invalid credentials. Please try again.");
