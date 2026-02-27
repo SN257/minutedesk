@@ -635,7 +635,7 @@ const AddMeeting = () => {
     const t = setTimeout(async () => {
       try {
         const apiUrl = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '/api');
-        const res = await fetch(`${apiUrl}/users?query=${encodeURIComponent(q)}`, { credentials: 'include' });
+        const res = await fetch(`${apiUrl}/users?query=${encodeURIComponent(q)}`);
         if (!active) return;
         if (!res.ok) {
           setAttendanceSuggestions([]);

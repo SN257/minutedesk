@@ -21,7 +21,11 @@ const authFetch = (url: string, options: RequestInit = {}): Promise<Response> =>
     ...authHeaders(),
     ...(options.headers || {}),
   };
-  return fetch(url, { ...options, credentials: 'include', headers });
+  // Do NOT use credentials: 'include' for cross-domain requests.
+  // Mobile Safari (ITP) blocks cross-site cookies causing "Load failed".
+  // Token-based auth via Authorization header is used instead.
+  const { credentials, ...restOptions } = options;
+  return fetch(url, { ...restOptions, headers });
 };
 
 interface LoginCredentials {
@@ -42,7 +46,6 @@ export const login = async (credentials: LoginCredentials): Promise<User> => {
     headers: {
       'Content-Type': 'application/json',
     },
-    credentials: 'include',
     body: JSON.stringify(credentials),
   });
 
@@ -263,7 +266,7 @@ export const getScheduledMeetings = async (startDate?: string, endDate?: string,
 
 // Get a single scheduled meeting by id
 export const getScheduledMeeting = async (id: string): Promise<any> => {
-  const response = await authFetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, { method: 'GET', credentials: 'include' });
+  const response = await authFetch(`${API_URL}/scheduled-meetings/${encodeURIComponent(id)}`, { method: 'GET' });
   if (!response.ok) {
     const text = await response.text().catch(() => null);
     let message = 'Failed to fetch scheduled meeting';
@@ -319,7 +322,7 @@ export type Task = {
 };
 
 export const getTasks = async (): Promise<Task[]> => {
-  const response = await authFetch(`${API_URL}/tasks`, { method: 'GET', credentials: 'include' });
+  const response = await authFetch(`${API_URL}/tasks`, { method: 'GET' });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.message || 'Failed to fetch tasks');
@@ -473,43 +476,43 @@ export const deleteTask = async (id: string): Promise<void> => {
 
 // Boards API
 export const createBoardApi = async (data: { title: string }) => {
-  const res = await authFetch(`${API_URL}/boards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create board');
   return res.json();
 };
 
 export const getBoardsApi = async () => {
-  const res = await authFetch(`${API_URL}/boards`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch boards');
   return res.json();
 };
 
 export const getListsApi = async (boardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch lists');
   return res.json();
 };
 
 export const createListApi = async (boardId: string, data: { title: string }) => {
-  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}/lists`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create list');
   return res.json();
 };
 
 export const createCardApi = async (listId: string, data: { title: string; description?: string; dueDate?: string }) => {
-  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to create card');
   return res.json();
 };
 
 export const getCardsApi = async (listId: string) => {
-  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}/cards`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch cards');
   return res.json();
 };
 
 export const getAllCardsApi = async () => {
-  const res = await authFetch(`${API_URL}/boards/cards/all`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/all`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch all cards');
   return res.json();
 };
@@ -525,79 +528,79 @@ export const getAllCardsForReportsApi = async (cardIds?: string[]) => {
 
 
 export const getCardApi = async (cardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch card');
   return res.json();
 };
 
 export const updateCardApi = async (cardId: string, data: Partial<{ title: string; description?: string; dueDate?: string; checklist?: any; priority?: string; labels?: string[]; assignee?: string; coverColor?: string; archived?: boolean }>) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to update card');
   return res.json();
 };
 
 export const moveCardApi = async (cardId: string, toListId: string, toOrder: number) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/move`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toListId, toOrder }) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/move`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toListId, toOrder }) });
   if (!res.ok) throw new Error('Failed to move card');
   return res.json();
 };
 
 export const addCommentApi = async (cardId: string, text: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) });
   if (!res.ok) throw new Error('Failed to add comment');
   return res.json();
 };
 
 export const getCommentsApi = async (cardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/comments`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch comments');
   return res.json();
 };
 
 export const deleteCardApi = async (cardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete card');
   return res.json();
 };
 
 export const archiveCardApi = async (cardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/archive`, { method: 'PUT', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/archive`, { method: 'PUT' });
   if (!res.ok) throw new Error('Failed to archive card');
   return res.json();
 };
 
 export const deleteListApi = async (listId: string) => {
-  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete list');
   return res.json();
 };
 
 export const duplicateCardApi = async (cardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/duplicate`, { method: 'POST', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/duplicate`, { method: 'POST' });
   if (!res.ok) throw new Error('Failed to duplicate card');
   return res.json();
 };
 
 export const updateBoardApi = async (boardId: string, data: Partial<{ title: string }>) => {
-  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'PUT', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Failed to update board');
   return res.json();
 };
 
 export const getDailyWorkWarnings = async (): Promise<any[]> => {
-  const res = await authFetch(`${API_URL}/boards/daily-work/warnings`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/daily-work/warnings`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to fetch daily work warnings');
   return res.json();
 };
 
 export const isYesterdayWorkLogMissing = async (): Promise<{ missing: boolean; date: string }> => {
-  const res = await authFetch(`${API_URL}/work-logs/missing/yesterday`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/work-logs/missing/yesterday`, { method: 'GET' });
   if (!res.ok) throw new Error('Failed to check missing work log');
   return res.json();
 };
 
 export const deleteBoardApi = async (boardId: string) => {
-  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/boards/${encodeURIComponent(boardId)}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Failed to delete board');
   return res.json();
 };
@@ -632,7 +635,7 @@ export const changeUserPassword = async (data: { currentPassword: string; newPas
 };
 // Work Logs API
 export const getWorkLogApi = async (date: string) => {
-  const res = await authFetch(`${API_URL}/work-logs/${date}`, { method: 'GET', credentials: 'include' });
+  const res = await authFetch(`${API_URL}/work-logs/${date}`, { method: 'GET' });
   if (!res.ok) {
     const text = await res.text().catch(() => null);
     let msg = 'Failed to fetch work log';
