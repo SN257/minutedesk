@@ -1,6 +1,14 @@
-let API_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3001' : '/api');
-if (API_URL && !API_URL.startsWith('http') && !API_URL.startsWith('/')) {
-  API_URL = `https://${API_URL}`;
+// In production, always use /api proxy (Vercel rewrites to Railway backend).
+// This avoids cross-origin issues that cause "Load failed" on mobile Safari.
+// In development, use the env var or default to localhost.
+let API_URL: string;
+if (import.meta.env.DEV) {
+  API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  if (API_URL && !API_URL.startsWith('http') && !API_URL.startsWith('/')) {
+    API_URL = `https://${API_URL}`;
+  }
+} else {
+  API_URL = '/api';
 }
 
 // Token management for cross-domain auth
