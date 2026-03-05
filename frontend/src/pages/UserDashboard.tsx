@@ -62,7 +62,7 @@ const UserDashboard = () => {
 
     return (
         <>
-            <div className="DB">
+            <div className={`DB ${appearance.theme === 'dark' ? 'DB--dark' : ''} ${appearance.compactMode ? 'DB--compact' : ''}`}>
                 {/* HEADER */}
                 <header className="DB-hdr">
                     <div className="DB-hdr-l">
@@ -96,7 +96,7 @@ const UserDashboard = () => {
                         </div>
                         <div className="DB-settings-launcher" ref={settingsRef} style={{ position: 'relative' }}>
                             <button className={`DB-hdr-btn ${settingsOpen ? 'is-active' : ''}`} title="Settings" onClick={() => setSettingsOpen(!settingsOpen)}>
-                                {IC('M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5m4.5 6h10.5M9 12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5M10.5 18h9.75M10.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5')}
+                                {IC('M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z')}
                             </button>
                             {settingsOpen && (
                                 <div className="DB-dd" style={{ width: '220px' }}>
@@ -112,7 +112,7 @@ const UserDashboard = () => {
                                     </button>
                                     <hr />
                                     <button onClick={() => { nav('/settings'); setSettingsOpen(false); }}>
-                                        {IC('M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5m4.5 6h10.5M9 12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5M10.5 18h9.75M10.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5')}
+                                        {IC('M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z')}
                                         More Settings
                                     </button>
                                 </div>
@@ -128,7 +128,7 @@ const UserDashboard = () => {
                                 <div className="DB-dd">
                                     <div className="DB-dd-head"><div className="DB-av DB-av--lg">{uInit}</div><div><b>{user?.name || 'User'}</b><small>{user?.email}</small></div></div>
                                     <hr />
-                                    <button onClick={() => { nav('/settings'); setDdOpen(false) }}>{IC('M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5m4.5 6h10.5M9 12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5M10.5 18h9.75M10.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5')}Settings</button>
+                                    <button onClick={() => { nav('/settings'); setDdOpen(false) }}>{IC('M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z')}Settings</button>
                                     <button onClick={() => nav('/')}>{IC('M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6')}Home</button>
                                     <hr />
                                     <button className="DB-dd-out" onClick={async () => { await logout(); setDdOpen(false) }}>{IC('M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1')}Sign out</button>
@@ -188,16 +188,16 @@ const UserDashboard = () => {
                     <div className="DB-row si" style={{ '--i': '3' } as any}>
                         <div className="DB-card DB-card--chart">
                             <div className="DB-card-hd"><h2>Activity Overview</h2>
-                                <div className="DB-legend"><span><b style={{ background: '#1e293b' }} />Meetings</span><span><b style={{ background: '#cbd5e1' }} />Tasks</span></div>
+                                <div className="DB-legend"><span><b style={{ background: appearance.theme === 'dark' ? '#cbd5e1' : '#1e293b' }} />Meetings</span><span><b style={{ background: appearance.theme === 'dark' ? '#475569' : '#cbd5e1' }} />Tasks</span></div>
                             </div>
                             <div className="DB-chart">
                                 <svg viewBox="0 0 560 200" preserveAspectRatio="none">
-                                    {[0, 1, 2, 3, 4].map(i => <line key={i} x1="0" x2="560" y1={30 + i * 35} y2={30 + i * 35} stroke="#f1f5f9" strokeWidth={1} />)}
+                                    {[0, 1, 2, 3, 4].map(i => <line key={i} x1="0" x2="560" y1={30 + i * 35} y2={30 + i * 35} stroke={appearance.theme === 'dark' ? '#334155' : '#f1f5f9'} strokeWidth={1} />)}
                                     {chartData.map((d, i) => {
                                         const x = 35 + i * 90; const bw = 32; const mH = Math.max((d.m / cMax) * 140, 3); const tH = Math.max((d.t / cMax) * 140, 3); return <g key={i}>
-                                            <rect x={x} y={175 - mH} width={bw} height={mH} rx={6} fill="#1e293b" className="bA" style={{ '--i': String(i) } as any} />
-                                            <rect x={x + bw + 5} y={175 - tH} width={bw} height={tH} rx={6} fill="#cbd5e1" className="bA" style={{ '--i': String(i + .4) } as any} />
-                                            <text x={x + bw + 2} y={194} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="600">{d.l}</text>
+                                            <rect x={x} y={175 - mH} width={bw} height={mH} rx={6} fill={appearance.theme === 'dark' ? '#cbd5e1' : '#1e293b'} className="bA" style={{ '--i': String(i) } as any} />
+                                            <rect x={x + bw + 5} y={175 - tH} width={bw} height={tH} rx={6} fill={appearance.theme === 'dark' ? '#475569' : '#cbd5e1'} className="bA" style={{ '--i': String(i + .4) } as any} />
+                                            <text x={x + bw + 2} y={194} textAnchor="middle" fill={appearance.theme === 'dark' ? '#94a3b8' : '#94a3b8'} fontSize="11" fontWeight="600">{d.l}</text>
                                         </g>
                                     })}
                                 </svg>
@@ -209,9 +209,9 @@ const UserDashboard = () => {
                             <h2>Work Score</h2>
                             <div className="DB-ring-wrap">
                                 <svg viewBox="0 0 140 140" className="DB-ring">
-                                    <circle cx="70" cy="70" r="58" fill="none" stroke="#f1f5f9" strokeWidth="12" />
+                                    <circle cx="70" cy="70" r="58" fill="none" stroke={appearance.theme === 'dark' ? '#334155' : '#f1f5f9'} strokeWidth="12" />
                                     <circle cx="70" cy="70" r="58" fill="none" stroke="url(#rg)" strokeWidth="12" strokeLinecap="round" strokeDasharray={`${score * 3.64} 364`} transform="rotate(-90 70 70)" className="DB-ring-fill" />
-                                    <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor="#0f172a" /><stop offset="100%" stopColor="#475569" /></linearGradient></defs>
+                                    <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={appearance.theme === 'dark' ? '#cbd5e1' : '#0f172a'} /><stop offset="100%" stopColor={appearance.theme === 'dark' ? '#64748b' : '#475569'} /></linearGradient></defs>
                                 </svg>
                                 <div className="DB-ring-txt"><span className="DB-ring-num">{score}</span><span className="DB-ring-pct">%</span></div>
                             </div>
@@ -261,7 +261,7 @@ const UserDashboard = () => {
                                 { l: 'View Boards', p: '/boards', ic: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
                                 { l: "Today's Log", p: '/work-logs/daily', ic: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
                                 { l: 'Insights', p: '/reports/insights', ic: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-                                { l: 'Settings', p: '/settings', ic: 'M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5m4.5 6h10.5M9 12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5M10.5 18h9.75M10.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 0H4.5' },
+                                { l: 'Settings', p: '/settings', ic: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
                             ].map((q, i) => (
                                 <button key={q.l} className="DB-qb" style={{ animationDelay: `${.4 + i * .04}s` }} onClick={() => nav(q.p)}>
                                     <div className="DB-qb-ic">{IC(q.ic)}</div>
@@ -445,6 +445,59 @@ const UserDashboard = () => {
                     .DB-app-end{order:4;width:100%;display:flex;gap:10px;align-items:baseline;text-align:left}
                     .DB-app-go{display:none}
                 }
+                /* Dark Mode */
+                .DB--dark{background:#0f172a;color:#e2e8f0}
+                .DB--dark .DB-hdr{background:rgba(15,23,42,.95);border-color:#1e293b}
+                .DB--dark .DB-logo{color:#e2e8f0}
+                .DB--dark .DB-hdr-btn{color:#94a3b8}
+                .DB--dark .DB-hdr-btn:hover{background:#1e293b;color:#e2e8f0}
+                .DB--dark .DB-stat{background:#1e293b;box-shadow:0 4px 24px rgba(0,0,0,.2)}
+                .DB--dark .DB-stat-n,.DB--dark .DB-stat-l{color:#e2e8f0}
+                .DB--dark .DB-stat-desc{color:#64748b}
+                .DB--dark .DB-stat-bar{background:#334155}
+                .DB--dark .DB-card{background:#1e293b;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+                .DB--dark .DB-card-hd h2{color:#e2e8f0}
+                .DB--dark .DB-app{background:#1e293b;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+                .DB--dark .DB-app:hover{box-shadow:0 12px 40px rgba(0,0,0,.3)}
+                .DB--dark .DB-app-body h3{color:#e2e8f0}
+                .DB--dark .DB-app-tags span{background:#334155;color:#94a3b8}
+                .DB--dark .DB-app-n{color:#e2e8f0}
+                .DB--dark .DB-sec-title{color:#e2e8f0}
+                .DB--dark .DB-qb{background:#1e293b;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+                .DB--dark .DB-qb:hover{box-shadow:0 10px 32px rgba(0,0,0,.3)}
+                .DB--dark .DB-qb-ic{background:#334155;color:#94a3b8}
+                .DB--dark .DB-qb span{color:#94a3b8}
+                .DB--dark .DB-qb:hover span{color:#e2e8f0}
+                .DB--dark .DB-dd{background:#1e293b;border-color:#334155}
+                .DB--dark .DB-dd-head{background:#0f172a;border-color:#334155}
+                .DB--dark .DB-dd-head b{color:#e2e8f0}
+                .DB--dark .DB-dd hr{background:#334155}
+                .DB--dark .DB-dd button{color:#94a3b8}
+                .DB--dark .DB-dd button:hover{background:#334155;color:#e2e8f0}
+                .DB--dark .DB-apps-dropdown{background:#1e293b;border-color:#334155}
+                .DB--dark .DB-apps-grid{background:#334155}
+                .DB--dark .DB-app-grid-it{background:#1e293b}
+                .DB--dark .DB-app-grid-it:hover{background:#334155}
+                .DB--dark .DB-app-grid-ic{background:#334155;border-color:#475569;color:#94a3b8}
+                .DB--dark .DB-app-grid-lbl{color:#94a3b8}
+                .DB--dark .DB-chart-ft{color:#64748b}
+                .DB--dark .DB-chart-ft strong{color:#e2e8f0}
+                .DB--dark .DB-ring-num{color:#e2e8f0}
+                .DB--dark .DB-score-msg{color:#64748b}
+                .DB--dark .DB-blbl{color:#94a3b8}
+                .DB--dark .DB-bnum{color:#e2e8f0}
+                .DB--dark .DB-legend span{color:#64748b}
+                /* Compact Mode */
+                .DB--compact .DB-stat{padding:16px 18px;gap:6px}
+                .DB--compact .DB-stat-ic{width:38px;height:38px}
+                .DB--compact .DB-stat-n{font-size:1.8rem}
+                .DB--compact .DB-stats{gap:12px}
+                .DB--compact .DB-content{padding:20px 40px 40px;gap:20px}
+                .DB--compact .DB-app{padding:16px 18px;gap:12px}
+                .DB--compact .DB-app-ic{width:42px;height:42px}
+                .DB--compact .DB-qb{padding:16px 10px;gap:8px}
+                .DB--compact .DB-qb-ic{width:38px;height:38px}
+                .DB--compact .DB-card{padding:20px}
             `}</style>
         </>
     );
