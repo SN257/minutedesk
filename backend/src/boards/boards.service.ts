@@ -89,6 +89,14 @@ export class BoardsService {
     return this.listRepo.save(list);
   }
 
+  async updateList(userId: string, listId: string, data: Partial<List>) {
+    if (!await this.verifyListOwnership(listId, userId)) return null;
+    const existing = await this.listRepo.findOne({ where: { id: listId } });
+    if (!existing) return null;
+    const merged = this.listRepo.merge(existing, data as any);
+    return this.listRepo.save(merged);
+  }
+
   async createCard(userId: string, listId: string, dto: CreateCardDto) {
     if (!await this.verifyListOwnership(listId, userId)) return null;
     const cardData: any = { ...dto, listId };
