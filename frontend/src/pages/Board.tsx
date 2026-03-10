@@ -6,7 +6,7 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import {
   createBoardApi, getBoardsApi, getListsApi, createListApi, createCardApi, updateCardApi,
   moveCardApi, getCommentsApi, addCommentApi, getCardsApi, archiveCardApi,
-  deleteListApi, deleteCardApi, duplicateCardApi, getCardApi
+  deleteListApi, updateListApi, deleteCardApi, duplicateCardApi, getCardApi
 } from '../services/api';
 import { useConfirm } from '../components/ConfirmProvider';
 import { useSnackbar } from '../contexts/SnackbarContext';
@@ -296,6 +296,11 @@ const BoardPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [openAddInputFor, setOpenAddInputFor] = useState<string | null>(null);
   const addInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const [editingListId, setEditingListId] = useState<string | null>(null);
+  const [editingListTitle, setEditingListTitle] = useState('');
+  const [isAddingList, setIsAddingList] = useState(false);
+  const [newListTitle, setNewListTitle] = useState('');
 
   // Card modal state
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
@@ -967,7 +972,42 @@ const BoardPage: React.FC = () => {
                   {/* Modern List Header with Gradient */}
                   <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base truncate mr-2">{list.title}</h3>
+                      {editingListId === list.id ? (
+                        <form onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (!editingListTitle.trim()) {
+                            setEditingListId(null);
+                            return;
+                          }
+                          const updated = await updateListApi(list.id, { title: editingListTitle });
+                          setLists(s => s.map(l => l.id === list.id ? updated : l));
+                          setEditingListId(null);
+                        }} className="flex-1 mr-2">
+                          <input
+                            autoFocus
+                            value={editingListTitle}
+                            onChange={e => setEditingListTitle(e.target.value)}
+                            onBlur={async () => {
+                              if (!editingListTitle.trim()) {
+                                setEditingListId(null);
+                                return;
+                              }
+                              const updated = await updateListApi(list.id, { title: editingListTitle });
+                              setLists(s => s.map(l => l.id === list.id ? updated : l));
+                              setEditingListId(null);
+                            }}
+                            className="w-full px-2 py-1 text-sm md:text-base font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded focus:outline-none focus:ring-2 focus:ring-slate-500"
+                          />
+                        </form>
+                      ) : (
+                        <h3
+                          onClick={() => { setEditingListId(list.id); setEditingListTitle(list.title); }}
+                          className="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base truncate mr-2 cursor-pointer hover:bg-slate-200/50 dark:hover:bg-slate-700/50 px-2 py-1 rounded transition-colors -ml-2"
+                          title="Click to rename"
+                        >
+                          {list.title}
+                        </h3>
+                      )}
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-bold">
                           {listCards.length}
@@ -1150,21 +1190,43 @@ const BoardPage: React.FC = () => {
 
             {/* Modern Add List Button */}
             <div className="w-80 flex-shrink-0">
-              <button
-                className="w-full h-32 bg-slate-200/20 dark:bg-slate-800/20 hover:bg-slate-200/40 dark:hover:bg-slate-800/40 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group"
-                onClick={async () => {
-                  const l = await createListApi(currentBoard!, { title: 'New List' });
-                  setLists(s => [...s, l]);
-                  setCards(c => ({ ...c, [l.id]: [] }));
-                }}
-              >
-                <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
+              {isAddingList ? (
+                <div className="w-full border border-slate-300 dark:border-slate-700 rounded-2xl p-3 shadow-sm bg-white dark:bg-slate-800 backdrop-blur-md">
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newListTitle.trim()) return;
+                    const l = await createListApi(currentBoard!, { title: newListTitle });
+                    setLists(s => [...s, l]);
+                    setCards(c => ({ ...c, [l.id]: [] }));
+                    setNewListTitle('');
+                    setIsAddingList(false);
+                  }}>
+                    <input
+                      autoFocus
+                      placeholder="Enter list title..."
+                      value={newListTitle}
+                      onChange={e => setNewListTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 outline-none text-sm font-medium text-slate-900 dark:text-slate-100 shadow-sm transition-all mb-3"
+                    />
+                    <div className="flex gap-2 text-sm justify-end">
+                      <button type="button" onClick={() => setIsAddingList(false)} className="px-3 py-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded font-medium transition-colors">Cancel</button>
+                      <button type="submit" className="px-4 py-1.5 btn-slate rounded font-medium">Add List</button>
+                    </div>
+                  </form>
                 </div>
-                <span className="text-sm font-bold tracking-tight">Add New List</span>
-              </button>
+              ) : (
+                <button
+                  className="w-full h-32 bg-slate-200/20 dark:bg-slate-800/20 hover:bg-slate-200/40 dark:hover:bg-slate-800/40 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl transition-all flex flex-col items-center justify-center gap-2 text-slate-500 dark:text-slate-400 group"
+                  onClick={() => { setIsAddingList(true); setNewListTitle(''); }}
+                >
+                  <div className="w-10 h-10 rounded-full bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </div>
+                  <span className="text-sm font-bold tracking-tight">Add New List</span>
+                </button>
+              )}
             </div>
           </div>
         </DragDropContext>

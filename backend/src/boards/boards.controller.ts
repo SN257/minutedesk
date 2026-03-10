@@ -115,6 +115,13 @@ export class BoardsController {
     return result;
   }
 
+  @Put('lists/:listId')
+  async updateList(@Req() req: any, @Param('listId') listId: string, @Body() body: Partial<any>) {
+    const updated = await this.svc.updateList(req.session.userId, listId, body);
+    if (!updated) throw new NotFoundException('List not found');
+    return updated;
+  }
+
   @Post('cards/:cardId/duplicate')
   async duplicateCard(@Req() req: any, @Param('cardId') cardId: string) {
     const duplicated = await this.svc.duplicateCard(req.session.userId, cardId);

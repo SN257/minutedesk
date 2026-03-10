@@ -583,6 +583,12 @@ export const deleteListApi = async (listId: string) => {
   return res.json();
 };
 
+export const updateListApi = async (listId: string, data: any) => {
+  const res = await authFetch(`${API_URL}/boards/lists/${encodeURIComponent(listId)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  if (!res.ok) throw new Error('Failed to update list');
+  return res.json();
+};
+
 export const duplicateCardApi = async (cardId: string) => {
   const res = await authFetch(`${API_URL}/boards/cards/${encodeURIComponent(cardId)}/duplicate`, { method: 'POST' });
   if (!res.ok) throw new Error('Failed to duplicate card');
