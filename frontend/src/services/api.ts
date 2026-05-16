@@ -32,8 +32,10 @@ const authFetch = (url: string, options: RequestInit = {}): Promise<Response> =>
   // Do NOT use credentials: 'include' for cross-domain requests.
   // Mobile Safari (ITP) blocks cross-site cookies causing "Load failed".
   // Token-based auth via Authorization header is used instead.
-  const { credentials, ...restOptions } = options;
-  return fetch(url, { ...restOptions, headers });
+  // Default to no-store cache for API calls to ensure live analytics and avoid stale GET results.
+  const { credentials, cache, ...restOptions } = options;
+  const effectiveCache = cache || 'no-store';
+  return fetch(url, { ...restOptions, headers, cache: effectiveCache });
 };
 
 interface LoginCredentials {

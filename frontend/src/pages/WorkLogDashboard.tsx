@@ -17,34 +17,35 @@ const WorkLogDashboard = () => {
             try {
                 setLoading(true);
 
-                // Get last 7 days strings
+                // Build last 7 days and fetch logs concurrently
                 const last7Days = Array.from({ length: 7 }, (_, i) => {
                     const d = new Date();
                     d.setDate(d.getDate() - (6 - i));
                     return d.toISOString().split('T')[0];
                 });
 
-                const [m, w, ...logs] = await Promise.all([
-                    isYesterdayWorkLogMissing().catch(() => null),
-                    getDailyWorkWarnings().catch(() => []),
-                    ...last7Days.map(dateStr => getWorkLogApi(dateStr).catch(() => null))
-                ]);
+                const promises = last7Days.map(dateStr => getWorkLogApi(dateStr).catch(() => null));
+                const results = await Promise.all(promises);
+
+                const m = await isYesterdayWorkLogMissing().catch(() => null);
+                const w = await getDailyWorkWarnings().catch(() => []);
 
                 setMissingLog(m);
                 setWarnings(w || []);
 
-                // Process logs for charts and tables
                 const processedLogs = last7Days.map((dateStr, index) => {
-                    const log = logs[index];
+                    const log = results[index];
                     const d = new Date(dateStr);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+
+                    const hasLog = !!(log && (log.todayWork?.trim().length > 0 || log.todayOnLeave || log.todayHoliday));
 
                     return {
                         dateStr,
                         shortDay: d.toLocaleDateString('en-US', { weekday: 'short' }),
                         fullDate: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                        hasLog: !!log && (log.todayWork?.trim().length > 0 || log.todayOnLeave || log.todayHoliday),
-                        logData: log,
+                        hasLog,
+                        logData: log || { date: dateStr, todayWork: null, todayOnLeave: false, todayHoliday: false },
                         isWeekend,
                         isToday: dateStr === todayDateStr
                     };
@@ -70,7 +71,8 @@ const WorkLogDashboard = () => {
     // Chart Data Preparation (Chronological)
     const chartData = [...weeklyLogs].reverse().map(l => ({
         name: l.shortDay,
-        Logged: l.hasLog ? 100 : 0,
+        Logged: l.hasLog ? 100 : (l.isWeekend ? 60 : 20), // non-zero heights for visibility
+        status: l.hasLog ? 'Logged' : (l.isWeekend ? 'Weekend' : (l.isToday ? 'Pending' : 'Missed')),
         fill: l.hasLog ? '#0f172a' : (l.isWeekend ? '#e2e8f0' : '#cbd5e1')
     }));
 
@@ -167,11 +169,13 @@ const WorkLogDashboard = () => {
                                     cursor={{ fill: '#f1f5f9' }}
                                     content={({ active, payload }) => {
                                         if (active && payload && payload.length) {
-                                            const status = payload[0].value === 100 ? "Logged" : "Missed";
+                                            const p = payload[0].payload as any;
+                                            const status = p.status || (p.Logged === 100 ? 'Logged' : 'Missed');
+                                            const color = status === 'Logged' ? '#0f172a' : (status === 'Weekend' ? '#64748b' : '#ef4444');
                                             return (
                                                 <div className="bg-white p-3 border border-slate-200 shadow-lg rounded-xl">
-                                                    <p className="font-bold text-slate-900 text-sm">{payload[0].payload.name}</p>
-                                                    <p className="text-xs font-semibold mt-1" style={{ color: status === 'Logged' ? '#0f172a' : '#64748b' }}>{status}</p>
+                                                    <p className="font-bold text-slate-900 text-sm">{p.name}</p>
+                                                    <p className="text-xs font-semibold mt-1" style={{ color }}>{status}</p>
                                                 </div>
                                             );
                                         }

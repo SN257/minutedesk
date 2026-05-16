@@ -559,6 +559,10 @@ const Settings = () => {
                 }
                 @media(max-width:768px){
                     .DB-hero{padding:32px 20px 64px}
+                    /* Add top spacing on small screens to avoid touching status bar */
+                    @media (max-width: 640px) {
+                        .DB-hero{margin-top:20px}
+                    }
                     .DB-hero-title{font-size:1.8rem}
                     .DB-hdr{padding:0 16px}
                 }

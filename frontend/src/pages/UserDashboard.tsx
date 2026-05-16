@@ -56,6 +56,12 @@ const UserDashboard = () => {
     const chartData = (() => { const o: { l: string; m: number; t: number }[] = []; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); const lbl = d.toLocaleDateString('en-US', { month: 'short' }); const y = d.getFullYear(); const mo = d.getMonth(); o.push({ l: lbl, m: meetings.filter(x => { try { const dd = new Date(x.date || x.createdAt); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length, t: tasks.filter(x => { try { const dd = new Date(x.createdAt || x.dueDate); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length }) } return o })();
     const cMax = Math.max(...chartData.map(d => Math.max(d.m, d.t)), 1);
 
+        // Debug: expose chart data when running locally to help diagnose incorrect graphs
+        if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.debug('UserDashboard chartData:', { chartData, meetingsCount: meetings.length, tasksCount: tasks.length, cMax });
+        }
+
     const IC = (d: string) => <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6} d={d} /></svg>;
 
     if (loading) return (<div className="DB"><div className="DB-ld"><div className="DB-ld-bar"><div /></div><p>Preparing your workspace...</p></div></div>);
@@ -433,6 +439,10 @@ const UserDashboard = () => {
                 @media(max-width:900px){.DB-row{grid-template-columns:1fr}.DB-quick{grid-template-columns:repeat(3,1fr)}.DB-clock{display:none}}
                 @media(max-width:768px){
                     .DB-hero{padding:32px 20px 56px}
+                    /* Add top spacing on small screens to avoid touching status bar */
+                    @media (max-width: 640px) {
+                        .DB-hero{margin-top:20px}
+                    }
                     .DB-hero-title{font-size:1.8rem}
                     .DB-stats{padding:0 20px;grid-template-columns:repeat(2,1fr);gap:12px}
                     .DB-content{padding:24px 20px 40px}

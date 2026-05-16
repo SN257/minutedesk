@@ -10,15 +10,26 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
         (async () => {
             try {
                 setLoading(true);
-                // Getting logs for the last 30 days securely via concurrent fetching
-                const promises = [];
+                // Build the last 30 days list and fetch each day's log concurrently.
+                const promises: Promise<any | null>[] = [];
+                const dateStrings: string[] = [];
                 for (let i = 0; i < 30; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
-                    promises.push(getWorkLogApi(d.toISOString().split('T')[0]).catch(() => null));
+                    const dateStr = d.toISOString().split('T')[0];
+                    dateStrings.push(dateStr);
+                    promises.push(getWorkLogApi(dateStr).catch(() => null));
                 }
+
                 const results = await Promise.all(promises);
-                const data = results.filter(r => r && r.date).sort((a, b) => a.date.localeCompare(b.date));
+
+                // Ensure we have an entry for every date so analytics can mark "Missed" days
+                const data = dateStrings.map((dateStr, idx) => {
+                    const r = results[idx];
+                    if (r && r.date) return r;
+                    return { date: dateStr, todayWork: null, tomorrowWork: null };
+                }).sort((a, b) => a.date.localeCompare(b.date));
+
                 setLogs(data);
             } catch (err) {
                 console.error(err);
@@ -29,15 +40,16 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
     }, []);
 
     const exportToCSV = () => {
-        let csvContent = 'WORKLOG EXPORT (Last 30 Days)\n\nDate,Status,Today Task,Tomorrow Task\n';
+        let csvContent = 'WORKLOG EXPORT (Last 30 Days)\n\nDate,Status,Today Work,Tomorrow Work\n';
+        const todayIso = new Date().toISOString().split('T')[0];
         logs.forEach(l => {
             const isWeekendLocal = [0, 6].includes(new Date(l.date).getDay());
             let status = 'Logged';
-            if (isWeekendLocal && !l.todayTask) status = 'Weekend';
-            else if (!l.todayTask && new Date(l.date).toISOString().split('T')[0] < new Date().toISOString().split('T')[0]) status = 'Missed';
-            else if (!l.todayTask) status = 'Pending';
+            if (isWeekendLocal && !l.todayWork) status = 'Weekend';
+            else if (!l.todayWork && l.date < todayIso) status = 'Missed';
+            else if (!l.todayWork) status = 'Pending';
 
-            csvContent += `"${new Date(l.date).toLocaleDateString()}","${status}","${l.todayTask?.replace(/"/g, '""') || ''}","${l.tomorrowTask?.replace(/"/g, '""') || ''}"\n`;
+            csvContent += `"${new Date(l.date).toLocaleDateString()}","${status}","${(l.todayWork || '').replace(/"/g, '""')}","${(l.tomorrowWork || '').replace(/"/g, '""')}"\n`;
         });
         const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
@@ -57,7 +69,7 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
         const isWkend = [0, 6].includes(d.getDay());
         const isPast = l.date < new Date().toISOString().split('T')[0];
 
-        if (l.todayTask) logged++;
+        if (l.todayWork) logged++;
         else if (isWkend) weekends++;
         else if (isPast) missed++;
     });
@@ -67,9 +79,9 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
         { name: 'Missed', value: missed, color: '#ef4444' }
     ].filter(d => d.value > 0);
 
-    const lengthData = logs.filter(l => l.todayTask).map(l => ({
+    const lengthData = logs.filter(l => l.todayWork).map(l => ({
         name: new Date(l.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
-        "Entry Length": l.todayTask?.length || 0
+        "Entry Length": l.todayWork?.length || 0
     }));
 
     if (loading) {
