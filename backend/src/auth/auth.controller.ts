@@ -14,10 +14,19 @@ import { LoginDto } from './dto/login.dto';
 import { AuthGuard } from './guards/auth.guard';
 import { createToken, verifyToken } from './token.util';
 import { Request } from 'express';
+import { PasswordOtpService } from '../users/password-otp.service';
+import {
+  CompletePasswordResetDto,
+  RequestForgotPasswordOtpDto,
+  VerifyForgotPasswordOtpDto,
+} from '../users/dto/password-otp.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(
+    private authService: AuthService,
+    private passwordOtpService: PasswordOtpService,
+  ) { }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
@@ -38,6 +47,27 @@ export class AuthController {
   }
 
   // Registration endpoint removed - users must be created manually via scripts
+
+  @Post('forgot-password/request-otp')
+  @HttpCode(HttpStatus.OK)
+  async requestForgotPasswordOtp(@Body() body: RequestForgotPasswordOtpDto) {
+    return this.passwordOtpService.requestForgotPasswordOtp(body.email);
+  }
+
+  @Post('forgot-password/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  async verifyForgotPasswordOtp(@Body() body: VerifyForgotPasswordOtpDto) {
+    return this.passwordOtpService.verifyForgotPasswordOtp(body.email, body.otp);
+  }
+
+  @Post('forgot-password/reset')
+  @HttpCode(HttpStatus.OK)
+  async resetForgottenPassword(@Body() body: CompletePasswordResetDto) {
+    return this.passwordOtpService.completeForgotPasswordReset(
+      body.token,
+      body.newPassword,
+    );
+  }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)

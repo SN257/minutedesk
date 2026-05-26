@@ -20,6 +20,9 @@ export class User {
   @Column({ nullable: true })
   name: string;
 
+  @Column({ type: 'varchar', default: 'user' })
+  role: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

@@ -32,6 +32,7 @@ const Support = lazy(() => import("./pages/Support"));
 const Documentation = lazy(() => import("./pages/Documentation"));
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
 const Insights = lazy(() => import("./pages/Insights"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
 
 // Loading fallback component
 const LoadingFallback = () => (
@@ -326,6 +327,19 @@ function App() {
                     <Suspense fallback={<LoadingFallback />}>
                       <Settings />
                     </Suspense>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <UserManagement />
+                      </Suspense>
+                    </AppLayout>
                   </ProtectedRoute>
                 }
               />

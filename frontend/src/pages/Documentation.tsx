@@ -63,7 +63,7 @@ const DOCS: DocSection[] = [
                 content: [
                     'Open Settings from the sidebar (Home Hub → Settings) or the profile dropdown in the header.',
                     'In the "Profile" tab, update your display name or email address. Changes take effect immediately after saving.',
-                    'In the "Security" tab, change your password. You\'ll need to enter your current password for verification.',
+                    'In the "Security" tab, request an OTP to your registered email before setting a new password.',
                     'Your avatar is generated automatically from your initials. A custom avatar upload is coming soon.',
                 ],
             },
@@ -247,7 +247,7 @@ const DOCS: DocSection[] = [
                 description: 'Change your password and manage session security.',
                 icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
                 content: [
-                    'In the Security tab, enter your current password and a new password to update your credentials.',
+                    'In the Security tab, verify the OTP sent to your registered email before setting a new password.',
                     'All sessions use HTTP-only cookies — your token is never exposed to client-side JavaScript.',
                     'Data is encrypted in transit via HTTPS and at rest with AES-256 encryption.',
                     'Logout from all sessions by clicking "Sign out" from any profile menu.',

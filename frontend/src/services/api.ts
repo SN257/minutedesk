@@ -47,6 +47,7 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  role?: string;
 }
 
 // Login function
@@ -622,6 +623,11 @@ export const deleteBoardApi = async (boardId: string) => {
 };
 
 // User Settings API
+const readApiError = async (res: Response, fallback: string) => {
+  const error = await res.json().catch(() => ({}));
+  return new Error(error.message || fallback);
+};
+
 export const updateUserProfile = async (data: { name?: string; email?: string }) => {
   const res = await authFetch(`${API_URL}/users/profile`, {
     method: 'PUT',
@@ -636,7 +642,29 @@ export const updateUserProfile = async (data: { name?: string; email?: string })
   return res.json();
 };
 
-export const changeUserPassword = async (data: { currentPassword: string; newPassword: string }) => {
+export const requestProfilePasswordOtp = async (): Promise<{ message: string; email: string }> => {
+  const res = await authFetch(`${API_URL}/users/change-password/request-otp`, {
+    method: 'POST',
+  });
+  if (!res.ok) {
+    throw await readApiError(res, 'Failed to send verification code');
+  }
+  return res.json();
+};
+
+export const verifyProfilePasswordOtp = async (otp: string): Promise<{ message: string; token: string }> => {
+  const res = await authFetch(`${API_URL}/users/change-password/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ otp }),
+  });
+  if (!res.ok) {
+    throw await readApiError(res, 'Failed to verify code');
+  }
+  return res.json();
+};
+
+export const changeUserPassword = async (data: { token: string; newPassword: string }) => {
   const res = await authFetch(`${API_URL}/users/change-password`, {
     method: 'POST',
 
@@ -644,8 +672,46 @@ export const changeUserPassword = async (data: { currentPassword: string; newPas
     body: JSON.stringify(data),
   });
   if (!res.ok) {
-    const error = await res.json();
-    throw new Error(error.message || 'Failed to change password');
+    throw await readApiError(res, 'Failed to change password');
+  }
+  return res.json();
+};
+
+export const requestForgotPasswordOtp = async (email: string): Promise<{ message: string; email: string }> => {
+  const res = await fetch(`${API_URL}/auth/forgot-password/request-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    throw await readApiError(res, 'Failed to send verification code');
+  }
+  return res.json();
+};
+
+export const verifyForgotPasswordOtp = async (email: string, otp: string): Promise<{ message: string; token: string }> => {
+  const res = await fetch(`${API_URL}/auth/forgot-password/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify({ email, otp }),
+  });
+  if (!res.ok) {
+    throw await readApiError(res, 'Failed to verify code');
+  }
+  return res.json();
+};
+
+export const resetForgotPassword = async (data: { token: string; newPassword: string }) => {
+  const res = await fetch(`${API_URL}/auth/forgot-password/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    throw await readApiError(res, 'Failed to reset password');
   }
   return res.json();
 };
@@ -685,4 +751,68 @@ export const saveWorkLogApi = async (data: {
   });
   if (!res.ok) throw new Error('Failed to save work log');
   return res.json();
+};
+
+// ─── Super Admin APIs ─────────────────────────────────────────────────────────
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const adminGetUsers = async (): Promise<AdminUser[]> => {
+  const res = await authFetch(`${API_URL}/users/admin/list`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to fetch users');
+  }
+  return res.json();
+};
+
+export const adminCreateUser = async (data: {
+  email: string;
+  password: string;
+  name?: string;
+  role?: string;
+}): Promise<AdminUser> => {
+  const res = await authFetch(`${API_URL}/users/admin/create`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to create user');
+  }
+  return res.json();
+};
+
+export const adminUpdateUser = async (
+  id: string,
+  data: { name?: string; email?: string; role?: string },
+): Promise<AdminUser> => {
+  const res = await authFetch(`${API_URL}/users/admin/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to update user');
+  }
+  return res.json();
+};
+
+export const adminDeleteUser = async (id: string): Promise<void> => {
+  const res = await authFetch(`${API_URL}/users/admin/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to delete user');
+  }
 };

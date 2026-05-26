@@ -12,7 +12,10 @@ export class UsersService {
   ) {}
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    return this.usersRepository
+      .createQueryBuilder('user')
+      .where('LOWER(user.email) = LOWER(:email)', { email: email.trim() })
+      .getOne();
   }
 
   async findById(id: string): Promise<User | null> {
@@ -56,23 +59,54 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async changePassword(
-    id: string,
-    currentPassword: string,
-    newPassword: string,
-  ): Promise<{ success: boolean; message: string }> {
+  async setPassword(id: string, newPassword: string): Promise<User | null> {
     const user = await this.findById(id);
-    if (!user) {
-      return { success: false, message: 'User not found' };
-    }
-
-    const isValid = await this.validatePassword(currentPassword, user.password);
-    if (!isValid) {
-      return { success: false, message: 'Current password is incorrect' };
-    }
+    if (!user) return null;
 
     user.password = await bcrypt.hash(newPassword, 10);
-    await this.usersRepository.save(user);
-    return { success: true, message: 'Password changed successfully' };
+    return this.usersRepository.save(user);
+  }
+
+  // ─── Admin methods ───────────────────────────────────────────────────────────
+
+  async adminFindAll(): Promise<Omit<User, 'password'>[]> {
+    const users = await this.usersRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+    return users.map(({ password, ...rest }) => rest as Omit<User, 'password'>);
+  }
+
+  async adminCreateUser(
+    email: string,
+    password: string,
+    name?: string,
+    role: string = 'user',
+  ): Promise<Omit<User, 'password'>> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = this.usersRepository.create({ email, password: hashedPassword, name, role });
+    const saved = await this.usersRepository.save(user);
+    const { password: _pw, ...rest } = saved;
+    return rest as Omit<User, 'password'>;
+  }
+
+  async adminUpdateUser(
+    id: string,
+    data: { name?: string; email?: string; role?: string },
+  ): Promise<Omit<User, 'password'> | null> {
+    const user = await this.findById(id);
+    if (!user) return null;
+
+    if (data.name !== undefined) user.name = data.name;
+    if (data.email !== undefined) user.email = data.email;
+    if (data.role !== undefined) user.role = data.role;
+
+    const saved = await this.usersRepository.save(user);
+    const { password, ...rest } = saved;
+    return rest as Omit<User, 'password'>;
+  }
+
+  async adminDeleteUser(id: string): Promise<boolean> {
+    const result = await this.usersRepository.delete(id);
+    return (result.affected ?? 0) > 0;
   }
 }

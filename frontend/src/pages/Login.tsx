@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { login as apiLogin } from "../services/api";
+import {
+    login as apiLogin,
+    requestForgotPasswordOtp,
+    resetForgotPassword,
+    verifyForgotPasswordOtp,
+} from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
+
+type AuthPanelMode = "login" | "forgotEmail" | "forgotOtp" | "forgotPassword";
 
 const Login = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [mode, setMode] = useState<AuthPanelMode>("login");
+    const [recoveryEmail, setRecoveryEmail] = useState("");
+    const [recoveryOtp, setRecoveryOtp] = useState("");
+    const [recoveryToken, setRecoveryToken] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmNewPassword, setConfirmNewPassword] = useState("");
+    const [showNewPassword, setShowNewPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
     const navigate = useNavigate();
     const { setUser } = useAuth();
@@ -22,6 +37,7 @@ const Login = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+        setNotice("");
         setLoading(true);
 
         try {
@@ -34,6 +50,122 @@ const Login = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const resetRecoveryFlow = () => {
+        setRecoveryOtp("");
+        setRecoveryToken("");
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setShowNewPassword(false);
+    };
+
+    const switchToLogin = () => {
+        setMode("login");
+        setError("");
+        setNotice("");
+        resetRecoveryFlow();
+    };
+
+    const switchToForgotPassword = () => {
+        setRecoveryEmail(email);
+        setMode("forgotEmail");
+        setError("");
+        setNotice("");
+        resetRecoveryFlow();
+    };
+
+    const handleForgotEmailSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setNotice("");
+        setLoading(true);
+        try {
+            const result = await requestForgotPasswordOtp(recoveryEmail.trim());
+            setNotice(`OTP sent to ${result.email}.`);
+            setMode("forgotOtp");
+        } catch (err: any) {
+            setError(err.message || "Enter a registered email address.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendForgotOtp = async () => {
+        setError("");
+        setNotice("");
+        setLoading(true);
+        try {
+            const result = await requestForgotPasswordOtp(recoveryEmail.trim());
+            setNotice(`OTP sent to ${result.email}.`);
+        } catch (err: any) {
+            setError(err.message || "Failed to resend OTP.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleForgotOtpSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setNotice("");
+        setLoading(true);
+        try {
+            const result = await verifyForgotPasswordOtp(recoveryEmail.trim(), recoveryOtp.trim());
+            setRecoveryToken(result.token);
+            setMode("forgotPassword");
+            setNotice("Email verified. Create a new password.");
+        } catch (err: any) {
+            setError(err.message || "Invalid verification code.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError("");
+        setNotice("");
+        if (newPassword !== confirmNewPassword) {
+            setError("New passwords do not match.");
+            return;
+        }
+        if (newPassword.length < 6) {
+            setError("Password must be at least 6 characters.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await resetForgotPassword({ token: recoveryToken, newPassword });
+            setEmail(recoveryEmail);
+            setPassword("");
+            switchToLogin();
+            setNotice("Password reset successfully. Sign in with your new password.");
+        } catch (err: any) {
+            setError(err.message || "Failed to reset password.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formCopy = {
+        login: {
+            title: "Welcome back",
+            subtitle: "Sign in to your workspace to continue",
+        },
+        forgotEmail: {
+            title: "Forgot password",
+            subtitle: "Enter your registered email to receive an OTP",
+        },
+        forgotOtp: {
+            title: "Verify OTP",
+            subtitle: "Enter the code sent to your registered email",
+        },
+        forgotPassword: {
+            title: "Reset password",
+            subtitle: "Create a new password for your MinuteDesk account",
+        },
     };
 
     return (
@@ -118,8 +250,8 @@ const Login = () => {
 
                         {/* Form header */}
                         <div className="login-form-header">
-                            <h2 className="login-form-title">Welcome back</h2>
-                            <p className="login-form-subtitle">Sign in to your workspace to continue</p>
+                            <h2 className="login-form-title">{formCopy[mode].title}</h2>
+                            <p className="login-form-subtitle">{formCopy[mode].subtitle}</p>
                         </div>
 
                         {/* Error message */}
@@ -132,7 +264,17 @@ const Login = () => {
                             </div>
                         )}
 
+                        {notice && (
+                            <div className="login-success" role="status">
+                                <svg className="login-error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                <span>{notice}</span>
+                            </div>
+                        )}
+
                         {/* Form */}
+                        {mode === "login" && (
                         <form onSubmit={handleSubmit} className="login-form" autoComplete="on">
                             <div className="login-field">
                                 <label htmlFor="login-email" className="login-label">Email Address</label>
@@ -191,6 +333,12 @@ const Login = () => {
                                 </div>
                             </div>
 
+                            <div className="login-form-row">
+                                <button type="button" className="login-link-button" onClick={switchToForgotPassword}>
+                                    Forgot password?
+                                </button>
+                            </div>
+
                             <button
                                 type="submit"
                                 className="login-submit-btn"
@@ -214,6 +362,154 @@ const Login = () => {
                                 )}
                             </button>
                         </form>
+                        )}
+
+                        {mode === "forgotEmail" && (
+                            <form onSubmit={handleForgotEmailSubmit} className="login-form" autoComplete="on">
+                                <div className="login-step-card">
+                                    <div className="login-step-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <strong>Email OTP</strong>
+                                        <span>Registered accounts only</span>
+                                    </div>
+                                </div>
+
+                                <div className="login-field">
+                                    <label htmlFor="recovery-email" className="login-label">Registered Email</label>
+                                    <div className="login-input-wrapper">
+                                        <svg className="login-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                        <input
+                                            id="recovery-email"
+                                            type="email"
+                                            placeholder="you@company.com"
+                                            value={recoveryEmail}
+                                            onChange={(e) => setRecoveryEmail(e.target.value)}
+                                            required
+                                            autoFocus
+                                            autoComplete="email"
+                                            className="login-input"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="login-submit-btn" disabled={loading}>
+                                    <span className="login-btn-content">{loading ? "Sending OTP..." : "Send OTP"}</span>
+                                </button>
+                                <button type="button" className="login-secondary-btn" onClick={switchToLogin}>Back to Sign In</button>
+                            </form>
+                        )}
+
+                        {mode === "forgotOtp" && (
+                            <form onSubmit={handleForgotOtpSubmit} className="login-form" autoComplete="off">
+                                <div className="login-step-card">
+                                    <div className="login-step-icon">
+                                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6} d="M9 12l2 2 4-4m5-4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-3 8 3z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <strong>OTP sent</strong>
+                                        <span>{recoveryEmail}</span>
+                                    </div>
+                                </div>
+
+                                <div className="login-field">
+                                    <label htmlFor="recovery-otp" className="login-label">Verification Code</label>
+                                    <div className="login-input-wrapper">
+                                        <svg className="login-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 11c0-1.105.895-2 2-2s2 .895 2 2-.895 2-2 2-2-.895-2-2zM6 20h12a2 2 0 002-2v-4a2 2 0 00-2-2h-1M7 12H6a2 2 0 00-2 2v4a2 2 0 002 2z" />
+                                        </svg>
+                                        <input
+                                            id="recovery-otp"
+                                            type="text"
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            maxLength={6}
+                                            placeholder="000000"
+                                            value={recoveryOtp}
+                                            onChange={(e) => setRecoveryOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                                            required
+                                            autoFocus
+                                            className="login-input login-input--otp"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="login-submit-btn" disabled={loading || recoveryOtp.length !== 6}>
+                                    <span className="login-btn-content">{loading ? "Verifying..." : "Verify OTP"}</span>
+                                </button>
+                                <div className="login-inline-actions">
+                                    <button type="button" className="login-link-button" onClick={handleResendForgotOtp} disabled={loading}>Resend OTP</button>
+                                    <button type="button" className="login-link-button" onClick={switchToLogin}>Back to Sign In</button>
+                                </div>
+                            </form>
+                        )}
+
+                        {mode === "forgotPassword" && (
+                            <form onSubmit={handleResetPasswordSubmit} className="login-form" autoComplete="off">
+                                <div className="login-field">
+                                    <label htmlFor="new-password" className="login-label">New Password</label>
+                                    <div className="login-input-wrapper">
+                                        <svg className="login-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                        </svg>
+                                        <input
+                                            id="new-password"
+                                            type={showNewPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                            autoFocus
+                                            autoComplete="new-password"
+                                            className="login-input login-input--password"
+                                        />
+                                        <button
+                                            type="button"
+                                            className="login-password-toggle"
+                                            onClick={() => setShowNewPassword(!showNewPassword)}
+                                            tabIndex={-1}
+                                            aria-label={showNewPassword ? "Hide password" : "Show password"}
+                                        >
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="login-toggle-icon">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={showNewPassword ? "M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878l4.242 4.242M21 21l-4.878-4.878" : "M15 12a3 3 0 11-6 0 3 3 0 016 0z"} />
+                                                {!showNewPassword && <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />}
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="login-field">
+                                    <label htmlFor="confirm-new-password" className="login-label">Confirm New Password</label>
+                                    <div className="login-input-wrapper">
+                                        <svg className="login-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5-4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-3 8 3z" />
+                                        </svg>
+                                        <input
+                                            id="confirm-new-password"
+                                            type={showNewPassword ? "text" : "password"}
+                                            placeholder="••••••••"
+                                            value={confirmNewPassword}
+                                            onChange={(e) => setConfirmNewPassword(e.target.value)}
+                                            required
+                                            autoComplete="new-password"
+                                            className="login-input"
+                                        />
+                                    </div>
+                                </div>
+
+                                <button type="submit" className="login-submit-btn" disabled={loading}>
+                                    <span className="login-btn-content">{loading ? "Resetting..." : "Reset Password"}</span>
+                                </button>
+                                <button type="button" className="login-secondary-btn" onClick={switchToLogin}>Back to Sign In</button>
+                            </form>
+                        )}
 
                         {/* Footer */}
                         <p className="login-footer-text">
@@ -557,6 +853,22 @@ const Login = () => {
                     flex-shrink: 0;
                     color: #ef4444;
                 }
+                .login-success {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 12px 16px;
+                    border-radius: 12px;
+                    background: #f0fdf4;
+                    border: 1px solid #bbf7d0;
+                    color: #166534;
+                    font-size: 0.85rem;
+                    font-weight: 500;
+                    margin-bottom: 1.5rem;
+                }
+                .login-success .login-error-icon {
+                    color: #16a34a;
+                }
                 @keyframes shake {
                     0%, 100% { transform: translateX(0); }
                     20% { transform: translateX(-6px); }
@@ -629,6 +941,81 @@ const Login = () => {
                 .login-input--password {
                     padding-right: 48px;
                 }
+                .login-input--otp {
+                    text-align: center;
+                    letter-spacing: 0.32em;
+                    font-weight: 800;
+                    font-size: 1.05rem;
+                }
+
+                .login-form-row {
+                    display: flex;
+                    justify-content: flex-end;
+                    margin-top: -0.65rem;
+                }
+                .login-link-button {
+                    border: none;
+                    background: transparent;
+                    color: #475569;
+                    font-size: 0.82rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    font-family: inherit;
+                    padding: 0;
+                    transition: color 0.2s ease;
+                }
+                .login-link-button:hover:not(:disabled) {
+                    color: #0f172a;
+                    text-decoration: underline;
+                }
+                .login-link-button:disabled {
+                    opacity: 0.55;
+                    cursor: not-allowed;
+                }
+                .login-inline-actions {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 16px;
+                    flex-wrap: wrap;
+                }
+                .login-step-card {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 14px;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 14px;
+                    background: white;
+                    box-shadow: 0 8px 24px rgba(15,23,42,0.04);
+                }
+                .login-step-icon {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 12px;
+                    background: #f1f5f9;
+                    color: #0f172a;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+                .login-step-icon svg {
+                    width: 20px;
+                    height: 20px;
+                }
+                .login-step-card strong {
+                    display: block;
+                    color: #0f172a;
+                    font-size: 0.88rem;
+                    font-weight: 800;
+                    margin-bottom: 2px;
+                }
+                .login-step-card span {
+                    display: block;
+                    color: #64748b;
+                    font-size: 0.78rem;
+                    overflow-wrap: anywhere;
+                }
 
                 /* Password toggle */
                 .login-password-toggle {
@@ -692,6 +1079,24 @@ const Login = () => {
                 .login-submit-btn:disabled {
                     opacity: 0.7;
                     cursor: not-allowed;
+                }
+                .login-secondary-btn {
+                    width: 100%;
+                    padding: 13px;
+                    border-radius: 12px;
+                    border: 1.5px solid #e2e8f0;
+                    background: white;
+                    color: #475569;
+                    font-size: 0.9rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    font-family: inherit;
+                    transition: all 0.2s ease;
+                }
+                .login-secondary-btn:hover {
+                    border-color: #94a3b8;
+                    background: #f8fafc;
+                    color: #0f172a;
                 }
 
                 .login-btn-content, .login-btn-loading {

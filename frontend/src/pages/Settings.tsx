@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { updateUserProfile, changeUserPassword } from '../services/api';
+import {
+    updateUserProfile,
+    changeUserPassword,
+    requestProfilePasswordOtp,
+    verifyProfilePasswordOtp,
+} from '../services/api';
 import { useSettings } from '../contexts/SettingsContext';
+
+type PasswordStep = 'idle' | 'otp' | 'password';
 
 const Settings = () => {
     const nav = useNavigate();
@@ -12,7 +19,10 @@ const Settings = () => {
     const [activeSection, setActiveSection] = useState('account');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [currentPassword, setCurrentPassword] = useState('');
+    const [passwordStep, setPasswordStep] = useState<PasswordStep>('idle');
+    const [passwordOtp, setPasswordOtp] = useState('');
+    const [passwordOtpEmail, setPasswordOtpEmail] = useState('');
+    const [passwordResetToken, setPasswordResetToken] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -42,12 +52,51 @@ const Settings = () => {
         finally { setIsLoading(false); }
     };
 
+    const resetPasswordFlow = () => {
+        setPasswordStep('idle');
+        setPasswordOtp('');
+        setPasswordOtpEmail('');
+        setPasswordResetToken('');
+        setNewPassword('');
+        setConfirmPassword('');
+    };
+
+    const handleRequestPasswordOtp = async () => {
+        setIsLoading(true);
+        try {
+            const result = await requestProfilePasswordOtp();
+            setPasswordOtpEmail(result.email);
+            setPasswordStep('otp');
+            showAlert('success', 'Verification code sent to your email.');
+        } catch (err: unknown) {
+            showAlert('error', (err as Error).message || 'Failed to send verification code.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleVerifyPasswordOtp = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsLoading(true);
+        try {
+            const result = await verifyProfilePasswordOtp(passwordOtp.trim());
+            setPasswordResetToken(result.token);
+            setPasswordStep('password');
+            showAlert('success', 'Email verified. Set your new password.');
+        } catch (err: unknown) {
+            showAlert('error', (err as Error).message || 'Failed to verify code.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!passwordResetToken) return showAlert('error', 'Verify your email before changing password.');
         if (newPassword !== confirmPassword) return showAlert('error', 'New passwords do not match.');
         if (newPassword.length < 6) return showAlert('error', 'Password must be at least 6 characters.');
         setIsLoading(true);
-        try { await changeUserPassword({ currentPassword, newPassword }); showAlert('success', 'Password updated!'); setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }
+        try { await changeUserPassword({ token: passwordResetToken, newPassword }); showAlert('success', 'Password updated successfully.'); resetPasswordFlow(); }
         catch (err: unknown) { showAlert('error', (err as Error).message || 'Failed to update password.'); }
         finally { setIsLoading(false); }
     };
@@ -209,21 +258,70 @@ const Settings = () => {
                                     <p>Keep your account secure by updating your credentials regularly.</p>
                                 </div>
 
-                                <form onSubmit={handlePasswordUpdate}>
-                                    <div className="ST-section-title">{IC('M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z', 18)}<span>Change Password</span></div>
-                                    <div className="ST-form-grid ST-form-grid--single">
-                                        <div className="ST-field"><label>Current Password</label><input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required /></div>
+                                <div className="ST-section-title">{IC('M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z', 18)}<span>Change Password</span></div>
+                                <div className="ST-security-card">
+                                    <div className="ST-security-main">
+                                        <div className="ST-security-ic">{IC('M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 20)}</div>
+                                        <div>
+                                            <h3>Email verification required</h3>
+                                            <p>OTP will be sent to {user?.email}</p>
+                                        </div>
                                     </div>
-                                    <div className="ST-sep" />
-                                    <div className="ST-form-grid">
-                                        <div className="ST-field"><label>New Password</label><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required /></div>
-                                        <div className="ST-field"><label>Confirm New Password</label><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></div>
-                                    </div>
-                                    <div className="ST-form-foot">
-                                        <button type="button" className="ST-btn ST-btn--ghost" onClick={() => { setCurrentPassword(''); setNewPassword(''); setConfirmPassword(''); }}>Reset</button>
-                                        <button type="submit" className="ST-btn" disabled={isLoading}>{isLoading ? 'Updating...' : 'Update Password'}</button>
-                                    </div>
-                                </form>
+                                    {passwordStep === 'idle' && (
+                                        <button type="button" className="ST-btn" onClick={handleRequestPasswordOtp} disabled={isLoading}>
+                                            {isLoading ? 'Sending...' : 'Send OTP'}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {passwordStep === 'otp' && (
+                                    <form onSubmit={handleVerifyPasswordOtp} className="ST-step-panel">
+                                        <div className="ST-step-head">
+                                            <span>Step 1</span>
+                                            <h3>Verify your email</h3>
+                                            <p>Code sent to {passwordOtpEmail || user?.email}</p>
+                                        </div>
+                                        <div className="ST-form-grid ST-form-grid--single">
+                                            <div className="ST-field">
+                                                <label>Verification Code</label>
+                                                <input
+                                                    className="ST-otp-input"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    pattern="[0-9]*"
+                                                    maxLength={6}
+                                                    value={passwordOtp}
+                                                    onChange={e => setPasswordOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                                    required
+                                                    autoFocus
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="ST-form-foot">
+                                            <button type="button" className="ST-btn ST-btn--ghost" onClick={resetPasswordFlow}>Cancel</button>
+                                            <button type="button" className="ST-btn ST-btn--outline" onClick={handleRequestPasswordOtp} disabled={isLoading}>Resend OTP</button>
+                                            <button type="submit" className="ST-btn" disabled={isLoading || passwordOtp.length !== 6}>{isLoading ? 'Verifying...' : 'Verify OTP'}</button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {passwordStep === 'password' && (
+                                    <form onSubmit={handlePasswordUpdate} className="ST-step-panel">
+                                        <div className="ST-step-head">
+                                            <span>Step 2</span>
+                                            <h3>Create new password</h3>
+                                            <p>Email verified for this password change</p>
+                                        </div>
+                                        <div className="ST-form-grid">
+                                            <div className="ST-field"><label>New Password</label><input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required autoFocus /></div>
+                                            <div className="ST-field"><label>Confirm New Password</label><input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required /></div>
+                                        </div>
+                                        <div className="ST-form-foot">
+                                            <button type="button" className="ST-btn ST-btn--ghost" onClick={resetPasswordFlow}>Cancel</button>
+                                            <button type="submit" className="ST-btn" disabled={isLoading}>{isLoading ? 'Updating...' : 'Update Password'}</button>
+                                        </div>
+                                    </form>
+                                )}
 
                                 <div className="ST-section-title" style={{ marginTop: 32 }}>{IC('M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z', 18)}<span>Session Management</span></div>
                                 <div className="ST-info-row">
@@ -477,6 +575,18 @@ const Settings = () => {
                 .ST-sep{height:1px;background:#f1f5f9;margin:8px 0 20px}
                 .ST-form-foot{display:flex;justify-content:flex-end;gap:10px;padding-top:12px;border-top:1px solid #f1f5f9;margin-top:8px}
 
+                .ST-security-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:20px 22px;background:#f8fafc;border:1px solid #f1f5f9;border-radius:14px;margin-bottom:18px}
+                .ST-security-main{display:flex;align-items:center;gap:14px;min-width:0}
+                .ST-security-ic{width:42px;height:42px;border-radius:12px;background:#e2e8f0;color:#0f172a;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+                .ST-security-main h3{font-size:.98rem;font-weight:800;color:#0f172a;margin:0 0 4px}
+                .ST-security-main p{font-size:.8rem;color:#64748b;font-weight:500;margin:0;overflow-wrap:anywhere}
+                .ST-step-panel{border:1px solid #e2e8f0;border-radius:14px;padding:22px;background:#fff;margin:16px 0 24px}
+                .ST-step-head{margin-bottom:18px}
+                .ST-step-head span{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+                .ST-step-head h3{font-size:1rem;font-weight:800;color:#0f172a;margin:0 0 4px}
+                .ST-step-head p{font-size:.82rem;color:#64748b;margin:0;overflow-wrap:anywhere}
+                .ST-field input.ST-otp-input{text-align:center;letter-spacing:.35em;font-size:1.25rem;font-weight:900;padding-left:calc(16px + .35em)}
+
                 .ST-btn{display:inline-flex;align-items:center;gap:8px;padding:11px 24px;border-radius:12px;font-size:.85rem;font-weight:700;cursor:pointer;transition:all .2s;border:none;font-family:inherit;background:linear-gradient(135deg,#0f172a,#334155);color:white;box-shadow:0 4px 12px rgba(15,23,42,.1)}
                 .ST-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(15,23,42,.16)}
                 .ST-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
@@ -556,6 +666,8 @@ const Settings = () => {
                     .ST-theme-picks{grid-template-columns:1fr}
                     .ST-danger-card{flex-direction:column;align-items:flex-start}
                     .ST-info-row{flex-direction:column;align-items:flex-start;gap:16px}
+                    .ST-security-card{flex-direction:column;align-items:flex-start}
+                    .ST-form-foot{flex-wrap:wrap}
                 }
                 @media(max-width:768px){
                     .DB-hero{padding:32px 20px 64px}
@@ -594,6 +706,11 @@ const Settings = () => {
                 .DB--dark .ST-back-btn span{color:#94a3b8}
                 .DB--dark .ST-profile-banner,.DB--dark .ST-toggle-row,.DB--dark .ST-danger-card,.DB--dark .ST-info-row{background:#334155;border-color:#475569}
                 .DB--dark .ST-profile-meta h3,.DB--dark .ST-toggle-txt h4,.DB--dark .ST-danger-txt h4,.DB--dark .ST-info-val{color:#e2e8f0}
+                .DB--dark .ST-security-card{background:#334155;border-color:#475569}
+                .DB--dark .ST-security-ic{background:#475569;color:#e2e8f0}
+                .DB--dark .ST-security-main h3,.DB--dark .ST-step-head h3{color:#e2e8f0}
+                .DB--dark .ST-step-panel{background:#1e293b;border-color:#334155}
+                .DB--dark .ST-step-head span{background:#334155;color:#cbd5e1}
                 .DB--dark .ST-field input{background:#334155;border-color:#475569;color:#e2e8f0}
                 .DB--dark .ST-field input:focus{background:#1e293b;border-color:#94a3b8}
                 .DB--dark .ST-field label{color:#94a3b8}
