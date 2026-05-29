@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommend
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package*.json .npmrc ./
 RUN npm ci
 
 COPY . .
