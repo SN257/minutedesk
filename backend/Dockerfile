@@ -1,7 +1,7 @@
 # ── Stage 1: Build ──────────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
+FROM node:20-slim AS builder
 
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -12,16 +12,16 @@ COPY . .
 RUN npm run build
 
 # ── Stage 2: Production ──────────────────────────────────────────────────────
-FROM node:20-alpine AS production
+FROM node:20-slim AS production
 
-RUN apk add --no-cache python3 make g++
+RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 ENV NODE_ENV=production
 
 COPY package*.json ./
-RUN npm ci --omit=dev && apk del python3 make g++
+RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
