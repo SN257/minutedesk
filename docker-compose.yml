@@ -35,11 +35,11 @@ services:
       DB_SSL: "false"
       SESSION_SECRET: ${SESSION_SECRET:-changeme}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
-      SMTP_HOST: ${SMTP_HOST:-""}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
-      SMTP_USER: ${SMTP_USER:-""}
-      SMTP_PASS: ${SMTP_PASS:-""}
-      SMTP_FROM: ${SMTP_FROM:-""}
+      SMTP_USER: ${SMTP_USER:-user}
+      SMTP_PASS: ${SMTP_PASS:-pass}
+      SMTP_FROM: ${SMTP_FROM:-noreply@example.com}
       SMTP_SECURE: ${SMTP_SECURE:-false}
     expose:
       - "3001"
