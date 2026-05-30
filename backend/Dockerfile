@@ -28,6 +28,6 @@ RUN npm ci --omit=dev
 COPY --from=builder /app/dist ./dist
 
 # Run migrations then start the app
-CMD ["sh", "-c", "npx typeorm migration:run -d dist/src/data-source.prod.js && node dist/main.js"]
+CMD ["sh", "-c", "npx typeorm migration:run -d dist/data-source.prod.js && node dist/main.js"]
 
 EXPOSE 3001
