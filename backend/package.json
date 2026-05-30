@@ -24,11 +24,11 @@
     "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/data-source.ts",
     "migration:show": "npm run typeorm -- migration:show -d src/data-source.ts",
-    "user:create": "ts-node -r tsconfig-paths/register src/scripts/create-user.ts",
-    "user:create:direct": "ts-node -r tsconfig-paths/register src/scripts/create-user-direct.ts",
-    "user:list": "ts-node -r tsconfig-paths/register src/scripts/list-users.ts",
-    "data:check": "ts-node -r tsconfig-paths/register src/scripts/check-user-data.ts",
-    "data:reassign": "ts-node -r tsconfig-paths/register src/scripts/reassign-data.ts"
+    "user:create": "node dist/scripts/create-user.js",
+    "user:create:direct": "node dist/scripts/create-user-direct.js",
+    "user:list": "node dist/scripts/list-users.js",
+    "data:check": "node dist/scripts/check-user-data.js",
+    "data:reassign": "node dist/scripts/reassign-data.js"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
