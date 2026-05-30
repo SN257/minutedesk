@@ -44,10 +44,20 @@ async function bootstrap() {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const connectPgSimple = require('connect-pg-simple');
     const PgSession = connectPgSimple(session);
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
-    });
+    const poolConfig = process.env.DATABASE_URL
+      ? {
+          connectionString: process.env.DATABASE_URL,
+          ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
+        }
+      : {
+          host: process.env.DB_HOST || 'localhost',
+          port: parseInt(process.env.DB_PORT, 10) || 5432,
+          user: process.env.DB_USERNAME || 'postgres',
+          password: process.env.DB_PASSWORD || 'postgres',
+          database: process.env.DB_DATABASE || 'minutedesk',
+          ssl: process.env.DB_SSL === 'false' ? false : undefined,
+        };
+    const pool = new Pool(poolConfig);
     store = new PgSession({ pool, tableName: 'session', createTableIfMissing: true });
     console.log('Using Postgres session store for express-session');
   } catch (err) {
