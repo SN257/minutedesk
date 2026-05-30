@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Controller, Get } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -10,6 +10,14 @@ import { TasksModule } from './tasks/tasks.module';
 import { BoardsModule } from './boards/boards.module';
 import { WorkLogsModule } from './work-logs/work-logs.module';
 import { NotificationsModule } from './notifications/notifications.module';
+
+@Controller()
+export class HealthController {
+  @Get()
+  health() {
+    return { status: 'ok' };
+  }
+}
 
 @Module({
   imports: [
@@ -46,5 +54,6 @@ import { NotificationsModule } from './notifications/notifications.module';
     // Notifications
     NotificationsModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule { }

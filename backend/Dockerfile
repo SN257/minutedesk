@@ -16,7 +16,7 @@ RUN npm run build
 # ── Stage 2: Production ──────────────────────────────────────────────────────
 FROM node:20-slim AS production
 
-RUN apt-get update && apt-get install -y python3 make g++ --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y python3 make g++ curl --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
