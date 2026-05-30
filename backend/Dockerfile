@@ -27,8 +27,6 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-COPY --from=builder /app/dist ./dist
-
 # Start the app (migrations are run manually via npm run migration:run:prod)
 CMD ["node", "dist/main.js"]
 

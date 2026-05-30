@@ -36,7 +36,7 @@ services:
       DB_DATABASE: minutedesk
       DB_SSL: "false"
       SESSION_SECRET: ${SESSION_SECRET:-changeme}
-      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+      CORS_ORIGIN: ${CORS_ORIGIN:-https://vk.harivadan.in,http://localhost:5173,http://localhost:3000}
       SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-user}
