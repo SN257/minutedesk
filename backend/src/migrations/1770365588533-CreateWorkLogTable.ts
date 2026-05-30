@@ -8,14 +8,14 @@ export class CreateWorkLogTable1770365588533 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_tasks_userId"`);
         await queryRunner.query(`CREATE TABLE "work_logs" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "userId" uuid NOT NULL, "date" date NOT NULL, "todayWork" text, "tomorrowWork" text, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_f4f3234af57451baa20576887be" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_c03bc8dc60259cd79cf6b49de1" ON "work_logs" ("userId", "date") `);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "personName"`);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "day"`);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "place"`);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "attendance"`);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "presentSantName"`);
-        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN "notes"`);
-        await queryRunner.query(`ALTER TABLE "cards" DROP COLUMN "coverSize"`);
-        await queryRunner.query(`ALTER TABLE "cards" DROP COLUMN "completed"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "personName"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "day"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "place"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "attendance"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "presentSantName"`);
+        await queryRunner.query(`ALTER TABLE "scheduled_meetings" DROP COLUMN IF EXISTS "notes"`);
+        await queryRunner.query(`ALTER TABLE "cards" DROP COLUMN IF EXISTS "coverSize"`);
+        await queryRunner.query(`ALTER TABLE "cards" DROP COLUMN IF EXISTS "completed"`);
         await queryRunner.query(`CREATE INDEX "IDX_166bd96559cb38595d392f75a3" ON "tasks" ("userId") `);
         await queryRunner.query(`ALTER TABLE "work_logs" ADD CONSTRAINT "FK_699ea8c6b5b4acc9eebbdb9058d" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
