@@ -1,12 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class InitialSchema1717000000000 implements MigrationInterface {
-  name = 'InitialSchema1717000000000';
+export class CreateCompleteSchema1717100000000 implements MigrationInterface {
+  name = 'CreateCompleteSchema1717100000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
 
-    // Users
+    // Users table
     await queryRunner.query(`
       CREATE TABLE "users" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -20,8 +20,9 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_users" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_users_email" ON "users" ("email")`);
 
-    // Meetings
+    // Meetings table
     await queryRunner.query(`
       CREATE TABLE "meetings" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -44,8 +45,10 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_meetings" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_meetings_userId" ON "meetings" ("userId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_meetings_date" ON "meetings" ("date")`);
 
-    // Scheduled Meetings
+    // Scheduled Meetings table
     await queryRunner.query(`
       CREATE TABLE "scheduled_meetings" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -63,9 +66,10 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_scheduled_meetings" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_scheduled_meetings_userId" ON "scheduled_meetings" ("userId")`);
     await queryRunner.query(`CREATE INDEX "IDX_scheduled_meetings_date" ON "scheduled_meetings" ("date")`);
 
-    // Tasks
+    // Tasks table
     await queryRunner.query(`
       CREATE TABLE "tasks" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -81,8 +85,9 @@ export class InitialSchema1717000000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(`CREATE INDEX "IDX_tasks_userId" ON "tasks" ("userId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_tasks_status" ON "tasks" ("status")`);
 
-    // Boards
+    // Boards table
     await queryRunner.query(`
       CREATE TABLE "boards" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -93,8 +98,9 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_boards" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_boards_userId" ON "boards" ("userId")`);
 
-    // Lists
+    // Lists table
     await queryRunner.query(`
       CREATE TABLE "lists" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -106,8 +112,9 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_lists" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_lists_boardId" ON "lists" ("boardId")`);
 
-    // Cards
+    // Cards table
     await queryRunner.query(`
       CREATE TABLE "cards" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -123,13 +130,18 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         "archived" boolean NOT NULL DEFAULT false,
         "checklist" text,
         "workLogDate" date,
+        "workLogSource" character varying,
+        "workLogTaskId" uuid,
         "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
         "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
         CONSTRAINT "PK_cards" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_cards_listId" ON "cards" ("listId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_cards_archived" ON "cards" ("archived")`);
+    await queryRunner.query(`CREATE INDEX "IDX_cards_workLogDate" ON "cards" ("workLogDate")`);
 
-    // Comments
+    // Comments table
     await queryRunner.query(`
       CREATE TABLE "comments" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -140,8 +152,10 @@ export class InitialSchema1717000000000 implements MigrationInterface {
         CONSTRAINT "PK_comments" PRIMARY KEY ("id")
       )
     `);
+    await queryRunner.query(`CREATE INDEX "IDX_comments_cardId" ON "comments" ("cardId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_comments_userId" ON "comments" ("userId")`);
 
-    // Work Logs
+    // Work Logs table
     await queryRunner.query(`
       CREATE TABLE "work_logs" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -160,7 +174,7 @@ export class InitialSchema1717000000000 implements MigrationInterface {
     `);
     await queryRunner.query(`CREATE UNIQUE INDEX "IDX_work_logs_userId_date" ON "work_logs" ("userId", "date")`);
 
-    // Notifications
+    // Notifications table
     await queryRunner.query(`
       CREATE TABLE "notifications" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -174,6 +188,7 @@ export class InitialSchema1717000000000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(`CREATE INDEX "IDX_notifications_userId" ON "notifications" ("userId")`);
+    await queryRunner.query(`CREATE INDEX "IDX_notifications_read" ON "notifications" ("read")`);
 
     // Foreign Keys
     await queryRunner.query(`ALTER TABLE "work_logs" ADD CONSTRAINT "FK_work_logs_userId" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
