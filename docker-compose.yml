@@ -11,6 +11,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - minutedesk
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -26,6 +28,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - minutedesk
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 10s
@@ -60,8 +64,16 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    networks:
+      - minutedesk
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:3001}
     ports:
       - "3000:80"
+
+networks:
+  minutedesk:
+    driver: bridge
 
 volumes:
   postgres_data:
