@@ -15,14 +15,15 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   const envCors = process.env.CORS_ORIGIN || '';
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'https://minutedesk.vercel.app',
-    ...envCors.split(',').map((o) => o.trim()).filter((o) => o)
-  ];
+  const corsOrigin = envCors.trim() === '*'
+    ? true
+    : [
+        'http://localhost:5173',
+        ...envCors.split(',').map((o) => o.trim()).filter((o) => o)
+      ];
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: corsOrigin,
     credentials: true,
   });
 
