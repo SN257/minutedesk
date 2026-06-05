@@ -164,7 +164,7 @@ const Login = () => {
         },
         forgotPassword: {
             title: "Reset password",
-            subtitle: "Create a new password for your MinuteDesk account",
+            subtitle: "Create a new password for your Nexus account",
         },
     };
 
@@ -189,7 +189,7 @@ const Login = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <span className="brand-logo-text">MinuteDesk</span>
+                            <span className="brand-logo-text">Nexus</span>
                         </div>
 
                         {/* Hero text */}
@@ -245,7 +245,7 @@ const Login = () => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
-                            <span className="brand-logo-text brand-logo-text--dark">MinuteDesk</span>
+                            <span className="brand-logo-text brand-logo-text--dark">Nexus</span>
                         </div>
 
                         {/* Form header */}

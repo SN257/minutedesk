@@ -77,7 +77,7 @@ const Header = ({ navItems, secondaryNavItems }: HeaderProps) => {
                         <button
                             onClick={() => navigate('/')}
                             className="flex items-center gap-2 flex-shrink-0 group"
-                            aria-label="MinuteDesk Home"
+                            aria-label="Nexus Home"
                         >
                             {/* Logo mark */}
                             <div className={`relative w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 ${isDark
@@ -98,7 +98,7 @@ const Header = ({ navItems, secondaryNavItems }: HeaderProps) => {
                             {/* Wordmark */}
                             <div className="flex flex-col justify-center text-left ml-1">
                                 <p className={`text-lg md:text-xl font-extrabold leading-tight transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                    MinuteDesk
+                                    Nexus
                                 </p>
                             </div>
                         </button>
@@ -227,7 +227,7 @@ const Header = ({ navItems, secondaryNavItems }: HeaderProps) => {
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-bold text-slate-900">{user?.name ?? 'User'}</p>
-                                                    <p className="text-xs text-slate-500 mt-0.5">{user?.email ?? 'user@minutedesk.com'}</p>
+                                                    <p className="text-xs text-slate-500 mt-0.5">{user?.email ?? 'user@nexus.com'}</p>
                                                 </div>
                                             </div>
                                             <div className="mt-3 flex items-center gap-1.5">

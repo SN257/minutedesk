@@ -55,7 +55,7 @@ async function bootstrap() {
           port: parseInt(process.env.DB_PORT, 10) || 5432,
           user: process.env.DB_USERNAME || 'postgres',
           password: process.env.DB_PASSWORD || 'postgres',
-          database: process.env.DB_DATABASE || 'minutedesk',
+          database: process.env.DB_DATABASE || 'nexus',
           ssl: process.env.DB_SSL === 'false' ? false : undefined,
         };
     const pool = new Pool(poolConfig);

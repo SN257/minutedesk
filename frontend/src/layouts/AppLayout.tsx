@@ -344,7 +344,7 @@ const AppLayout = ({ children }: { children: React.ReactNode }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            {!sidebarCollapsed && <span className="font-bold text-lg text-white">MinuteDesk</span>}
+            {!sidebarCollapsed && <span className="font-bold text-lg text-white">Nexus</span>}
           </div>
         </div>
 

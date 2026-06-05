@@ -121,7 +121,7 @@ const Settings = () => {
                     <div className="DB-hdr-l">
                         <button className="DB-logo" onClick={() => nav('/')}>
                             <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.3} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            <span>MinuteDesk</span>
+                            <span>Nexus</span>
                         </button>
                     </div>
                     <div className="DB-hdr-r">
@@ -225,7 +225,7 @@ const Settings = () => {
                             <div className="ST-fade" key="account">
                                 <div className="ST-panel-hd">
                                     <h2>Profile & Identity</h2>
-                                    <p>Update your personal details visible across all MinuteDesk workspaces.</p>
+                                    <p>Update your personal details visible across all Nexus workspaces.</p>
                                 </div>
 
                                 <div className="ST-profile-banner">
@@ -381,7 +381,7 @@ const Settings = () => {
                             <div className="ST-fade" key="appearance">
                                 <div className="ST-panel-hd">
                                     <h2>Display & Theme</h2>
-                                    <p>Customize how MinuteDesk looks and feels for you.</p>
+                                    <p>Customize how Nexus looks and feels for you.</p>
                                 </div>
 
                                 <div className="ST-section-title">{IC('M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z', 18)}<span>Color Theme</span></div>
@@ -415,7 +415,7 @@ const Settings = () => {
                             <div className="ST-fade" key="danger">
                                 <div className="ST-panel-hd">
                                     <h2>Data & Privacy</h2>
-                                    <p>Export your MinuteDesk workspace data.</p>
+                                    <p>Export your Nexus workspace data.</p>
                                 </div>
 
                                 <div className="ST-section-title">{IC('M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4', 18)}<span>Export Data</span></div>
@@ -424,13 +424,13 @@ const Settings = () => {
                                         <h4>Download Workspace Archive</h4>
                                         <p>Get a complete ZIP archive of all your meetings, boards, tasks and work logs connected to your identity.</p>
                                     </div>
-                                    <button type="button" className="ST-btn ST-btn--outline" onClick={() => { const data = { exportedAt: new Date().toISOString(), user: user?.email }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'minutedesk-export.json'; a.click(); URL.revokeObjectURL(url); showAlert('success', 'Data export started. Check your downloads.'); }}>Generate Export</button>
+                                    <button type="button" className="ST-btn ST-btn--outline" onClick={() => { const data = { exportedAt: new Date().toISOString(), user: user?.email }; const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'nexus-export.json'; a.click(); URL.revokeObjectURL(url); showAlert('success', 'Data export started. Check your downloads.'); }}>Generate Export</button>
                                 </div>
 
                                 <div className="ST-section-title" style={{ marginTop: 32 }}>{IC('M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 18)}<span>Privacy Controls</span></div>
                                 <div className="ST-toggles">
                                     <div className="ST-toggle-row">
-                                        <div className="ST-toggle-txt"><h4>Analytics & Diagnostics</h4><p>Allow MinuteDesk to collect anonymous usage data to help us identify bugs and improve the platform.</p></div>
+                                        <div className="ST-toggle-txt"><h4>Analytics & Diagnostics</h4><p>Allow Nexus to collect anonymous usage data to help us identify bugs and improve the platform.</p></div>
                                         <button type="button" onClick={() => updatePrivacy({ analyticsEnabled: !privacy.analyticsEnabled })} className={`ST-sw ${privacy.analyticsEnabled ? 'is-on' : ''}`}><div className="ST-sw-knob" /></button>
                                     </div>
                                     <div className="ST-toggle-row">
@@ -458,7 +458,7 @@ const Settings = () => {
                                         <h4 style={{ color: '#0f172a' }}>Right to be Forgotten</h4>
                                         <p>Contact our support team to request a complete erasure of your identity from our active servers under GDPR or CCPA standards.</p>
                                     </div>
-                                    <button type="button" className="ST-btn ST-btn--outline" onClick={() => { window.open('mailto:support@minutedesk.com?subject=Data%20Erasure%20Request', '_blank'); showAlert('success', 'Opening email client to contact support.'); }}>Contact Support</button>
+                                    <button type="button" className="ST-btn ST-btn--outline" onClick={() => { window.open('mailto:support@nexus.com?subject=Data%20Erasure%20Request', '_blank'); showAlert('success', 'Opening email client to contact support.'); }}>Contact Support</button>
                                 </div>
                             </div>
                         )}

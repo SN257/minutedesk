@@ -6,13 +6,13 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: minutedesk
+      POSTGRES_DB: nexus
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
-      - minutedesk
+      - nexus
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -29,7 +29,7 @@ services:
       db:
         condition: service_healthy
     networks:
-      - minutedesk
+      - nexus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]
       interval: 10s
@@ -43,7 +43,7 @@ services:
       DB_PORT: "5432"
       DB_USERNAME: postgres
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_DATABASE: minutedesk
+      DB_DATABASE: nexus
       DB_SSL: "false"
       SESSION_SECRET: ${SESSION_SECRET:-changeme}
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
@@ -65,12 +65,12 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - minutedesk
+      - nexus
     ports:
       - "3000:80"
 
 networks:
-  minutedesk:
+  nexus:
     driver: bridge
 
 volumes:

@@ -1,4 +1,4 @@
-# MinuteDesk Backend
+# Nexus Backend - Where everything flows together
 
 NestJS backend API with PostgreSQL database and session-based authentication.
 
@@ -17,7 +17,7 @@ npm install
 ```
 
 2. Set up PostgreSQL database:
-   - Create a new database named `minutedesk`
+   - Create a new database named `nexus`
    - Or use your existing PostgreSQL credentials
 
 3. Configure environment variables:
@@ -31,7 +31,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_DATABASE=minutedesk
+DB_DATABASE=nexus
 
 PORT=3001
 SESSION_SECRET=your-super-secret-session-key-change-this-in-production

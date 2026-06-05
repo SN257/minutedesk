@@ -42,7 +42,7 @@ npm run migration:create src/migrations/MigrationName
 
 1. **Create the database** (if not exists):
 ```sql
-CREATE DATABASE minutedesk;
+CREATE DATABASE nexus;
 ```
 
 2. **Run the initial migration**:

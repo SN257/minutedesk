@@ -3,7 +3,7 @@
 ## Desktop View (≥ 1024px)
 ```
 ┌────────────────────────────────────────────────────┐
-│  ☰ MinuteDesk  │  Dashboard / Current Page         │
+│  ☰ Nexus  │  Dashboard / Current Page         │
 ├────────────────────────────────────────────────────┤
 │                │                                    │
 │  [Dashboard]   │                                    │
@@ -57,7 +57,7 @@
 ### Menu Open
 ```
 ┌────────────┐┌────────────────┐
-│ MinuteDesk ││ [Dark Overlay] │
+│ Nexus ││ [Dark Overlay] │
 │     [X]    ││                │
 │            ││                │
 │ Dashboard  ││   Content      │

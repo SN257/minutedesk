@@ -1,13 +1,13 @@
 #!/bin/bash
 # =============================================================
-# MinuteDesk Deployment Script for MilesWeb VPS
+# Nexus Deployment Script for MilesWeb VPS - Where everything flows together
 # Run this script ON the MilesWeb server after uploading files
 # =============================================================
 
 set -e  # Exit on error
 
 echo "========================================="
-echo "  MinuteDesk Production Deployment"
+echo "  Nexus Production Deployment - Where everything flows together"
 echo "========================================="
 
 # Navigate to project directory
@@ -46,7 +46,7 @@ echo ""
 echo "🚀 Step 6: Starting/Restarting Backend with PM2..."
 cd ..
 if command -v pm2 &> /dev/null; then
-    pm2 delete minutedesk-backend 2>/dev/null || true
+    pm2 delete nexus-backend 2>/dev/null || true
     pm2 start ecosystem.config.js
     pm2 save
     echo "✅ Backend started with PM2."
@@ -64,5 +64,5 @@ echo "Next steps:"
 echo "  1. Configure Nginx using the nginx.conf template"
 echo "  2. Set up SSL with: sudo certbot --nginx -d YOUR_DOMAIN.com"
 echo "  3. Restart Nginx: sudo systemctl restart nginx"
-echo "  4. Check backend logs: pm2 logs minutedesk-backend"
+echo "  4. Check backend logs: pm2 logs nexus-backend"
 echo ""

@@ -10,7 +10,7 @@ async function clearOldNotifications() {
     port: parseInt(process.env.DB_PORT, 10) || 5432,
     username: process.env.DB_USERNAME || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
-    database: process.env.DB_DATABASE || 'minutedesk',
+    database: process.env.DB_DATABASE || 'nexus',
     entities: ['dist/**/*.entity.js'],
     synchronize: false,
   });

@@ -12,7 +12,7 @@ const Footer = () => {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                         </svg>
                     </div>
-                    <span className="text-xs font-bold text-slate-500">MinuteDesk Infrastructure v2.4</span>
+                    <span className="text-xs font-bold text-slate-500">Nexus Infrastructure v2.4</span>
                 </div>
 
                 <div className="flex flex-wrap gap-x-8 gap-y-2">

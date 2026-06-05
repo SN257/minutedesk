@@ -12,7 +12,7 @@ if (import.meta.env.DEV) {
 }
 
 // Token management for cross-domain auth
-const TOKEN_KEY = 'minutedesk_token';
+const TOKEN_KEY = 'nexus_token';
 export const getToken = (): string | null => localStorage.getItem(TOKEN_KEY);
 export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);

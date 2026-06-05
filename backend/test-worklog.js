@@ -56,7 +56,7 @@ BEGIN
 END $$;
 `;
 
-exec(`psql -U postgres -d minutedesk -c "${sql.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
+exec(`psql -U postgres -d nexus -c "${sql.replace(/"/g, '\\"')}"`, (error, stdout, stderr) => {
     if (error) {
         console.error('Error:', error);
         return;

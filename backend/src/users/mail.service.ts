@@ -27,8 +27,8 @@ export class MailService {
   async sendPasswordOtp(to: string, otp: string, purpose: PasswordOtpPurpose) {
     const isProfileChange = purpose === 'profile_password_change';
     const subject = isProfileChange
-      ? 'Your MinuteDesk password change code'
-      : 'Reset your MinuteDesk password';
+      ? 'Your Nexus password change code'
+      : 'Reset your Nexus password';
     const action = isProfileChange ? 'change your password' : 'reset your password';
 
     if (!this.transporter) {
@@ -43,7 +43,7 @@ export class MailService {
     }
 
     await this.transporter.sendMail({
-      from: process.env.SMTP_FROM || process.env.SMTP_USER || 'MinuteDesk <no-reply@minutedesk.com>',
+      from: process.env.SMTP_FROM || process.env.SMTP_USER || 'Nexus <no-reply@nexus.com>',
       to,
       subject,
       text: `Use ${otp} to ${action}. This code expires in 10 minutes. If you did not request this, ignore this email.`,
@@ -51,7 +51,7 @@ export class MailService {
         <div style="margin:0;padding:32px;background:#f8fafc;font-family:Inter,Arial,sans-serif;color:#0f172a">
           <div style="max-width:520px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
             <div style="padding:24px 28px;background:#0f172a;color:#ffffff">
-              <div style="font-size:18px;font-weight:800">MinuteDesk</div>
+              <div style="font-size:18px;font-weight:800">Nexus</div>
               <div style="font-size:13px;color:#cbd5e1;margin-top:6px">${subject}</div>
             </div>
             <div style="padding:28px">

@@ -35,7 +35,7 @@ const DOCS: DocSection[] = [
                 description: 'Go from zero to productive in under 5 minutes.',
                 icon: 'M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4z',
                 content: [
-                    'Sign in to MinuteDesk with your company email and password.',
+                    'Sign in to Nexus with your company email and password.',
                     'You\'ll land on the Home page — your gateway to every module. Click "Command Center" in the header or navigate to any Hub to start.',
                     'The Dashboard (Home Hub → Overview) gives you a bird\'s-eye view of upcoming meetings, pending tasks, overdue items, and recent work logs.',
                     'Use the sidebar to switch between Activity Hubs: Meeting Hub, Project Hub, Work Hub, and Insight Hub.',
@@ -48,7 +48,7 @@ const DOCS: DocSection[] = [
                 description: 'Understand the layout, sidebar, and hub system.',
                 icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
                 content: [
-                    'MinuteDesk uses a Hub-based architecture. The sidebar displays Activity Hubs — clickable tiles that switch the sidebar\'s Tools section to show that hub\'s pages.',
+                    'Nexus uses a Hub-based architecture. The sidebar displays Activity Hubs — clickable tiles that switch the sidebar\'s Tools section to show that hub\'s pages.',
                     'The header breadcrumb trail always shows where you are, so you can navigate back in one click.',
                     'Click the collapse button (double chevrons) in the top-left to minimize the sidebar and reclaim screen space.',
                     'On mobile, tap the hamburger menu to open the sidebar. Press Escape or tap the overlay to close it.',
@@ -259,7 +259,7 @@ const DOCS: DocSection[] = [
                 description: 'Toggle dark mode and compact layout.',
                 icon: 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z',
                 content: [
-                    'MinuteDesk supports Light and Dark themes. Toggle between them in Settings → Appearance.',
+                    'Nexus supports Light and Dark themes. Toggle between them in Settings → Appearance.',
                     'Compact mode reduces padding across the app for denser information display — ideal for power users.',
                     'Theme preference is saved per-user and persists across sessions.',
                 ],
@@ -350,7 +350,7 @@ const Documentation = () => {
                             <span className="bg-gradient-to-r from-slate-300 via-white to-slate-300 bg-clip-text text-transparent">know</span>
                         </h1>
                         <p className="text-base md:text-lg text-slate-400 leading-relaxed font-light max-w-2xl mx-auto mb-8">
-                            Comprehensive guides, tutorials, and references for every feature in MinuteDesk.
+                            Comprehensive guides, tutorials, and references for every feature in Nexus.
                         </p>
 
                         {/* Search */}

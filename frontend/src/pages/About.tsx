@@ -44,7 +44,7 @@ const About = () => {
                                     <span className="text-slate-500 italic">of professional focus.</span>
                                 </h1>
                                 <p className="text-lg text-slate-400 font-medium leading-relaxed max-w-xl">
-                                    MinuteDesk was born from a realization that visibility is the catalyst for growth. We've engineered the first unified OS that treats your time as your most valuable infrastructure asset.
+                                    Nexus was born from a realization that visibility is the catalyst for growth. We've engineered the first unified OS that treats your time as your most valuable infrastructure asset.
                                 </p>
                                 <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/5">
                                     <div>
@@ -126,7 +126,7 @@ const About = () => {
                         </div>
                         <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-6 tracking-tight">Ready to get started?</h2>
                         <p className="text-lg text-slate-400 font-medium max-w-lg mx-auto mb-10">
-                            Join the teams already transforming their workflow with MinuteDesk. Launch your command center today.
+                            Join the teams already transforming their workflow with Nexus. Launch your command center today.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button onClick={() => navigate('/platform')} className="group relative px-10 py-5 bg-white text-slate-900 font-bold text-base rounded-2xl overflow-hidden shadow-2xl hover:scale-105 transition-all">

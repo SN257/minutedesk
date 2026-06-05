@@ -1,7 +1,7 @@
 {
-  "name": "minutedesk-backend",
+  "name": "nexus-backend",
   "version": "0.0.1",
-  "description": "MinuteDesk Backend API",
+  "description": "Nexus Backend API - Where everything flows together",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

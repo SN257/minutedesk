@@ -2,7 +2,7 @@
 module.exports = {
     apps: [
         {
-            name: 'minutedesk-backend',
+            name: 'nexus-backend',
             cwd: './backend',
             script: 'dist/main.js',
             instances: 1,

@@ -62,7 +62,7 @@ const Home = () => {
                                     </span>
                                     <div className="absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-700 opacity-0 group-hover:opacity-100 transition-opacity" />
                                 </button>
-                                <button onClick={() => window.open('mailto:sales@minutedesk.com?subject=Book a Demo', '_blank')} className="group px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
+                                <button onClick={() => window.open('mailto:sales@nexus.com?subject=Book a Demo', '_blank')} className="group px-10 py-5 bg-white text-slate-900 font-bold text-lg rounded-2xl border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-all hover:scale-105 shadow-lg">
                                     <span className="flex items-center gap-3">
                                         Book a Demo
                                         <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
