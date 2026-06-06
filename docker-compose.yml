@@ -33,10 +33,10 @@ services:
       - nexus
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]
-      interval: 10s
-      timeout: 5s
+      interval: 15s
+      timeout: 10s
       retries: 10
-      start_period: 30s
+      start_period: 60s
     environment:
       NODE_ENV: production
       PORT: "3001"

@@ -27,7 +27,7 @@ RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
 
-# Start the app (migrations are run manually via npm run migration:run:prod)
-CMD ["node", "dist/main.js"]
+# Run migrations then start the app
+CMD ["sh", "-c", "npm run migration:run:prod && node dist/main.js"]
 
 EXPOSE 3001
