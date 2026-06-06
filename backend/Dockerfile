@@ -26,8 +26,9 @@ COPY package*.json .npmrc ./
 RUN npm ci --omit=dev
 
 COPY --from=builder /app/dist ./dist
-
-# Run migrations then start the app
-CMD ["sh", "-c", "npm run migration:run:prod && node dist/main.js"]
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint.sh
 
 EXPOSE 3001
+
+CMD ["./docker-entrypoint.sh"]
