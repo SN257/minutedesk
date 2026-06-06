@@ -124,7 +124,14 @@ export class PasswordOtpService {
       attempts: 0,
     });
 
-    await this.mailService.sendPasswordOtp(email, otp, purpose);
+    try {
+      await this.mailService.sendPasswordOtp(email, otp, purpose);
+    } catch (err) {
+      this.otpRecords.delete(key);
+      throw new BadRequestException(
+        'Failed to send verification email. Please check SMTP configuration.',
+      );
+    }
   }
 
   private async verifyOtp(
