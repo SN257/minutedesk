@@ -6,7 +6,7 @@ services:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: nexus
+      POSTGRES_DB: minutedesk
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     volumes:
@@ -44,7 +44,7 @@ services:
       DB_PORT: "5432"
       DB_USERNAME: postgres
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
-      DB_DATABASE: nexus
+      DB_DATABASE: minutedesk
       DB_SSL: "false"
       SESSION_SECRET: ${SESSION_SECRET:-changeme}
       CORS_ORIGIN: "${CORS_ORIGIN:-*}"
