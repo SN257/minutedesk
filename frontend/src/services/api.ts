@@ -528,6 +528,12 @@ export const getAllCardsApi = async () => {
   return res.json();
 };
 
+export const getAssignedToMeCardsApi = async () => {
+  const res = await authFetch(`${API_URL}/boards/cards/assigned-to-me`, { method: 'GET' });
+  if (!res.ok) throw new Error('Failed to fetch assigned cards');
+  return res.json();
+};
+
 export const getAllCardsForReportsApi = async (cardIds?: string[]) => {
   const url = cardIds && cardIds.length > 0
     ? `${API_URL}/boards/cards/all-for-reports?cardIds=${cardIds.join(',')}`

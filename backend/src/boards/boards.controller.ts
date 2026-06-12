@@ -70,6 +70,11 @@ export class BoardsController {
     return this.svc.getAllCardsForUser(req.session.userId);
   }
 
+  @Get('cards/assigned-to-me')
+  async getAssignedCards(@Req() req: any) {
+    return this.svc.getCardsAssignedToUser(req.session.userId);
+  }
+
   @Get('cards/all-for-reports')
   async getAllCardsForReports(@Req() req: any, @Query('cardIds') cardIds?: string) {
     const cardIdArray = cardIds ? cardIds.split(',').filter(id => id.trim()) : undefined;

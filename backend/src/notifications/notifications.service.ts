@@ -7,6 +7,8 @@ import { Meeting } from '../meetings/meetings.entity';
 import { ScheduledMeeting } from '../scheduled-meetings/scheduled-meetings.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { WorkLog } from '../work-logs/work-log.entity';
+import { User } from '../users/entities/user.entity';
+import { MailService } from './mail.service';
 
 @Injectable()
 export class NotificationsService {
@@ -21,6 +23,9 @@ export class NotificationsService {
     private readonly meetingRepo: Repository<Meeting>,
     @InjectRepository(ScheduledMeeting)
     private readonly scheduledMeetingRepo: Repository<ScheduledMeeting>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly mailService: MailService,
   ) {}
 
   async createForUser(userId: string, title: string, body?: string, meta?: any) {
@@ -30,7 +35,17 @@ export class NotificationsService {
       if (exists) return exists;
     }
     const n = this.repo.create({ userId, title, body, meta, read: false });
-    return this.repo.save(n);
+    const saved = await this.repo.save(n);
+
+    // Send email notification asynchronously — never block on it
+    this.userRepo.findOne({ where: { id: userId } }).then(user => {
+      if (user?.email) {
+        // Pass meta to mail service so it can generate contextual templates
+        this.mailService.sendNotificationEmail(user.email, title, body, meta).catch(() => {});
+      }
+    }).catch(() => {});
+
+    return saved;
   }
 
   async findForUser(userId: string) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
     login as apiLogin,
     requestForgotPasswordOtp,
@@ -26,7 +26,11 @@ const Login = () => {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [mounted, setMounted] = useState(false);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { setUser } = useAuth();
+
+    // Get return URL from query params
+    const returnUrl = searchParams.get('returnUrl') || '/';
 
     useEffect(() => {
         // Trigger mount animations
@@ -44,7 +48,8 @@ const Login = () => {
             const loggedInUser = await apiLogin({ email, password });
             // Set user directly from login response to avoid cross-site cookie issues
             setUser(loggedInUser);
-            navigate("/");
+            // Navigate to returnUrl after successful login
+            navigate(returnUrl);
         } catch (err: any) {
             setError(err.message || "Invalid credentials. Please try again.");
         } finally {

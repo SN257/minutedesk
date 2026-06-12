@@ -6,7 +6,8 @@ import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import {
   createBoardApi, getBoardsApi, getListsApi, createListApi, createCardApi, updateCardApi,
   moveCardApi, getCommentsApi, addCommentApi, getCardsApi, archiveCardApi,
-  deleteListApi, updateListApi, deleteCardApi, duplicateCardApi, getCardApi
+  deleteListApi, updateListApi, deleteCardApi, duplicateCardApi, getCardApi,
+  getAllUsers, getAssignedToMeCardsApi
 } from '../services/api';
 import { useConfirm } from '../components/ConfirmProvider';
 import { useSnackbar } from '../contexts/SnackbarContext';
@@ -254,9 +255,12 @@ const DropdownContent: React.FC<{
 
 const BoardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { boardId } = useParams<{ boardId: string }>();
+  const { boardId, cardId } = useParams<{ boardId?: string; cardId?: string }>();
   const [boards, setBoards] = useState<BoardType[]>([]);
   const [boardListCounts, setBoardListCounts] = useState<Record<string, number>>({});
+  const [allUsers, setAllUsers] = useState<Array<{ id: string; name?: string; email?: string }>>([]);
+  const [assignedToMeCards, setAssignedToMeCards] = useState<CardType[]>([]);
+  const [memberSearch, setMemberSearch] = useState('');
 
   // Use URL param as the source of truth for the current board
   const currentBoard = boardId || null;
@@ -336,6 +340,12 @@ const BoardPage: React.FC = () => {
         const bs: BoardType[] = await getBoardsApi();
         setBoards(bs);
 
+        // Fetch all users for assignee picker
+        getAllUsers().then(users => setAllUsers(users)).catch(() => {});
+
+        // Fetch cards assigned to current user from other boards
+        getAssignedToMeCardsApi().then(cards => setAssignedToMeCards(cards)).catch(() => {});
+
         // Fetch list counts for all boards in parallel (non-blocking)
         // This runs in the background and updates counts as they come in
         Promise.all(bs.map(async (b) => {
@@ -354,7 +364,7 @@ const BoardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!currentBoard) return;
+    if (!currentBoard || currentBoard === 'assigned-to-me') return;
     (async () => {
       const ls = await getListsApi(currentBoard);
 
@@ -372,6 +382,33 @@ const BoardPage: React.FC = () => {
       setCards(map);
     })();
   }, [currentBoard]);
+
+  // Refresh assigned-to-me cards when navigating to that view
+  useEffect(() => {
+    if (currentBoard === 'assigned-to-me') {
+      getAssignedToMeCardsApi().then(cards => setAssignedToMeCards(cards)).catch(() => {});
+    }
+  }, [currentBoard]);
+
+  // Auto-open card when accessed via /task/:cardId URL
+  useEffect(() => {
+    if (cardId && !showCard) {
+      (async () => {
+        try {
+          const card = await getCardApi(cardId);
+          if (card) {
+            setShowCard(card);
+            // Automatically show checklist if it has items
+            if (card.checklist && Array.isArray(card.checklist) && card.checklist.length > 0) {
+              setShowChecklist(true);
+            }
+          }
+        } catch (err) {
+          console.error('Failed to fetch card:', err);
+        }
+      })();
+    }
+  }, [cardId]);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -506,6 +543,9 @@ const BoardPage: React.FC = () => {
           [listId]: c[listId].map(card => card.id === showCard.id ? normalized : card)
         }));
       }
+
+      // Update in assignedToMeCards state
+      setAssignedToMeCards(prev => prev.map(card => card.id === showCard.id ? normalized : card));
     } catch (err) {
       console.error('Failed to update card field', err);
       showSnackbar('Failed to update card', 'error');
@@ -917,6 +957,50 @@ const BoardPage: React.FC = () => {
                         </div>
                       </div>
                     ))}
+                    {/* Assigned to Me board */}
+                    <div
+                      onClick={() => setCurrentBoard('assigned-to-me')}
+                      className="bg-white dark:bg-slate-800 rounded-xl p-5 flex flex-col border border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-lg transition-all duration-300 cursor-pointer relative overflow-hidden group h-44"
+                    >
+                      {/* Top accent line */}
+                      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+
+                      {/* Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-slate-900 dark:text-slate-100 font-bold text-lg mb-1 line-clamp-2 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">
+                            Assigned to Me
+                          </h3>
+                        </div>
+                        <div className="p-1.5 rounded-lg">
+                          <svg className="w-5 h-5 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        </div>
+                      </div>
+
+                      {/* Middle */}
+                      <div className="flex-1 mb-3">
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">
+                              {assignedToMeCards.length} {assignedToMeCards.length === 1 ? 'task' : 'tasks'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            <span className="text-xs text-slate-600 dark:text-slate-400 font-medium">Active</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Stats row */}
+                      <div className="flex items-center gap-3 pt-3 border-t border-slate-100 dark:border-slate-700">
+                        <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                          <span className="text-sm font-semibold">{assignedToMeCards.length} {assignedToMeCards.length === 1 ? 'task' : 'tasks'}</span>
+                        </div>
+                      </div>
+                    </div>
                     <div
                       onClick={async () => {
                         setShowCreateModal(true);
@@ -935,6 +1019,109 @@ const BoardPage: React.FC = () => {
               })()}
             </div>
           )}
+        </div>
+      ) : currentBoard === 'assigned-to-me' ? (
+        /* Assigned to Me — identical layout to the regular board view */
+        <div className="flex gap-4 md:gap-6 p-3 md:p-6 overflow-x-auto items-start scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+          {[
+            { label: 'To Do',       cards: assignedToMeCards.filter(c => !c.archived && !c.completed) },
+            { label: 'Done',        cards: assignedToMeCards.filter(c => c.archived || c.completed) },
+          ].map(col => (
+            <div key={col.label} className="w-80 flex-shrink-0 bg-white dark:bg-slate-800/40 backdrop-blur-md rounded-2xl shadow-sm hover:shadow-md flex flex-col overflow-hidden relative border border-slate-200 dark:border-slate-700/50 animate-fadeIn transition-all duration-300">
+              {/* Header — identical to list header */}
+              <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700/50">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 text-sm md:text-base truncate mr-2">
+                    {col.label}
+                  </h3>
+                  <span className="text-[10px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-full font-bold">
+                    {col.cards.length}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cards area — identical to list cards area */}
+              <div className="p-3 space-y-2.5 transition-all relative flex-1 overflow-auto custom-scrollbar max-h-[calc(100vh-280px)]">
+                {col.cards.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">No tasks</div>
+                ) : col.cards.map(card => (
+                  <div
+                    key={card.id}
+                    className="bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer border border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 relative group overflow-hidden"
+                  >
+                    <div
+                      className="p-4 relative"
+                      onMouseEnter={() => setHoveredCard(card.id)}
+                      onMouseLeave={() => setHoveredCard(prev => (prev === card.id ? null : prev))}
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Checkbox */}
+                        <div className="flex items-center justify-center flex-shrink-0 mt-2">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const updated = await updateCardApi(card.id, { archived: !card.completed } as any);
+                                const normalized = { ...updated, completed: !!updated.archived };
+                                setAssignedToMeCards(prev => prev.map(c => c.id === card.id ? normalized : c));
+                                if (showCard && showCard.id === card.id) setShowCard(normalized);
+                              } catch { showSnackbar('Failed to update card', 'error'); }
+                            }}
+                            className="transform transition-all focus:outline-none"
+                            title={card.completed ? 'Completed' : 'Mark as done'}
+                          >
+                            {card.completed ? (
+                              <span className="w-5 h-5 rounded-full bg-green-600 inline-flex items-center justify-center text-white">
+                                <svg className="w-3 h-3" viewBox="0 0 20 20" fill="none"><path d="M5 10l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                              </span>
+                            ) : (
+                              <span className="w-5 h-5 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-400 dark:border-slate-600 hover:border-slate-600 dark:hover:border-slate-400 inline-flex items-center justify-center transition-colors"></span>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Title */}
+                        <div
+                          onClick={() => openCard(card)}
+                          className={`flex-1 font-semibold text-sm truncate transition-all ${card.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100 group-hover:translate-x-1'}`}
+                        >
+                          {card.title}
+                        </div>
+
+                        {/* Assignee avatar */}
+                        {card.assignee && (() => {
+                          const au = allUsers.find(u => u.id === card.assignee);
+                          return (
+                            <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold" title={au?.name || au?.email || 'Assigned'}>
+                              {(au?.name || au?.email || '?').charAt(0).toUpperCase()}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+                      {/* Hover preview — identical to regular board */}
+                      {hoveredCard === card.id && (
+                        <div className="absolute left-full top-0 ml-4 w-64 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 rounded-xl shadow-slate-lg p-4 z-30">
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="font-bold text-sm text-slate-900 dark:text-slate-100">{card.title}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 font-medium">{card.dueDate || ''}</div>
+                          </div>
+                          {card.description && <div className="text-sm text-slate-700 dark:text-slate-300 mb-3 line-clamp-3 font-medium whitespace-pre-line">{card.description}</div>}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {(card.labels || []).map((l: string) => (
+                              <span key={l} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-semibold">{l}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Bottom accent bar — identical to regular cards */}
+                    <div className="absolute inset-x-0 bottom-0 h-1" style={{ background: card.coverColor ? `linear-gradient(90deg, ${card.coverColor}, ${card.coverColor}dd)` : 'linear-gradient(90deg, #475569, #334155)' }}></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : lists.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-12 bg-transparent">
@@ -1101,6 +1288,16 @@ const BoardPage: React.FC = () => {
                                     <div onClick={() => openCard(card)} className={`flex-1 font-semibold text-sm truncate transition-all ${card.completed ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100 group-hover:translate-x-1'}`}>
                                       {card.title}
                                     </div>
+
+                                    {/* Assignee avatar */}
+                                    {card.assignee && (() => {
+                                      const assignedUser = allUsers.find(u => u.id === card.assignee);
+                                      return (
+                                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] font-bold" title={assignedUser?.name || assignedUser?.email || 'Assigned'}>
+                                          {(assignedUser?.name || assignedUser?.email || '?').charAt(0).toUpperCase()}
+                                        </div>
+                                      );
+                                    })()}
 
                                     {/* Delete card button */}
                                     <button
@@ -1688,7 +1885,7 @@ const BoardPage: React.FC = () => {
                   {/* Members Dropdown */}
                   <div className="relative" ref={membersBtnRef}>
                     <button
-                      onClick={() => setShowMembersModal(!showMembersModal)}
+                      onClick={() => { setShowMembersModal(!showMembersModal); setMemberSearch(''); }}
                       className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -1700,23 +1897,87 @@ const BoardPage: React.FC = () => {
                         <input
                           type="text"
                           placeholder="Search members..."
-                          value={showCard.assignee || ''}
-                          onChange={async (e) => {
-                            await updateCardField('assignee', e.target.value || null);
-                          }}
+                          value={memberSearch}
+                          onChange={(e) => setMemberSearch(e.target.value)}
                           className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-lg focus:ring-2 focus:ring-slate-500 focus:border-slate-600 dark:focus:border-slate-500 outline-none font-medium text-slate-900 dark:text-slate-100 text-sm mb-3"
                           autoFocus
                         />
-                        <button
-                          onClick={() => setShowMembersModal(false)}
-                          className="w-full px-3 py-2 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-lg font-semibold text-sm transition-colors"
-                        >
-                          Done
-                        </button>
+                        {/* Current assignee */}
+                        {showCard.assignee && (() => {
+                          const assignedUser = allUsers.find(u => u.id === showCard.assignee);
+                          return (
+                            <div className="flex items-center justify-between px-3 py-2 mb-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                                  {(assignedUser?.name || assignedUser?.email || '?').charAt(0).toUpperCase()}
+                                </div>
+                                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                                  {assignedUser?.name || assignedUser?.email || showCard.assignee}
+                                </span>
+                              </div>
+                              <button
+                                onClick={async () => { await updateCardField('assignee', null); }}
+                                className="text-red-500 hover:text-red-700 text-xs font-semibold"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          );
+                        })()}
+                        {/* User list */}
+                        <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
+                          {allUsers
+                            .filter(u => u.id !== showCard.assignee)
+                            .filter(u => {
+                              if (!memberSearch) return true;
+                              const q = memberSearch.toLowerCase();
+                              return (u.name?.toLowerCase().includes(q)) || (u.email?.toLowerCase().includes(q));
+                            })
+                            .map(u => (
+                              <button
+                                key={u.id}
+                                onClick={async () => {
+                                  await updateCardField('assignee', u.id);
+                                  setShowMembersModal(false);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors text-left"
+                              >
+                                <div className="w-7 h-7 rounded-full bg-slate-300 dark:bg-slate-600 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs font-bold">
+                                  {(u.name || u.email || '?').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-medium text-slate-900 dark:text-slate-100">{u.name || 'Unnamed'}</span>
+                                  {u.email && <span className="text-xs text-slate-500 dark:text-slate-400">{u.email}</span>}
+                                </div>
+                              </button>
+                            ))}
+                          {allUsers.filter(u => u.id !== showCard.assignee).filter(u => {
+                            if (!memberSearch) return true;
+                            const q = memberSearch.toLowerCase();
+                            return (u.name?.toLowerCase().includes(q)) || (u.email?.toLowerCase().includes(q));
+                          }).length === 0 && (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-2">No users found</p>
+                          )}
+                        </div>
                       </DropdownContent>
                     )}
                   </div>
                 </div>
+
+                {/* Display current assignee */}
+                {showCard.assignee && (() => {
+                  const assignedUser = allUsers.find(u => u.id === showCard.assignee);
+                  return (
+                    <div className="pl-8 flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center text-xs font-bold">
+                        {(assignedUser?.name || assignedUser?.email || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        Assigned to: <span className="font-semibold text-slate-900 dark:text-slate-100">{assignedUser?.name || assignedUser?.email || showCard.assignee}</span>
+                      </span>
+                    </div>
+                  );
+                })()}
 
                 {/* Display current labels */}
                 {showCard.labels && showCard.labels.length > 0 && (

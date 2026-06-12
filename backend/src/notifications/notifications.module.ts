@@ -7,10 +7,12 @@ import { Card } from '../boards/card.entity';
 import { WorkLog } from '../work-logs/work-log.entity';
 import { Meeting } from '../meetings/meetings.entity';
 import { ScheduledMeeting } from '../scheduled-meetings/scheduled-meetings.entity';
+import { User } from '../users/entities/user.entity';
+import { MailService } from './mail.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Notification, Card, WorkLog, Meeting, ScheduledMeeting])],
-  providers: [NotificationsService],
+  imports: [TypeOrmModule.forFeature([Notification, Card, WorkLog, Meeting, ScheduledMeeting, User])],
+  providers: [NotificationsService, MailService],
   controllers: [NotificationsController],
   exports: [NotificationsService],
 })

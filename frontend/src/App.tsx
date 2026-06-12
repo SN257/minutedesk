@@ -296,6 +296,19 @@ function App() {
               />
 
               <Route
+                path="/task/:cardId"
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Suspense fallback={<LoadingFallback />}>
+                        <Board />
+                      </Suspense>
+                    </AppLayout>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
                 path="/reports"
                 element={
                   <ProtectedRoute>

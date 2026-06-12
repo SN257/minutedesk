@@ -10,6 +10,7 @@ import { CreateListDto } from './dto/create-list.dto';
 import { CreateCardDto } from './dto/create-card.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { NotificationsService } from '../notifications/notifications.service';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class BoardsService {
@@ -18,6 +19,7 @@ export class BoardsService {
     @InjectRepository(List) private readonly listRepo: Repository<List>,
     @InjectRepository(Card) private readonly cardRepo: Repository<Card>,
     @InjectRepository(Comment) private readonly commentRepo: Repository<Comment>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly notificationsService?: NotificationsService,
   ) { }
 
@@ -58,6 +60,11 @@ export class BoardsService {
       .leftJoin('boards', 'b', 'b.id = l."boardId"')
       .where('b."userId" = :userId OR c.assignee::uuid = :userId', { userId })
       .getMany();
+  }
+
+  async getCardsAssignedToUser(userId: string): Promise<Card[]> {
+    // Get all cards where this user is the assignee (from any board, including own)
+    return this.cardRepo.find({ where: { assignee: userId } });
   }
 
   async getAllCardsForReports(userId: string, cardIds?: string[]): Promise<Card[]> {
@@ -109,12 +116,16 @@ export class BoardsService {
     // Only notify if task is assigned to someone other than the creator
     try {
       if (saved.assignee && saved.assignee !== userId && this.notificationsService) {
+        const assignedByUser = await this.userRepo.findOne({ where: { id: userId } });
         const title = `New task assigned: ${saved.title}`;
         const body = saved.description || 'You have been assigned a new task';
         await this.notificationsService.createForUser(saved.assignee, title, body, {
           cardId: saved.id,
           type: 'task_assigned',
-          category: 'Task'
+          category: 'Task',
+          priority: saved.priority,
+          dueDate: saved.dueDate,
+          assignedBy: assignedByUser?.name || 'Someone',
         });
       }
 
@@ -129,6 +140,7 @@ export class BoardsService {
             cardId: saved.id,
             type: 'task_overdue',
             category: 'Task',
+            dueDate: saved.dueDate,
           });
         }
       }
@@ -139,19 +151,30 @@ export class BoardsService {
   }
 
   async updateCard(userId: string, cardId: string, data: Partial<Card>) {
-    if (!await this.verifyCardOwnership(cardId, userId)) return null;
+    // Allow update if user owns the board OR is the assignee
+    const isOwner = await this.verifyCardOwnership(cardId, userId);
+    if (!isOwner) {
+      const card = await this.cardRepo.findOne({ where: { id: cardId } });
+      if (!card || card.assignee !== userId) return null;
+    }
     const existing = await this.cardRepo.findOne({ where: { id: cardId } });
     if (!existing) return null;
 
     // Notify when task is assigned to a different user
     try {
       if (data.assignee && data.assignee !== userId && data.assignee !== existing.assignee && this.notificationsService) {
+        const assignedByUser = await this.userRepo.findOne({ where: { id: userId } });
         const title = `Task assigned: ${existing.title}`;
         const body = existing.description || 'You have been assigned a task';
+        const dueDate = data.dueDate || existing.dueDate;
+        const priority = data.priority || existing.priority;
         await this.notificationsService.createForUser(data.assignee, title, body, {
           cardId: existing.id,
           type: 'task_assigned',
-          category: 'Task'
+          category: 'Task',
+          priority,
+          dueDate,
+          assignedBy: assignedByUser?.name || 'Someone',
         });
       }
 
@@ -166,6 +189,7 @@ export class BoardsService {
             cardId: existing.id,
             type: 'task_overdue',
             category: 'Task',
+            dueDate: data.dueDate,
           });
         }
       }
@@ -222,7 +246,13 @@ export class BoardsService {
   }
 
   async getCard(userId: string, cardId: string) {
-    if (!await this.verifyCardOwnership(cardId, userId)) return null;
+    const isOwner = await this.verifyCardOwnership(cardId, userId);
+    if (!isOwner) {
+      // Allow assignee to view the card
+      const card = await this.cardRepo.findOne({ where: { id: cardId } });
+      if (!card || card.assignee !== userId) return null;
+      return card;
+    }
     return this.cardRepo.findOne({ where: { id: cardId } });
   }
 
