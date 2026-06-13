@@ -1073,7 +1073,7 @@ const AddMeeting = () => {
     }
 
     const payload: any = {
-      center: !isOneOnOne ? center : undefined,
+      center: center || undefined,
       personName: isOneOnOne ? personName : undefined,
       date,
       day: !isOneOnOne ? day : undefined,
