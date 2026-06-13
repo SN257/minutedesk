@@ -15,7 +15,7 @@ type Note = {
 
 type Meeting = {
   id: string;
-  center: string;
+  center?: string | null;
   personName?: string;
   date: string;
   day?: string;
@@ -72,7 +72,8 @@ const AddMeeting = () => {
 
   const ITEMS_PER_PAGE = 5;
 
-  const formatCenterName = (s: string) => {
+  const formatCenterName = (s: string | null | undefined) => {
+    if (!s) return '-';
     return s
       .split(' ')
       .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))

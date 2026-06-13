@@ -32,15 +32,35 @@ type CardType = {
   checklist?: { id: string; text: string; done: boolean; assignee?: string; duration?: string }[];
 };
 
-// Predefined Labels & Colors (professional palette)
-const LABEL_COLORS = [
-  { name: 'Bug', color: 'bg-red-200 dark:bg-red-900/40', text: 'text-red-800 dark:text-red-200', bg: 'bg-red-50 dark:bg-red-900/20' },
-  { name: 'Feature', color: 'bg-sky-200 dark:bg-sky-900/40', text: 'text-sky-800 dark:text-sky-200', bg: 'bg-sky-50 dark:bg-sky-900/20' },
-  { name: 'Design', color: 'bg-violet-200 dark:bg-violet-900/40', text: 'text-violet-800 dark:text-violet-200', bg: 'bg-violet-50 dark:bg-violet-900/20' },
-  { name: 'Research', color: 'bg-emerald-200 dark:bg-emerald-900/40', text: 'text-emerald-800 dark:text-emerald-200', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
-  { name: 'Marketing', color: 'bg-amber-200 dark:bg-amber-900/40', text: 'text-amber-800 dark:text-amber-200', bg: 'bg-amber-50 dark:bg-amber-900/20' },
-  { name: 'Urgent', color: 'bg-pink-200 dark:bg-pink-900/40', text: 'text-pink-800 dark:text-pink-200', bg: 'bg-pink-50 dark:bg-pink-900/20' },
+// Custom Label color palette — users pick a color when creating a label
+type LabelDef = { name: string; hex: string };
+
+const LABEL_COLOR_PALETTE = [
+  '#EF4444', '#F97316', '#F59E0B', '#22C55E', '#14B8A6',
+  '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#64748B',
+  '#0EA5E9', '#D946EF',
 ];
+
+// Derive tailwind-style classes from a hex color for inline usage
+const hexToLabelStyle = (hex: string): { bg: string; text: string; border: string } => {
+  return {
+    bg: hex + '28', // ~16% opacity
+    text: hex,
+    border: hex + '44',
+  };
+};
+
+// Helper to load custom labels from localStorage for a given board
+const loadBoardLabels = (boardId: string): LabelDef[] => {
+  try {
+    const raw = localStorage.getItem(`board-labels-${boardId}`);
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+};
+
+const saveBoardLabels = (boardId: string, labels: LabelDef[]) => {
+  localStorage.setItem(`board-labels-${boardId}`, JSON.stringify(labels));
+};
 
 // NOTE: priority color mapping removed (unused) to avoid TS unused-variable errors
 
@@ -288,6 +308,15 @@ const BoardPage: React.FC = () => {
   const [boardFilterIndex, setBoardFilterIndex] = useState(-1);
   const [showPriorityDropdown, setShowPriorityDropdown] = useState(false);
   const [showLabelDropdown, setShowLabelDropdown] = useState(false);
+
+  // Custom labels state
+  const [boardLabels, setBoardLabels] = useState<LabelDef[]>([]);
+  const [newLabelName, setNewLabelName] = useState('');
+  const [newLabelColor, setNewLabelColor] = useState(LABEL_COLOR_PALETTE[0]);
+  const [showCreateLabel, setShowCreateLabel] = useState(false);
+  const [editingLabelIdx, setEditingLabelIdx] = useState<number | null>(null);
+  const [editLabelName, setEditLabelName] = useState('');
+  const [editLabelColor, setEditLabelColor] = useState('');
   const boardSortRef = useRef<HTMLDivElement | null>(null);
   const boardFilterRef = useRef<HTMLDivElement | null>(null);
   const priorityRef = useRef<HTMLDivElement | null>(null);
@@ -382,6 +411,35 @@ const BoardPage: React.FC = () => {
       setCards(map);
     })();
   }, [currentBoard]);
+
+  // Load custom labels when board changes
+  useEffect(() => {
+    if (currentBoard && currentBoard !== 'assigned-to-me') {
+      setBoardLabels(loadBoardLabels(currentBoard));
+    }
+  }, [currentBoard]);
+
+  // Collect all unique label names used across all cards in this board (for filter dropdown)
+  const allUsedLabels = React.useMemo(() => {
+    const names = new Set<string>();
+    Object.values(cards).flat().forEach(c => (c.labels || []).forEach(l => names.add(l)));
+    return Array.from(names);
+  }, [cards]);
+
+  // Combined labels list: board-defined labels + any labels on cards not yet in the board list
+  const allBoardLabels = React.useMemo(() => {
+    const definedNames = new Set(boardLabels.map(l => l.name));
+    const extras: LabelDef[] = allUsedLabels
+      .filter(n => !definedNames.has(n))
+      .map((n, i) => ({ name: n, hex: LABEL_COLOR_PALETTE[i % LABEL_COLOR_PALETTE.length] }));
+    return [...boardLabels, ...extras];
+  }, [boardLabels, allUsedLabels]);
+
+  // Helper to get a label's color from the board label list
+  const getLabelColor = (labelName: string): string => {
+    const found = allBoardLabels.find(l => l.name === labelName);
+    return found?.hex || '#64748B';
+  };
 
   // Refresh assigned-to-me cards when navigating to that view
   useEffect(() => {
@@ -757,12 +815,16 @@ const BoardPage: React.FC = () => {
                       All Labels
                     </div>
                     <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
-                    {LABEL_COLORS.map((label) => (
+                    {allBoardLabels.length === 0 && (
+                      <div className="px-3 py-2 text-slate-400 dark:text-slate-500 text-sm italic">No labels created yet</div>
+                    )}
+                    {allBoardLabels.map((label) => (
                       <div
                         key={label.name}
-                        className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 ${filterLabel === label.name ? 'bg-slate-100 dark:bg-slate-700 font-semibold' : ''}`}
+                        className={`w-full text-left px-3 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-gray-900 dark:text-slate-100 flex items-center gap-2 ${filterLabel === label.name ? 'bg-slate-100 dark:bg-slate-700 font-semibold' : ''}`}
                         onClick={() => { setFilterLabel(label.name); setShowLabelDropdown(false); }}
                       >
+                        <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: label.hex }} />
                         {label.name}
                       </div>
                     ))}
@@ -1108,9 +1170,10 @@ const BoardPage: React.FC = () => {
                           </div>
                           {card.description && <div className="text-sm text-slate-700 dark:text-slate-300 mb-3 line-clamp-3 font-medium whitespace-pre-line">{card.description}</div>}
                           <div className="flex items-center gap-2 flex-wrap">
-                            {(card.labels || []).map((l: string) => (
-                              <span key={l} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-semibold">{l}</span>
-                            ))}
+                            {(card.labels || []).map((l: string) => {
+                              const style = hexToLabelStyle(getLabelColor(l));
+                              return <span key={l} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}>{l}</span>;
+                            })}
                           </div>
                         </div>
                       )}
@@ -1330,9 +1393,10 @@ const BoardPage: React.FC = () => {
                                       </div>
                                       {card.description && <div className="text-sm text-slate-700 dark:text-slate-300 mb-3 line-clamp-3 font-medium whitespace-pre-line">{card.description}</div>}
                                       <div className="flex items-center gap-2 flex-wrap">
-                                        {(card.labels || []).map((l: string) => (
-                                          <span key={l} className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-full text-xs font-semibold">{l}</span>
-                                        ))}
+                                        {(card.labels || []).map((l: string) => {
+                                          const style = hexToLabelStyle(getLabelColor(l));
+                                          return <span key={l} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}>{l}</span>;
+                                        })}
                                       </div>
                                     </div>
                                   )}
@@ -1806,33 +1870,250 @@ const BoardPage: React.FC = () => {
                   {/* Labels Dropdown */}
                   <div className="relative" ref={labelsBtnRef}>
                     <button
-                      onClick={() => setShowLabelsModal(!showLabelsModal)}
+                      onClick={() => { setShowLabelsModal(!showLabelsModal); setShowCreateLabel(false); setEditingLabelIdx(null); }}
                       className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white text-sm font-medium rounded border border-slate-700 dark:border-slate-600 transition-colors shadow-sm"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
                       Labels
                     </button>
                     {showLabelsModal && (
-                      <DropdownContent wrapperRef={labelsBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 animate-scaleIn transition-colors" widthClass="w-72">
-                        <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Labels</h4>
-                        <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto custom-scrollbar">
-                          {LABEL_COLORS.map(label => {
-                            const isSelected = (showCard.labels || []).includes(label.name);
-                            return (
-                              <button
-                                key={label.name}
-                                onClick={async () => {
-                                  const currentLabels = showCard.labels || [];
-                                  const newLabels = isSelected
-                                    ? currentLabels.filter(l => l !== label.name)
-                                    : [...currentLabels, label.name];
-                                  await updateCardField('labels', newLabels);
+                      <DropdownContent wrapperRef={labelsBtnRef} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl p-3 animate-scaleIn transition-colors" widthClass="w-80">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Labels</h4>
+                          <button
+                            onClick={() => { setShowCreateLabel(true); setEditingLabelIdx(null); setNewLabelName(''); setNewLabelColor(LABEL_COLOR_PALETTE[0]); }}
+                            className="text-xs font-bold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 transition-all duration-200 py-1 px-2 hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-md"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                            Create
+                          </button>
+                        </div>
+
+                        {/* Create new label form */}
+                        {showCreateLabel && (
+                          <div className="mb-3 p-3 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner animate-fadeIn">
+                            {/* Live Preview */}
+                            <div className="mb-3 flex flex-col items-center justify-center py-2.5 bg-white dark:bg-slate-800/40 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mb-1.5 tracking-wider">Preview</span>
+                              <span
+                                className="px-3 py-1 rounded text-xs font-semibold border transition-all"
+                                style={{
+                                  backgroundColor: hexToLabelStyle(newLabelColor).bg,
+                                  color: hexToLabelStyle(newLabelColor).text,
+                                  borderColor: hexToLabelStyle(newLabelColor).border,
                                 }}
-                                className={`w-full ${label.color} ${label.text} px-3 py-2 rounded-lg font-semibold text-xs text-left transition-all hover:opacity-80 flex items-center justify-between ring-1 ring-inset ring-black/5`}
                               >
-                                <span>{label.name}</span>
-                                {isSelected && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
+                                {newLabelName.trim() || 'Label Preview'}
+                              </span>
+                            </div>
+
+                            <input
+                              type="text"
+                              value={newLabelName}
+                              onChange={e => setNewLabelName(e.target.value)}
+                              placeholder="Label name..."
+                              className="w-full px-2.5 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 mb-2 font-medium transition-all shadow-sm"
+                              autoFocus
+                              onKeyDown={e => {
+                                if (e.key === 'Enter' && newLabelName.trim()) {
+                                  if (!currentBoard) return;
+                                  const updated = [...boardLabels, { name: newLabelName.trim(), hex: newLabelColor }];
+                                  setBoardLabels(updated);
+                                  saveBoardLabels(currentBoard, updated);
+                                  setNewLabelName('');
+                                  setShowCreateLabel(false);
+                                }
+                              }}
+                            />
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {LABEL_COLOR_PALETTE.map(c => (
+                                <button
+                                  key={c}
+                                  onClick={() => setNewLabelColor(c)}
+                                  className={`w-6 h-6 rounded-full transition-all hover:scale-110 ${newLabelColor === c ? 'ring-2 ring-offset-2 ring-slate-500 dark:ring-offset-slate-900 scale-110' : ''}`}
+                                  style={{ backgroundColor: c }}
+                                />
+                              ))}
+                            </div>
+                            <div className="flex gap-1.5">
+                              <button
+                                disabled={!newLabelName.trim()}
+                                onClick={() => {
+                                  if (!currentBoard || !newLabelName.trim()) return;
+                                  const updated = [...boardLabels, { name: newLabelName.trim(), hex: newLabelColor }];
+                                  setBoardLabels(updated);
+                                  saveBoardLabels(currentBoard, updated);
+                                  setNewLabelName('');
+                                  setShowCreateLabel(false);
+                                }}
+                                className="flex-1 px-2.5 py-1.5 text-xs font-bold bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-md transition-all shadow-sm border border-slate-700 dark:border-slate-600 disabled:opacity-40 disabled:cursor-not-allowed"
+                              >
+                                Add Label
                               </button>
+                              <button
+                                onClick={() => setShowCreateLabel(false)}
+                                className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-all"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Label list */}
+                        <div className="space-y-1 max-h-60 overflow-y-auto custom-scrollbar">
+                          {allBoardLabels.length === 0 && !showCreateLabel && (
+                            <div className="text-center py-4 text-slate-400 dark:text-slate-500 text-sm">
+                              <svg className="w-8 h-8 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+                              No labels yet. Create one above!
+                            </div>
+                          )}
+                          {allBoardLabels.map((label, idx) => {
+                            const isSelected = (showCard.labels || []).includes(label.name);
+                            const style = hexToLabelStyle(label.hex);
+                            const isEditing = editingLabelIdx === idx;
+
+                            if (isEditing) {
+                              return (
+                                <div key={label.name + idx} className="p-3 bg-slate-50/80 dark:bg-slate-900/60 backdrop-blur-sm rounded-xl border border-slate-200/80 dark:border-slate-700/80 shadow-inner animate-fadeIn">
+                                  {/* Live Preview */}
+                                  <div className="mb-3 flex flex-col items-center justify-center py-2.5 bg-white dark:bg-slate-800/40 rounded-lg border border-slate-200/50 dark:border-slate-700/50">
+                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase mb-1.5 tracking-wider">Preview</span>
+                                    <span
+                                      className="px-3 py-1 rounded text-xs font-semibold border transition-all"
+                                      style={{
+                                        backgroundColor: hexToLabelStyle(editLabelColor).bg,
+                                        color: hexToLabelStyle(editLabelColor).text,
+                                        borderColor: hexToLabelStyle(editLabelColor).border,
+                                      }}
+                                    >
+                                      {editLabelName.trim() || 'Label Preview'}
+                                    </span>
+                                  </div>
+
+                                  <input
+                                    type="text"
+                                    value={editLabelName}
+                                    onChange={e => setEditLabelName(e.target.value)}
+                                    className="w-full px-2.5 py-1.5 text-sm bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500 mb-1.5 font-medium transition-all shadow-sm"
+                                    autoFocus
+                                  />
+                                  <div className="flex flex-wrap gap-1 mb-1.5">
+                                    {LABEL_COLOR_PALETTE.map(c => (
+                                      <button
+                                        key={c}
+                                        onClick={() => setEditLabelColor(c)}
+                                        className={`w-5 h-5 rounded-full transition-all hover:scale-110 ${editLabelColor === c ? 'ring-2 ring-offset-2 ring-slate-500 dark:ring-offset-slate-900 scale-110' : ''}`}
+                                        style={{ backgroundColor: c }}
+                                      />
+                                    ))}
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <button
+                                      onClick={() => {
+                                        if (!currentBoard || !editLabelName.trim()) return;
+                                        const oldName = allBoardLabels[idx].name;
+                                        const updated = boardLabels.map(l => l.name === oldName ? { name: editLabelName.trim(), hex: editLabelColor } : l);
+                                        // If it was an "extra" label (from cards but not in boardLabels), add it
+                                        if (!boardLabels.some(l => l.name === oldName)) {
+                                          updated.push({ name: editLabelName.trim(), hex: editLabelColor });
+                                        }
+                                        setBoardLabels(updated);
+                                        saveBoardLabels(currentBoard, updated);
+                                        // Update label name on all cards if renamed
+                                        if (oldName !== editLabelName.trim()) {
+                                          Object.entries(cards).forEach(([listId, listCards]) => {
+                                            const hasLabel = listCards.some(c => (c.labels || []).includes(oldName));
+                                            if (hasLabel) {
+                                              setCards(prev => ({
+                                                ...prev,
+                                                [listId]: prev[listId].map(c => ({
+                                                  ...c,
+                                                  labels: (c.labels || []).map(l => l === oldName ? editLabelName.trim() : l)
+                                                }))
+                                              }));
+                                              // Also update on backend for each card
+                                              listCards.filter(c => (c.labels || []).includes(oldName)).forEach(c => {
+                                                updateCardApi(c.id, { labels: (c.labels || []).map(l => l === oldName ? editLabelName.trim() : l) }).catch(() => {});
+                                              });
+                                            }
+                                          });
+                                          // Update currently showing card too
+                                          if ((showCard.labels || []).includes(oldName)) {
+                                            setShowCard(prev => prev ? { ...prev, labels: (prev.labels || []).map(l => l === oldName ? editLabelName.trim() : l) } : prev);
+                                          }
+                                        }
+                                        setEditingLabelIdx(null);
+                                      }}
+                                      className="flex-1 px-2.5 py-1.5 text-xs font-bold bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-md transition-colors shadow-sm border border-slate-700 dark:border-slate-600"
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      onClick={async () => {
+                                        if (!currentBoard) return;
+                                        const labelName = allBoardLabels[idx].name;
+                                        const updated = boardLabels.filter(l => l.name !== labelName);
+                                        setBoardLabels(updated);
+                                        saveBoardLabels(currentBoard, updated);
+                                        setEditingLabelIdx(null);
+                                      }}
+                                      className="px-2.5 py-1.5 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-md transition-colors"
+                                    >
+                                      Delete
+                                    </button>
+                                    <button
+                                      onClick={() => setEditingLabelIdx(null)}
+                                      className="px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div key={label.name + idx} className="flex items-center justify-between gap-2 p-1 rounded-lg hover:bg-slate-50/50 dark:hover:bg-slate-700/30 transition-all group">
+                                <button
+                                  onClick={async () => {
+                                    const currentLabels = showCard.labels || [];
+                                    const newLabels = isSelected
+                                      ? currentLabels.filter(l => l !== label.name)
+                                      : [...currentLabels, label.name];
+                                    await updateCardField('labels', newLabels);
+                                  }}
+                                  className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-left transition-all"
+                                >
+                                  {/* Custom Checkbox */}
+                                  <div className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${isSelected ? 'bg-slate-800 border-slate-800 dark:bg-slate-600 dark:border-slate-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'}`}>
+                                    {isSelected && (
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                    )}
+                                  </div>
+
+                                  {/* Label Badge */}
+                                  <span
+                                    className="flex-1 px-2.5 py-1 rounded text-xs font-semibold border transition-all text-center"
+                                    style={{
+                                      backgroundColor: style.bg,
+                                      color: style.text,
+                                      borderColor: style.border,
+                                    }}
+                                  >
+                                    {label.name}
+                                  </span>
+                                </button>
+                                <button
+                                  onClick={() => { setEditingLabelIdx(idx); setEditLabelName(label.name); setEditLabelColor(label.hex); setShowCreateLabel(false); }}
+                                  className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-all rounded hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                                  title="Edit label"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                </button>
+                              </div>
                             );
                           })}
                         </div>
@@ -1983,9 +2264,9 @@ const BoardPage: React.FC = () => {
                 {showCard.labels && showCard.labels.length > 0 && (
                   <div className="pl-8 flex flex-wrap gap-2">
                     {showCard.labels.map(label => {
-                      const labelInfo = LABEL_COLORS.find(l => l.name === label) || { name: label, color: 'bg-slate-200 dark:bg-slate-700', text: 'text-slate-800 dark:text-slate-200' };
+                      const style = hexToLabelStyle(getLabelColor(label));
                       return (
-                        <span key={label} className={`${labelInfo.color} ${labelInfo.text} px-3 py-1 rounded-full text-xs font-semibold`}>
+                        <span key={label} className="px-3 py-1 rounded-full text-xs font-semibold" style={{ backgroundColor: style.bg, color: style.text, border: `1px solid ${style.border}` }}>
                           {label}
                         </span>
                       );

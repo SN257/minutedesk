@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import { Pool } from 'pg';
-import { AppDataSource } from './data-source';
+import { DataSource } from 'typeorm';
 import { NotificationsService } from './notifications/notifications.service';
 import { User } from './users/entities/user.entity';
 import { WorkLog } from './work-logs/work-log.entity';
@@ -89,12 +89,12 @@ async function bootstrap() {
 
   // Schedule daily worklog reminders at 07:00 server time
   const notifSvc = app.get(NotificationsService);
+  const dataSource = app.get(DataSource);
 
   const runWorklogReminders = async () => {
     try {
-      if (!AppDataSource.isInitialized) await AppDataSource.initialize();
-      const userRepo = AppDataSource.getRepository(User);
-      const workLogRepo = AppDataSource.getRepository(WorkLog);
+      const userRepo = dataSource.getRepository(User);
+      const workLogRepo = dataSource.getRepository(WorkLog);
       const users = await userRepo.find();
       const today = new Date();
       const yyyy = today.getFullYear();
@@ -135,8 +135,7 @@ async function bootstrap() {
   // Schedule daily task due reminders at 07:00 as well
   const runTaskReminders = async () => {
     try {
-      if (!AppDataSource.isInitialized) await AppDataSource.initialize();
-      const taskRepo = AppDataSource.getRepository(Task);
+      const taskRepo = dataSource.getRepository(Task);
       const tasks = await taskRepo.createQueryBuilder('t').where('t.completed = false').andWhere('t.dueDate IS NOT NULL').getMany();
       const today = new Date();
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
@@ -160,16 +159,18 @@ async function bootstrap() {
 
   scheduleDailyAt(7, 0);
 
-  // Meeting reminders: check every 5 minutes for meetings starting within the next hour
+  // Meeting reminders: check every 5 minutes for scheduled meetings starting within the next hour
   const runMeetingReminders = async () => {
     try {
-      if (!AppDataSource.isInitialized) await AppDataSource.initialize();
-      const meetingRepo = AppDataSource.getRepository(Meeting);
+      const meetingRepo = dataSource.getRepository(Meeting);
       const now = new Date();
       const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
-      // Find meetings with start datetime between now and next hour
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}` + `-${String(now.getDate()).padStart(2, '0')}`;
-      const meetings = await meetingRepo.createQueryBuilder('m').where('m.date = :d', { d: todayStr }).getMany();
+      // Find scheduled meetings (with scheduledMeetingId) starting between now and next hour
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const meetings = await meetingRepo.createQueryBuilder('m')
+        .where('m.date = :d', { d: todayStr })
+        .andWhere('m.scheduledMeetingId IS NOT NULL')
+        .getMany();
       for (const m of meetings) {
         try {
           const start = new Date(`${m.date}T${m.startTime}`);

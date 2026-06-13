@@ -48,7 +48,8 @@ const defaultCenters = [
   "Scarborough"
 ];
 
-const formatCenterName = (s: string) => {
+const formatCenterName = (s: string | null | undefined) => {
+  if (!s) return '';
   return s
     .split(' ')
     .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
@@ -1073,11 +1074,11 @@ const AddMeeting = () => {
 
     const payload: any = {
       center: !isOneOnOne ? center : undefined,
-      personName: !isOneOnOne ? personName : undefined,
-      date: !isOneOnOne ? date : undefined,
+      personName: isOneOnOne ? personName : undefined,
+      date,
       day: !isOneOnOne ? day : undefined,
-      startTime: !isOneOnOne ? startTime : undefined,
-      endTime: !isOneOnOne ? endTime : undefined,
+      startTime,
+      endTime,
       place: !isOneOnOne ? place : undefined,
       attendance: !isOneOnOne ? attendance.join(", ") : undefined,
       presentSantName: !isOneOnOne ? presentSantName : undefined,

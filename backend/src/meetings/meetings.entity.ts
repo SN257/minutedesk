@@ -8,8 +8,8 @@ export class Meeting {
   @Column({ type: 'uuid' })
   userId: string;
 
-  @Column()
-  center: string;
+  @Column({ nullable: true })
+  center?: string;
 
   @Column({ nullable: true })
   personName?: string;

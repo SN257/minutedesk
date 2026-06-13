@@ -11,7 +11,7 @@ type Note = {
 
 type Meeting = {
   id: string;
-  center: string;
+  center?: string | null;
   personName?: string;
   date: string;
   day?: string;
