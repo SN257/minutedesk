@@ -1,6 +1,20 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { getCurrentUser, logout as apiLogout } from '../services/api';
+import { getCurrentUser, logout as apiLogout, updateUserTimezone } from '../services/api';
+import { getUserTimeZone } from '../utils/date';
+
+const SYNCED_TIMEZONE_KEY = 'synced_timezone';
+
+// Let the backend know the browser's timezone so reminders/due-date checks
+// run on the user's local clock instead of the server's. Only calls the API
+// when the detected timezone actually changed, so this is cheap to call often.
+export const syncTimezone = () => {
+  const timezone = getUserTimeZone();
+  if (localStorage.getItem(SYNCED_TIMEZONE_KEY) === timezone) return;
+  updateUserTimezone(timezone)
+    .then(() => localStorage.setItem(SYNCED_TIMEZONE_KEY, timezone))
+    .catch(() => {});
+};
 
 interface User {
   id: string;
@@ -29,6 +43,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const userData = await getCurrentUser();
       setUser(userData);
+      if (userData) syncTimezone();
     } catch (error) {
       setUser(null);
     } finally {

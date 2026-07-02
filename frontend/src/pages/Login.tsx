@@ -6,7 +6,7 @@ import {
     resetForgotPassword,
     verifyForgotPasswordOtp,
 } from "../services/api";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth, syncTimezone } from "../contexts/AuthContext";
 
 type AuthPanelMode = "login" | "forgotEmail" | "forgotOtp" | "forgotPassword";
 
@@ -48,6 +48,7 @@ const Login = () => {
             const loggedInUser = await apiLogin({ email, password });
             // Set user directly from login response to avoid cross-site cookie issues
             setUser(loggedInUser);
+            syncTimezone();
             // Navigate to returnUrl after successful login
             navigate(returnUrl);
         } catch (err: any) {

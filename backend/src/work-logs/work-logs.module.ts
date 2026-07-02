@@ -5,9 +5,10 @@ import { WorkLog } from './work-log.entity';
 import { WorkLogsController } from './work-logs.controller';
 import { WorkLogsService } from './work-logs.service';
 import { BoardsModule } from '../boards/boards.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([WorkLog]), BoardsModule],
+    imports: [TypeOrmModule.forFeature([WorkLog]), BoardsModule, UsersModule],
     controllers: [WorkLogsController],
     providers: [WorkLogsService],
     exports: [WorkLogsService],

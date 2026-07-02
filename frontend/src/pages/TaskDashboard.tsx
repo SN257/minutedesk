@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getBoardsApi, getAllCardsApi, getDailyWorkWarnings } from "../services/api";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 const TaskDashboard = () => {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ const TaskDashboard = () => {
         })();
     }, []);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
 
     // Process Cards
     const activeCards = cards.filter(c => !c.archived);
@@ -40,7 +41,7 @@ const TaskDashboard = () => {
     const dueTodayCards = activeCards.filter(c => c.dueDate === today);
 
     const formatDate = (ds: string) => {
-        try { return new Date(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+        try { return parseLocalDate(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
         catch { return ds || 'No date'; }
     };
 
@@ -50,14 +51,14 @@ const TaskDashboard = () => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        return d.toISOString().split('T')[0];
+        return getLocalDateString(d);
     });
 
     const trendData = last7Days.map(dateStr => {
-        const createdCount = cards.filter(c => c.createdAt && c.createdAt.startsWith(dateStr)).length;
-        const completedCount = completedCards.filter(c => c.updatedAt && c.updatedAt.startsWith(dateStr)).length;
+        const createdCount = cards.filter(c => c.createdAt && getLocalDateString(new Date(c.createdAt)) === dateStr).length;
+        const completedCount = completedCards.filter(c => c.updatedAt && getLocalDateString(new Date(c.updatedAt)) === dateStr).length;
         return {
-            name: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+            name: parseLocalDate(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
             Added: createdCount,
             Completed: completedCount
         };

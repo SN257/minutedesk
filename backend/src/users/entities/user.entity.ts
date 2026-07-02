@@ -23,6 +23,10 @@ export class User {
   @Column({ type: 'varchar', default: 'user' })
   role: string;
 
+  // IANA timezone name (e.g. "America/New_York"), auto-detected from the user's browser.
+  @Column({ type: 'varchar', nullable: true })
+  timezone?: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

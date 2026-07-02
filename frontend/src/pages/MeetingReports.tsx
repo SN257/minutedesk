@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { getMeetings, getAllCardsForReportsApi } from '../services/api';
 import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 // Using custom table UI instead of MUI DataGrid
 
 interface MeetingNote {
@@ -292,26 +293,26 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
         // Do not include a separate title line for lessons in the exported CSV
         csvContent += 'Lesson,Meeting,Date,Type,Assignee,Deadline,Status\n';
         allLessons.forEach(l => {
-          csvContent += `"${l.text}","${l.meetingTitle}","${new Date(l.meetingDate).toLocaleDateString()}","${l.meetingType || ''}","${l.assignee || ''}","${l.deadline ? new Date(l.deadline).toLocaleDateString() : ''}","${l.isCompleted ? 'Done' : 'Pending'}"\n`;
+          csvContent += `"${l.text}","${l.meetingTitle}","${parseLocalDate(l.meetingDate).toLocaleDateString()}","${l.meetingType || ''}","${l.assignee || ''}","${l.deadline ? parseLocalDate(l.deadline).toLocaleDateString() : ''}","${l.isCompleted ? 'Done' : 'Pending'}"\n`;
         });
       } else if (activeReport === 'decisions') {
         csvContent += 'DECISIONS\n';
         csvContent += 'Decision,Meeting,Date,Type,Assignee,Deadline,Status\n';
         allDecisions.forEach(d => {
-          csvContent += `"${d.text}","${d.meetingTitle}","${new Date(d.meetingDate).toLocaleDateString()}","${d.meetingType || ''}","${d.assignee || ''}","${d.deadline ? new Date(d.deadline).toLocaleDateString() : ''}","${d.isCompleted ? 'Done' : 'Pending'}"\n`;
+          csvContent += `"${d.text}","${d.meetingTitle}","${parseLocalDate(d.meetingDate).toLocaleDateString()}","${d.meetingType || ''}","${d.assignee || ''}","${d.deadline ? parseLocalDate(d.deadline).toLocaleDateString() : ''}","${d.isCompleted ? 'Done' : 'Pending'}"\n`;
         });
       } else {
         csvContent += 'INFORMATION\n';
         csvContent += 'Information,Category,Meeting,Date,Type,Assignee\n';
         allInformation.forEach(i => {
-          csvContent += `"${i.text}","${i.category || ''}","${i.meetingTitle}","${new Date(i.meetingDate).toLocaleDateString()}","${i.meetingType || ''}","${i.assignee || ''}"\n`;
+          csvContent += `"${i.text}","${i.category || ''}","${i.meetingTitle}","${parseLocalDate(i.meetingDate).toLocaleDateString()}","${i.meetingType || ''}","${i.assignee || ''}"\n`;
         });
       }
     } else {
       csvContent = 'TASKS REPORT\n\n';
       csvContent += 'Title,List,Due Date,Priority,Status,Labels\n';
       tasks.forEach(t => {
-        csvContent += `"${t.title}","${t.list?.title || ''}","${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : ''}","${t.priority || ''}","${t.archived ? 'Completed' : 'Active'}","${t.labels?.join(', ') || ''}"\n`;
+        csvContent += `"${t.title}","${t.list?.title || ''}","${t.dueDate ? parseLocalDate(t.dueDate).toLocaleDateString() : ''}","${t.priority || ''}","${t.archived ? 'Completed' : 'Active'}","${t.labels?.join(', ') || ''}"\n`;
       });
     }
 
@@ -319,7 +320,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${activeTab}_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `${activeTab}_report_${getLocalDateString()}.csv`;
     a.click();
   };
 
@@ -1077,7 +1078,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                                   : item.meetingTitle || 'Meeting'}
                               </span>
                               <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {new Date(item.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                {parseLocalDate(item.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                               </span>
                             </div>
                           </td>
@@ -1102,7 +1103,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                               <td className="px-6 py-4 whitespace-nowrap">
                                 {item.deadline ? (
                                   <span className="text-sm text-slate-700 dark:text-slate-300">
-                                    {new Date(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {parseLocalDate(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                   </span>
                                 ) : (
                                   <span className="text-sm text-slate-400 dark:text-slate-600">—</span>
@@ -1116,7 +1117,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                       ))
                     ) : (
                       paginatedData.map((task: any) => {
-                        const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.archived;
+                        const isOverdue = task.dueDate && task.dueDate < getLocalDateString() && !task.archived;
                         const isCompleted = task.archived || task.completed || task.status === 'done';
 
                         return (
@@ -1144,7 +1145,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               {task.dueDate ? (
                                 <span className={`text-sm font-medium ${isOverdue ? 'text-red-600 dark:text-red-400' : 'text-slate-700 dark:text-slate-300'}`}>
-                                  {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                  {parseLocalDate(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                               ) : (
                                 <span className="text-sm text-slate-400 dark:text-slate-600">—</span>
@@ -1490,7 +1491,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                       </td>
                       <td className="px-6 py-4 align-top">
                         <span className="text-sm text-slate-600 font-medium">
-                          {new Date(item.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {parseLocalDate(item.meetingDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </span>
                       </td>
                       <td className="px-6 py-4 align-top">
@@ -1509,7 +1510,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                         <td className="px-6 py-4 align-top">
                           {item.deadline ? (
                             <span className="text-sm text-slate-600 font-medium">
-                              {new Date(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {parseLocalDate(item.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                           ) : (
                             <span className="text-sm text-slate-400">—</span>
@@ -1520,7 +1521,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                   ))
                 ) : (
                   paginatedData.map((task: any) => {
-                    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.archived;
+                    const isOverdue = task.dueDate && task.dueDate < getLocalDateString() && !task.archived;
                     return (
                       <tr key={task.id} className="group transition-colors duration-200 border-b dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                         <td className="px-6 py-4 align-top">
@@ -1540,7 +1541,7 @@ const Reports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                         <td className="px-6 py-4 align-top">
                           {task.dueDate ? (
                             <span className={`text-sm font-semibold ${isOverdue ? 'text-red-600' : 'text-slate-600'}`}>
-                              {new Date(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              {parseLocalDate(task.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                             </span>
                           ) : (
                             <span className="text-sm text-slate-400">—</span>

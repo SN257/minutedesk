@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { isYesterdayWorkLogMissing, getDailyWorkWarnings, getWorkLogApi } from "../services/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { getLocalDateString, parseLocalDate } from "../utils/date";
 
 const WorkLogDashboard = () => {
     const navigate = useNavigate();
@@ -10,7 +11,7 @@ const WorkLogDashboard = () => {
     const [warnings, setWarnings] = useState<any[]>([]);
     const [weeklyLogs, setWeeklyLogs] = useState<any[]>([]);
 
-    const todayDateStr = new Date().toISOString().split('T')[0];
+    const todayDateStr = getLocalDateString();
 
     useEffect(() => {
         (async () => {
@@ -21,7 +22,7 @@ const WorkLogDashboard = () => {
                 const last7Days = Array.from({ length: 7 }, (_, i) => {
                     const d = new Date();
                     d.setDate(d.getDate() - (6 - i));
-                    return d.toISOString().split('T')[0];
+                    return getLocalDateString(d);
                 });
 
                 const promises = last7Days.map(dateStr => getWorkLogApi(dateStr).catch(() => null));
@@ -35,7 +36,7 @@ const WorkLogDashboard = () => {
 
                 const processedLogs = last7Days.map((dateStr, index) => {
                     const log = results[index];
-                    const d = new Date(dateStr);
+                    const d = parseLocalDate(dateStr);
                     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
 
                     const hasLog = !!(log && (log.todayWork?.trim().length > 0 || log.todayOnLeave || log.todayHoliday));

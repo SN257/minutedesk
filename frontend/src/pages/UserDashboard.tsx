@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getMeetings, getTasks, getBoardsApi, getScheduledMeetings, getAllCardsApi, getDailyWorkWarnings, isYesterdayWorkLogMissing } from '../services/api';
 import { useSettings } from '../contexts/SettingsContext';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 const UserDashboard = () => {
     const nav = useNavigate();
@@ -40,12 +41,12 @@ const UserDashboard = () => {
     const clockH = now.getHours() % 12 || 12;
     const clockM = String(now.getMinutes()).padStart(2, '0');
     const clockAP = now.getHours() >= 12 ? 'PM' : 'AM';
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const todayM = meetings.filter(m => m.date === today);
     const active = [...tasks.filter(t => !t.completed), ...cards.filter(c => !c.archived)];
     const done = [...tasks.filter(t => t.completed), ...cards.filter(c => c.archived)];
     const totalCount = tasks.length + cards.length;
-    const overdue = tasks.filter(t => { if (t.completed || !t.dueDate) return false; try { const d = new Date(t.dueDate); d.setHours(0, 0, 0, 0); const n = new Date(); n.setHours(0, 0, 0, 0); return d < n } catch { return false } });
+    const overdue = tasks.filter(t => { if (t.completed || !t.dueDate) return false; try { return t.dueDate < today } catch { return false } });
 
     const alerts = warns.length + overdue.length;
     const score = totalCount > 0 ? Math.round(done.length / totalCount * 100) : 0;
@@ -53,7 +54,7 @@ const UserDashboard = () => {
     const uName = user?.name || user?.email?.split('@')[0] || 'User';
     const uInit = (user?.name || user?.email || 'U')[0].toUpperCase();
 
-    const chartData = (() => { const o: { l: string; m: number; t: number }[] = []; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); const lbl = d.toLocaleDateString('en-US', { month: 'short' }); const y = d.getFullYear(); const mo = d.getMonth(); o.push({ l: lbl, m: meetings.filter(x => { try { const dd = new Date(x.date || x.createdAt); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length, t: tasks.filter(x => { try { const dd = new Date(x.createdAt || x.dueDate); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length }) } return o })();
+    const chartData = (() => { const o: { l: string; m: number; t: number }[] = []; for (let i = 5; i >= 0; i--) { const d = new Date(); d.setMonth(d.getMonth() - i); const lbl = d.toLocaleDateString('en-US', { month: 'short' }); const y = d.getFullYear(); const mo = d.getMonth(); o.push({ l: lbl, m: meetings.filter(x => { try { const dd = x.date ? parseLocalDate(x.date) : new Date(x.createdAt); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length, t: tasks.filter(x => { try { const dd = x.createdAt ? new Date(x.createdAt) : parseLocalDate(x.dueDate); return dd.getMonth() === mo && dd.getFullYear() === y } catch { return false } }).length }) } return o })();
     const cMax = Math.max(...chartData.map(d => Math.max(d.m, d.t)), 1);
 
         // Debug: expose chart data when running locally to help diagnose incorrect graphs

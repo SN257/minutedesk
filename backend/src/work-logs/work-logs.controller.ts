@@ -2,11 +2,16 @@
 import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { WorkLogsService } from './work-logs.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
+import { UsersService } from '../users/users.service';
+import { getZonedDateString, addDaysToDateString } from '../common/timezone.util';
 
 @Controller('work-logs')
 @UseGuards(AuthGuard)
 export class WorkLogsController {
-    constructor(private readonly workLogsService: WorkLogsService) { }
+    constructor(
+        private readonly workLogsService: WorkLogsService,
+        private readonly usersService: UsersService,
+    ) { }
 
     @Get(':date')
     async getLog(@Req() req: any, @Param('date') date: string) {
@@ -15,10 +20,9 @@ export class WorkLogsController {
 
     @Get('missing/yesterday')
     async missingYesterday(@Req() req: any) {
-        const today = new Date();
-        const y = new Date(today);
-        y.setDate(y.getDate() - 1);
-        const dateStr = y.toISOString().split('T')[0];
+        const user = await this.usersService.findById(req.session.userId);
+        const todayStr = getZonedDateString(new Date(), user?.timezone);
+        const dateStr = addDaysToDateString(todayStr, -1);
         const exists = await this.workLogsService.hasWorkLogForDate(req.session.userId, dateStr);
         return { missing: !exists, date: dateStr };
     }

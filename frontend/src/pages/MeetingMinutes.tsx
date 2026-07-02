@@ -5,6 +5,7 @@ import { useConfirm } from "../components/ConfirmProvider";
 import { useSnackbar } from "../contexts/SnackbarContext";
 import { useMeetings } from "../contexts/MeetingsContext";
 import AttendanceTooltip from "../components/AttendanceTooltip";
+import { parseLocalDate } from "../utils/date";
 
 type Note = {
   id: string;
@@ -59,7 +60,7 @@ const AddMeeting = () => {
   };
 
   const formatDate = (dateString: string) => {
-    const d = new Date(dateString);
+    const d = parseLocalDate(dateString);
     const dd = String(d.getDate()).padStart(2, '0');
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const yyyy = d.getFullYear();

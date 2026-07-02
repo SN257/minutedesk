@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllCardsApi, getBoardsApi } from "../services/api";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
+import { getLocalDateString } from '../utils/date';
 
 const ReportDashboard = () => {
     const navigate = useNavigate();
@@ -30,7 +31,7 @@ const ReportDashboard = () => {
     // Process Cards for Stats
     const activeCards = cards.filter(c => !c.archived);
     const completedCards = cards.filter(c => c.archived);
-    const overdueCards = activeCards.filter(c => c.dueDate && new Date(c.dueDate) < new Date());
+    const overdueCards = activeCards.filter(c => c.dueDate && c.dueDate < getLocalDateString());
 
     const completionRate = cards.length ? Math.round((completedCards.length / cards.length) * 100) : 0;
     const efficiencyScore = cards.length ? Math.round(((completedCards.length + (activeCards.length - overdueCards.length)) / cards.length) * 100) : 100;

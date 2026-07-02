@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { getWorkLogApi } from "../services/api";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: boolean }) {
     const [loading, setLoading] = useState(true);
@@ -16,7 +17,7 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
                 for (let i = 0; i < 30; i++) {
                     const d = new Date();
                     d.setDate(d.getDate() - i);
-                    const dateStr = d.toISOString().split('T')[0];
+                    const dateStr = getLocalDateString(d);
                     dateStrings.push(dateStr);
                     promises.push(getWorkLogApi(dateStr).catch(() => null));
                 }
@@ -41,21 +42,21 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
 
     const exportToCSV = () => {
         let csvContent = 'WORKLOG EXPORT (Last 30 Days)\n\nDate,Status,Today Work,Tomorrow Work\n';
-        const todayIso = new Date().toISOString().split('T')[0];
+        const todayIso = getLocalDateString();
         logs.forEach(l => {
-            const isWeekendLocal = [0, 6].includes(new Date(l.date).getDay());
+            const isWeekendLocal = [0, 6].includes(parseLocalDate(l.date).getDay());
             let status = 'Logged';
             if (isWeekendLocal && !l.todayWork) status = 'Weekend';
             else if (!l.todayWork && l.date < todayIso) status = 'Missed';
             else if (!l.todayWork) status = 'Pending';
 
-            csvContent += `"${new Date(l.date).toLocaleDateString()}","${status}","${(l.todayWork || '').replace(/"/g, '""')}","${(l.tomorrowWork || '').replace(/"/g, '""')}"\n`;
+            csvContent += `"${parseLocalDate(l.date).toLocaleDateString()}","${status}","${(l.todayWork || '').replace(/"/g, '""')}","${(l.tomorrowWork || '').replace(/"/g, '""')}"\n`;
         });
         const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `worklog_export_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `worklog_export_${getLocalDateString()}.csv`;
         a.click();
     };
 
@@ -65,9 +66,9 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
     let weekends = 0;
 
     logs.forEach(l => {
-        const d = new Date(l.date);
+        const d = parseLocalDate(l.date);
         const isWkend = [0, 6].includes(d.getDay());
-        const isPast = l.date < new Date().toISOString().split('T')[0];
+        const isPast = l.date < getLocalDateString();
 
         if (l.todayWork) logged++;
         else if (isWkend) weekends++;
@@ -80,7 +81,7 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
     ].filter(d => d.value > 0);
 
     const lengthData = logs.filter(l => l.todayWork).map(l => ({
-        name: new Date(l.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        name: parseLocalDate(l.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
         "Entry Length": l.todayWork?.length || 0
     }));
 
@@ -157,16 +158,16 @@ export default function WorkLogReports({ isEmbedded = false }: { isEmbedded?: bo
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {[...logs].reverse().slice(0, 10).map(l => {
-                                const isWeekendLocal = [0, 6].includes(new Date(l.date).getDay());
+                                const isWeekendLocal = [0, 6].includes(parseLocalDate(l.date).getDay());
                                 let status = 'Logged';
                                 if (isWeekendLocal && !l.todayTask) status = 'Weekend';
-                                else if (!l.todayTask && new Date(l.date).toISOString().split('T')[0] < new Date().toISOString().split('T')[0]) status = 'Missed';
+                                else if (!l.todayTask && l.date < getLocalDateString()) status = 'Missed';
                                 else if (!l.todayTask) status = 'Pending';
 
                                 return (
                                     <tr key={l.date} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4">
-                                            <p className="font-bold text-sm text-slate-900 truncate max-w-xs">{new Date(l.date).toLocaleDateString()}</p>
+                                            <p className="font-bold text-sm text-slate-900 truncate max-w-xs">{parseLocalDate(l.date).toLocaleDateString()}</p>
                                         </td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider border ${status === 'Missed' ? 'bg-red-50 text-red-600 border-red-200' : status === 'Logged' ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>

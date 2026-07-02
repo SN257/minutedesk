@@ -59,6 +59,14 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
+  async updateTimezone(id: string, timezone: string): Promise<User | null> {
+    const user = await this.findById(id);
+    if (!user) return null;
+
+    user.timezone = timezone;
+    return this.usersRepository.save(user);
+  }
+
   async setPassword(id: string, newPassword: string): Promise<User | null> {
     const user = await this.findById(id);
     if (!user) return null;

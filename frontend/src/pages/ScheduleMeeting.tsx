@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { createScheduledMeeting, getScheduledMeetings, updateScheduledMeeting, deleteScheduledMeeting } from '../services/api';
 import { useSnackbar } from '../contexts/SnackbarContext';
+import { parseLocalDate } from '../utils/date';
 
 type AgendaPoint = { id: string; text: string };
 type TimeSlot = { id: string; time: string; available: boolean; score?: number };
@@ -227,7 +228,7 @@ const ScheduleMeeting: React.FC = () => {
         const bookingsMap: Record<string, ScheduledMeetingDetail[]> = {};
 
         meetings.forEach((m: any) => {
-          const dateObj = new Date(m.date);
+          const dateObj = parseLocalDate(m.date);
           const dateKey = dateObj.toDateString();
           if (!bookingsMap[dateKey]) bookingsMap[dateKey] = [];
           bookingsMap[dateKey].push({

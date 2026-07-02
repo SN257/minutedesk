@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getMeeting } from "../services/api";
 import { useSnackbar } from "../contexts/SnackbarContext";
+import { parseLocalDate } from "../utils/date";
 
 const ViewMeeting = () => {
   const { id } = useParams();
@@ -34,7 +35,7 @@ const ViewMeeting = () => {
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+    const date = parseLocalDate(dateStr);
     const dd = String(date.getDate()).padStart(2, '0');
     const mm = String(date.getMonth() + 1).padStart(2, '0');
     const yyyy = date.getFullYear();
@@ -57,7 +58,7 @@ const ViewMeeting = () => {
       </tr>
       <tr style="border-bottom: 1px solid #cbd5e1;">
         <td style="padding: 4px 10px 4px 0; font-weight: bold; color: #475569;">Date:</td>
-        <td style="padding: 4px 0; color: #0f172a;">${new Date(m.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+        <td style="padding: 4px 0; color: #0f172a;">${parseLocalDate(m.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
       </tr>
       <tr style="border-bottom: 1px solid #cbd5e1;">
         <td style="padding: 4px 10px 4px 0; font-weight: bold; color: #475569;">Time:</td>
@@ -98,7 +99,7 @@ const ViewMeeting = () => {
       return `
         <div style="margin-bottom: 10px;">
           <div style="margin-bottom: 5px;">
-            <h3 style="display: inline; font-size: 14px; font-weight: bold; color: #0f172a; margin: 0;">${escape(title)}</h3>${badges}
+            <h3 style="display: inline; white-space: pre-wrap; font-size: 14px; font-weight: bold; color: #0f172a; margin: 0;">${escape(title)}</h3>${badges}
           </div>
           ${note.points && note.points.length > 0 ? `
           <div style="padding-left: 16px;">
@@ -582,7 +583,7 @@ const ViewMeeting = () => {
                           <tr className="border-b border-slate-300">
                             <td className="py-2.5 pr-4 font-bold text-slate-700">Date:</td>
                             <td className="py-2.5 text-slate-900">
-                              {new Date(meeting.date).toLocaleDateString('en-US', {
+                              {parseLocalDate(meeting.date).toLocaleDateString('en-US', {
                                 weekday: 'long',
                                 year: 'numeric',
                                 month: 'long',
@@ -627,7 +628,7 @@ const ViewMeeting = () => {
                           <div key={note.id} className="mb-6">
                             {/* Agenda Title */}
                             <div className="mb-3">
-                              <h3 className="text-base font-bold text-slate-900 inline">
+                              <h3 className="text-base font-bold text-slate-900 inline whitespace-pre-wrap">
                                 {meeting.notes.length === 1
                                   ? (note.title || 'Agenda Item')
                                   : `${idx + 1}. ${note.title || `Agenda Item ${idx + 1}`}`}
@@ -729,7 +730,7 @@ const ViewMeeting = () => {
                   <div className="print-info-item">
                     <span className="print-info-label">Date:</span>
                     <span className="print-info-value">{(() => {
-                      const d = new Date(meeting.date);
+                      const d = parseLocalDate(meeting.date);
                       return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
                     })()}</span>
                   </div>
@@ -876,7 +877,7 @@ const ViewMeeting = () => {
                 <div key={note.id} className="note-card bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 p-6 transition-colors">
                   <div className="flex items-start justify-between mb-4 print:mb-3">
                     <div className="flex items-center gap-3 flex-wrap">
-                      <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100">
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-slate-100 whitespace-pre-wrap">
                         {meeting.notes.length === 1 ? (note.title || 'Agenda') : (`Agenda ${idx + 1}${note.title ? ': ' + note.title : ''}`)}
                       </h3>
                       {note.important && (
@@ -940,7 +941,7 @@ const ViewMeeting = () => {
             <div className="hidden print:block print-footer">
               <p>
                 <strong>Meeting Minutes</strong> - {meeting.personName} | {meeting.center} | {(() => {
-                  const d = new Date(meeting.date);
+                  const d = parseLocalDate(meeting.date);
                   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 })()}
               </p>

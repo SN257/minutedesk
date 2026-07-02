@@ -3,12 +3,17 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as session from 'express-session';
 import { Pool } from 'pg';
-import { DataSource } from 'typeorm';
+import { Repository, In } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotificationsService } from './notifications/notifications.service';
 import { User } from './users/entities/user.entity';
 import { WorkLog } from './work-logs/work-log.entity';
 import { Task } from './tasks/tasks.entity';
 import { Meeting } from './meetings/meetings.entity';
+import { getZonedDateString, getZonedHourMinute, addDaysToDateString, zonedTimeToUtc } from './common/timezone.util';
+
+// Hour (in each user's own local timezone) at which daily reminder emails go out.
+const REMINDER_HOUR = 7;
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -87,23 +92,26 @@ async function bootstrap() {
   await app.listen(port, '0.0.0.0');
   console.log(`Application is running on: http://0.0.0.0:${port}`);
 
-  // Schedule daily worklog reminders at 07:00 server time
+  // Schedule daily worklog/task reminders at REMINDER_HOUR in each user's own local time
   const notifSvc = app.get(NotificationsService);
-  const dataSource = app.get(DataSource);
+  const userRepo = app.get<Repository<User>>(getRepositoryToken(User));
+  const workLogRepo = app.get<Repository<WorkLog>>(getRepositoryToken(WorkLog));
+  const taskRepo = app.get<Repository<Task>>(getRepositoryToken(Task));
+  const meetingRepo = app.get<Repository<Meeting>>(getRepositoryToken(Meeting));
+
+  // Ticking at a fixed hourly cadence means, for any user's fixed UTC offset
+  // (including fractional ones like UTC+5:30), exactly one tick per day lands
+  // within their local REMINDER_HOUR — so gating on the hour alone is enough
+  // to send each of these once a day, on each user's own clock.
+  const isReminderHourFor = (timezone?: string) => getZonedHourMinute(new Date(), timezone).hour === REMINDER_HOUR;
 
   const runWorklogReminders = async () => {
     try {
-      const userRepo = dataSource.getRepository(User);
-      const workLogRepo = dataSource.getRepository(WorkLog);
       const users = await userRepo.find();
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      const dateStr = `${yyyy}-${mm}-${dd}`;
-
       for (const u of users) {
         try {
+          if (!isReminderHourFor(u.timezone)) continue;
+          const dateStr = getZonedDateString(new Date(), u.timezone);
           const existing = await workLogRepo.findOne({ where: { userId: u.id, date: dateStr } });
           if (!existing) {
             await notifSvc.createForUser(u.id, 'Submit your daily work log', "Please submit today's work log.", { type: 'daily_worklog_reminder', date: dateStr });
@@ -118,31 +126,19 @@ async function bootstrap() {
     }
   };
 
-  const scheduleDailyAt = (hour = 7, minute = 0) => {
-    const now = new Date();
-    const next = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute, 0, 0);
-    if (next <= now) next.setDate(next.getDate() + 1);
-    const msUntilNext = next.getTime() - now.getTime();
-    setTimeout(() => {
-      runWorklogReminders();
-      setInterval(runWorklogReminders, 24 * 60 * 60 * 1000);
-    }, msUntilNext);
-    console.log(`[worklog-reminder] scheduled first run in ${Math.round(msUntilNext / 1000)}s`);
-  };
-
-  scheduleDailyAt(7, 0);
-
-  // Schedule daily task due reminders at 07:00 as well
   const runTaskReminders = async () => {
     try {
-      const taskRepo = dataSource.getRepository(Task);
       const tasks = await taskRepo.createQueryBuilder('t').where('t.completed = false').andWhere('t.dueDate IS NOT NULL').getMany();
-      const today = new Date();
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const taskUserIds = [...new Set(tasks.map(t => t.userId))];
+      const taskUsers = taskUserIds.length ? await userRepo.find({ where: { id: In(taskUserIds) } }) : [];
+      const usersById = new Map(taskUsers.map(u => [u.id, u]));
       for (const t of tasks) {
         try {
           const due = t.dueDate;
           if (!due) continue;
+          const user = usersById.get(t.userId);
+          if (!isReminderHourFor(user?.timezone)) continue;
+          const todayStr = getZonedDateString(new Date(), user?.timezone);
           if (due === todayStr) {
             await notifSvc.createForUser(t.userId, `Task due today: ${t.title}`, t.description || '', { type: 'task_due_today', taskId: t.id });
           } else if (due < todayStr) {
@@ -157,23 +153,33 @@ async function bootstrap() {
     }
   };
 
-  scheduleDailyAt(7, 0);
+  // A fixed 1-hour cadence keeps each user's local-hour check phase-stable, so
+  // this alone is enough to fire each reminder once a day per user (see above).
+  runWorklogReminders();
+  runTaskReminders();
+  setInterval(runWorklogReminders, 60 * 60 * 1000);
+  setInterval(runTaskReminders, 60 * 60 * 1000);
 
   // Meeting reminders: check every 5 minutes for scheduled meetings starting within the next hour
   const runMeetingReminders = async () => {
     try {
-      const meetingRepo = dataSource.getRepository(Meeting);
       const now = new Date();
       const inOneHour = new Date(now.getTime() + 60 * 60 * 1000);
-      // Find scheduled meetings (with scheduledMeetingId) starting between now and next hour
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      // Coarse UTC-based date window just to narrow the SQL query; the exact
+      // start-time comparison below is redone precisely per-meeting using each
+      // meeting owner's own timezone.
+      const dateCandidates = [-1, 0, 1].map(offset => addDaysToDateString(now.toISOString().split('T')[0], offset));
       const meetings = await meetingRepo.createQueryBuilder('m')
-        .where('m.date = :d', { d: todayStr })
+        .where('m.date IN (:...dates)', { dates: dateCandidates })
         .andWhere('m.scheduledMeetingId IS NOT NULL')
         .getMany();
+      const meetingUserIds = [...new Set(meetings.map(m => m.userId))];
+      const meetingUsers = meetingUserIds.length ? await userRepo.find({ where: { id: In(meetingUserIds) } }) : [];
+      const usersById = new Map(meetingUsers.map(u => [u.id, u]));
       for (const m of meetings) {
         try {
-          const start = new Date(`${m.date}T${m.startTime}`);
+          const ownerTimezone = usersById.get(m.userId)?.timezone;
+          const start = zonedTimeToUtc(m.date, m.startTime, ownerTimezone);
           if (start.getTime() > now.getTime() && start.getTime() <= inOneHour.getTime()) {
             await notifSvc.createForUser(m.userId, `Meeting starting soon: ${m.meetingType || 'Meeting'}`, `Starts at ${m.startTime}`, { type: 'meeting_reminder', meetingId: m.id });
           }

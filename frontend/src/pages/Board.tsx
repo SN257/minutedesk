@@ -12,6 +12,7 @@ import {
 import { useConfirm } from '../components/ConfirmProvider';
 import { useSnackbar } from '../contexts/SnackbarContext';
 import CreateBoardModal from '../components/CreateBoardModal';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 // Types
 type BoardType = { id: string; title: string; createdAt?: string };
@@ -2276,9 +2277,9 @@ const BoardPage: React.FC = () => {
 
                 {/* Display due date */}
                 {showCard.dueDate && (
-                  <div className={`pl-8 flex items-center gap-2 text-sm ${new Date(showCard.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) && !showCard.completed ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                  <div className={`pl-8 flex items-center gap-2 text-sm ${showCard.dueDate < getLocalDateString() && !showCard.completed ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    <span className="font-medium">Due: {new Date(showCard.dueDate).toLocaleDateString()}{new Date(showCard.dueDate).setHours(0, 0, 0, 0) < new Date().setHours(0, 0, 0, 0) && !showCard.completed ? ' (Overdue)' : ''}</span>
+                    <span className="font-medium">Due: {parseLocalDate(showCard.dueDate).toLocaleDateString()}{showCard.dueDate < getLocalDateString() && !showCard.completed ? ' (Overdue)' : ''}</span>
                   </div>
                 )}
 

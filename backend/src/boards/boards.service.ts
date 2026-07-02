@@ -11,6 +11,7 @@ import { CreateCardDto } from './dto/create-card.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { User } from '../users/entities/user.entity';
+import { getZonedDateString, addDaysToDateString } from '../common/timezone.util';
 
 @Injectable()
 export class BoardsService {
@@ -22,6 +23,12 @@ export class BoardsService {
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly notificationsService?: NotificationsService,
   ) { }
+
+  // "Today" in the timezone of the given user, falling back to UTC if unset.
+  private async getTodayForUser(userId?: string): Promise<string> {
+    const user = userId ? await this.userRepo.findOne({ where: { id: userId } }) : null;
+    return getZonedDateString(new Date(), user?.timezone);
+  }
 
   private async verifyBoardOwnership(boardId: string, userId: string): Promise<boolean> {
     const board = await this.boardRepo.findOne({ where: { id: boardId, userId } });
@@ -131,9 +138,9 @@ export class BoardsService {
 
       // Check if task is already overdue and notify immediately
       if (saved.dueDate && this.notificationsService) {
-        const today = new Date().toISOString().split('T')[0];
+        const targetUser = saved.assignee || userId;
+        const today = await this.getTodayForUser(targetUser);
         if (saved.dueDate < today) {
-          const targetUser = saved.assignee || userId;
           const title = `Task overdue: ${saved.title}`;
           const body = `This task was due on ${saved.dueDate}`;
           await this.notificationsService.createForUser(targetUser, title, body, {
@@ -180,9 +187,9 @@ export class BoardsService {
 
       // Check if due date is being updated to an overdue date
       if (data.dueDate && this.notificationsService) {
-        const today = new Date().toISOString().split('T')[0];
+        const targetUser = existing.assignee || userId;
+        const today = await this.getTodayForUser(targetUser);
         if (data.dueDate < today && data.dueDate !== existing.dueDate) {
-          const targetUser = existing.assignee || userId;
           const title = `Task overdue: ${existing.title}`;
           const body = `This task was due on ${data.dueDate}`;
           await this.notificationsService.createForUser(targetUser, title, body, {
@@ -367,16 +374,14 @@ export class BoardsService {
   async createCardsFromWorkLog(userId: string, tasks: string[]): Promise<Card[]> {
     console.log('[BoardsService] createCardsFromWorkLog called with', tasks.length, 'tasks');
     const { list } = await this.getOrCreateDailyWorkBoard(userId);
+    // default due date: tomorrow (in the user's local timezone)
+    const dueDate = addDaysToDateString(await this.getTodayForUser(userId), 1);
 
     const cards: Card[] = [];
     for (const task of tasks) {
       if (!task.trim()) continue;
 
       console.log('[BoardsService] Creating card:', task.trim());
-      // default due date: tomorrow (from now)
-      const due = new Date();
-      due.setDate(due.getDate() + 1);
-      const dueDate = due.toISOString().split('T')[0];
 
       const card = this.cardRepo.create({
         listId: list.id,
@@ -415,9 +420,7 @@ export class BoardsService {
 
       console.log('[BoardsService] Creating card:', task.trim());
       // due date should be the day after the work log date
-      const d = new Date(workLogDate);
-      d.setDate(d.getDate() + 1);
-      const due = d.toISOString().split('T')[0];
+      const due = addDaysToDateString(workLogDate, 1);
 
       const card = this.cardRepo.create({
         listId: list.id,
@@ -438,7 +441,9 @@ export class BoardsService {
 
   async getOverdueWorkLogWarnings(userId: string): Promise<any[]> {
     // Find cards in the user's Daily Work board that were created from work logs,
-    // are not archived, and whose dueDate is before today.
+    // are not archived, and whose dueDate is before today (in the user's own timezone,
+    // not the DB server's — CURRENT_DATE would use the server's timezone).
+    const today = await this.getTodayForUser(userId);
     const qb = this.cardRepo.createQueryBuilder('c')
       .select(['c.id', 'c.title', 'c.listId', 'c.workLogDate', 'c.dueDate'])
       .innerJoin('lists', 'l', 'l.id = c."listId"')
@@ -447,7 +452,7 @@ export class BoardsService {
       .andWhere('b.title = :boardTitle', { boardTitle: 'Daily Work' })
       .andWhere('c."workLogDate" IS NOT NULL')
       .andWhere('c.archived = false')
-      .andWhere('c."dueDate" < CURRENT_DATE')
+      .andWhere('c."dueDate" < :today', { today })
       .orderBy('c."dueDate"', 'ASC');
 
     const rows = await qb.getRawMany();
@@ -504,9 +509,9 @@ export class BoardsService {
 
       // Check if task is already overdue and notify immediately
       if (saved.dueDate && this.notificationsService) {
-        const today = new Date().toISOString().split('T')[0];
+        const targetUser = saved.assignee || creatorId;
+        const today = await this.getTodayForUser(targetUser);
         if (saved.dueDate < today) {
-          const targetUser = saved.assignee || creatorId;
           if (targetUser) {
             const title = `Task overdue: ${saved.title}`;
             const body = `This task was due on ${saved.dueDate}`;
@@ -547,9 +552,9 @@ export class BoardsService {
 
       // Check if due date is being updated to an overdue date
       if (data.dueDate && this.notificationsService) {
-        const today = new Date().toISOString().split('T')[0];
+        const targetUser = existing.assignee || updaterId;
+        const today = await this.getTodayForUser(targetUser);
         if (data.dueDate < today && data.dueDate !== existing.dueDate) {
-          const targetUser = existing.assignee || updaterId;
           if (targetUser) {
             const title = `Task overdue: ${existing.title}`;
             const body = `This task was due on ${data.dueDate}`;

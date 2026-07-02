@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getMeetings, getScheduledMeetings } from "../services/api";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 interface Meeting {
     id: string;
@@ -39,7 +40,7 @@ const MeetingDashboard = () => {
         })();
     }, []);
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     const now = new Date();
     const currentH = now.getHours();
     const currentM = now.getMinutes();
@@ -92,7 +93,7 @@ const MeetingDashboard = () => {
     }).filter(sm => !meetings.some(m => m.scheduledMeetingId === sm.id));
 
     const formatDate = (ds: string) => {
-        try { return new Date(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
+        try { return parseLocalDate(ds).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
         catch { return ds; }
     };
 
@@ -102,14 +103,14 @@ const MeetingDashboard = () => {
     const last7Days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
-        return d.toISOString().split('T')[0];
+        return getLocalDateString(d);
     });
 
     const trendData = last7Days.map(dateStr => {
         const heldCount = meetings.filter(m => m.date === dateStr).length;
         const scheduledCount = scheduledMapped.filter(sm => sm.date === dateStr).length;
         return {
-            name: new Date(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
+            name: parseLocalDate(dateStr).toLocaleDateString('en-US', { weekday: 'short' }),
             Scheduled: scheduledCount,
             Completed: heldCount
         };

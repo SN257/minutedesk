@@ -4,6 +4,7 @@ import { createMeeting, getMeeting, updateMeeting, getScheduledMeetings, getSche
 import { useSnackbar } from "../contexts/SnackbarContext";
 import { useMeetings } from "../contexts/MeetingsContext";
 import { useAuth } from "../contexts/AuthContext";
+import { parseLocalDate } from "../utils/date";
 
 type Point = {
   id: string;
@@ -23,6 +24,7 @@ type Note = {
 };
 
 const defaultCenters = [
+  "NA Head Center",
   "ATLANTA",
   "BOSTON",
   "CHICAGO",
@@ -54,6 +56,56 @@ const formatCenterName = (s: string | null | undefined) => {
     .split(' ')
     .map((w) => (w.length > 0 ? w[0].toUpperCase() + w.slice(1).toLowerCase() : w))
     .join(' ');
+};
+
+type ParsedAgendaItem = { title: string; points: string[] };
+
+const NUMBERED_RE = /^\d+[.)]\s+/;
+const ANY_MARKER_RE = /^(?:\d+[.)]|[a-zA-Z][.)]|[ivxlcdm]{2,}[.)]|[•●♦*\-◦○▪‣·])\s+/i;
+
+// Parses pasted outline text (e.g. copied from Word) into agenda items.
+//
+// Two modes, chosen by whether the text has numbered lines ("1.", "2.", ...):
+// - Numbered outline: only numbered lines start a new agenda item. Everything
+//   else directly under one — bullets ("*", "-", "•"), lettered/roman
+//   sub-points, or plain continuation text, regardless of indentation — is
+//   folded into that same agenda's discussion points. This is the common case
+//   (a numbered heading followed by a flat "*" bullet list of details) and
+//   matters most: bullet characters alone are too ambiguous to tell "new
+//   agenda" from "sub-point of the one above" without the numbering anchor.
+// - No numbering at all: falls back to indentation — lines at the minimum
+//   indentation are each their own agenda item, deeper-indented lines nest
+//   under the closest preceding one.
+const parseBulkAgendaText = (raw: string): ParsedAgendaItem[] => {
+  const lines = raw
+    .split(/\r\n|\r|\n/)
+    .map((line) => {
+      if (!line.trim()) return null;
+      const leading = line.match(/^[\t ]*/)?.[0] ?? '';
+      const indent = leading.replace(/\t/g, '    ').length;
+      const trimmed = line.trim();
+      const isNumbered = NUMBERED_RE.test(trimmed);
+      const text = trimmed.replace(ANY_MARKER_RE, '').trim();
+      return text ? { text, indent, isNumbered } : null;
+    })
+    .filter((l): l is { text: string; indent: number; isNumbered: boolean } => l !== null);
+
+  if (lines.length === 0) return [];
+
+  const hasNumbering = lines.some((l) => l.isNumbered);
+  const baseIndent = Math.min(...lines.map((l) => l.indent));
+  const items: ParsedAgendaItem[] = [];
+
+  for (const line of lines) {
+    const isSub = items.length > 0 && (hasNumbering ? !line.isNumbered : line.indent > baseIndent);
+    if (isSub) {
+      items[items.length - 1].points.push(line.text);
+    } else {
+      items.push({ title: line.text, points: [] });
+    }
+  }
+
+  return items;
 };
 
 const AddMeeting = () => {
@@ -97,6 +149,8 @@ const AddMeeting = () => {
   const [dayHighlightedIndex, setDayHighlightedIndex] = useState<number>(-1);
   const [isComposing, setIsComposing] = useState(false);
   const [lastAddedPointId, setLastAddedPointId] = useState<string | null>(null);
+  const [showBulkAgendaModal, setShowBulkAgendaModal] = useState(false);
+  const [bulkAgendaText, setBulkAgendaText] = useState("");
   const inputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
   const [showAssigneeDropdown, setShowAssigneeDropdown] = useState<string | null>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -118,10 +172,10 @@ const AddMeeting = () => {
   const DatePicker = ({ value, onChange, className }: { value?: string; onChange: (v: string) => void; className?: string }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef<HTMLDivElement | null>(null);
-    const [viewDate, setViewDate] = useState(() => value ? new Date(value) : new Date());
+    const [viewDate, setViewDate] = useState(() => value ? parseLocalDate(value) : new Date());
 
     useEffect(() => {
-      if (value) setViewDate(new Date(value));
+      if (value) setViewDate(parseLocalDate(value));
     }, [value]);
 
     useEffect(() => {
@@ -145,7 +199,7 @@ const AddMeeting = () => {
 
     const formatDisplay = (v?: string) => {
       if (!v) return '';
-      try { return new Date(v).toLocaleDateString(); } catch { return v; }
+      try { return parseLocalDate(v).toLocaleDateString(); } catch { return v; }
     };
 
     const toIso = (d: Date) => {
@@ -224,7 +278,7 @@ const AddMeeting = () => {
   const weekdayFromDate = (d: string) => {
     if (!d) return '';
     try {
-      const dt = new Date(d);
+      const dt = parseLocalDate(d);
       if (isNaN(dt.getTime())) return '';
       return daysOfWeek[dt.getDay()];
     } catch (err) {
@@ -701,6 +755,48 @@ const AddMeeting = () => {
     }]);
   };
 
+  const bulkAgendaPreview = showBulkAgendaModal ? parseBulkAgendaText(bulkAgendaText) : [];
+
+  // Rebuilds the agenda title so it reads the same way it was pasted: the main
+  // line, a blank line, then each sub-point on its own line with a bullet.
+  const formatAgendaTitle = (item: ParsedAgendaItem) =>
+    item.points.length > 0
+      ? `${item.title}\n\n${item.points.map((p) => `* ${p}`).join('\n')}`
+      : item.title;
+
+  const applyBulkAgenda = () => {
+    const parsed = parseBulkAgendaText(bulkAgendaText);
+    if (parsed.length === 0) return;
+
+    // The whole pasted block (main heading + its sub-points) is one agenda
+    // item — its full text becomes the agenda title. The point/minutes area
+    // is left blank; that's where the actual meeting discussion gets written.
+    const newNotes: Note[] = parsed.map((item) => ({
+      id: String(Date.now() + Math.random()),
+      title: formatAgendaTitle(item),
+      points: [{
+        id: String(Date.now() + Math.random()),
+        text: '',
+        category: 'Information' as const,
+      }],
+      important: false,
+      followUp: false,
+    }));
+
+    setNotes((prev) => {
+      // Drop the untouched blank placeholder agenda (if any) so bulk-adding
+      // right after opening the form doesn't leave an empty item behind.
+      const meaningfulExisting = prev.filter(
+        (n) => (n.title && n.title.trim()) || n.points.some((p) => p.text && p.text.trim()),
+      );
+      return [...meaningfulExisting, ...newNotes];
+    });
+
+    setBulkAgendaText("");
+    setShowBulkAgendaModal(false);
+    showSnackbar(`Added ${newNotes.length} agenda item${newNotes.length === 1 ? '' : 's'}`, 'success');
+  };
+
   const removeNote = (id: string) => {
     setNotes((s) => s.filter((n) => n.id !== id));
   };
@@ -962,7 +1058,7 @@ const AddMeeting = () => {
         // Create or update cards for each point
         for (const { point, noteTitle } of userPoints) {
           const cardTitle = `[${point.category}] ${point.text}`;
-          const prettyDate = date ? new Date(date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : date;
+          const prettyDate = date ? parseLocalDate(date).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' }) : date;
           const assignerName = user?.name || 'the meeting organizer';
           const cardDescription = `This task was created following the ${meetingType || 'meeting'} held in ${center} on ${prettyDate}. The agenda item discussed was ${noteTitle}. The responsibility for completing this task has been assigned to you by ${assignerName}.`;
 
@@ -1155,7 +1251,7 @@ const AddMeeting = () => {
             agenda: s.agenda || []
           }));
 
-          const dateKey = new Date(isoDate).toDateString();
+          const dateKey = parseLocalDate(isoDate).toDateString();
           let existing: any = {};
           try { existing = JSON.parse(localStorage.getItem('scheduledMeetings') || '{}'); } catch (e) { existing = {}; }
           existing[dateKey] = serverIntervals;
@@ -1577,7 +1673,17 @@ const AddMeeting = () => {
 
                 <div className="p-6">
                   <div className="space-y-6">
-                    <div className="flex justify-end mb-2">
+                    <div className="flex justify-end gap-3 mb-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowBulkAgendaModal(true)}
+                        className="px-6 py-2.5 bg-white dark:bg-slate-900 border-2 border-slate-700 dark:border-slate-500 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-600 focus:ring-offset-2 transition-colors shadow-sm flex items-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Bulk Agenda
+                      </button>
                       <button
                         type="button"
                         onClick={addNote}
@@ -1591,49 +1697,47 @@ const AddMeeting = () => {
                       <div key={note.id} className="bg-gray-50 dark:bg-slate-900/50 border-2 border-gray-300 dark:border-slate-700 rounded-2xl p-5 transition-colors">
                         <div className="flex justify-between items-center mb-4">
                           <div className="flex-1">
-                            {isPrefilledFromScheduled ? (
-                              <div className="text-base font-bold text-gray-900 dark:text-slate-100">{note.title || `Agenda ${noteIdx + 1}`}</div>
-                            ) : (
-                              <div>
-                                {titleEditMode.current[note.id] ? (
-                                  <input
-                                    type="text"
-                                    ref={(el) => { inputRefs.current[`title-${note.id}`] = el; }}
-                                    value={note.title ?? `Agenda ${noteIdx + 1}`}
-                                    onChange={(e) => {
-                                      const t = e.target.value;
-                                      setNotes((prev) => prev.map((n) => n.id === note.id ? { ...n, title: t } : n));
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        titleEditMode.current[note.id] = false;
-                                        forceRerender((v) => v + 1);
-                                      }
-                                    }}
-                                    onBlur={() => {
+                            {/* Agenda title is always editable, regardless of where the meeting
+                                was prefilled from (scheduled meeting, bulk paste, or manual entry) */}
+                            <div>
+                              {titleEditMode.current[note.id] ? (
+                                <input
+                                  type="text"
+                                  ref={(el) => { inputRefs.current[`title-${note.id}`] = el; }}
+                                  value={note.title ?? `Agenda ${noteIdx + 1}`}
+                                  onChange={(e) => {
+                                    const t = e.target.value;
+                                    setNotes((prev) => prev.map((n) => n.id === note.id ? { ...n, title: t } : n));
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
                                       titleEditMode.current[note.id] = false;
                                       forceRerender((v) => v + 1);
-                                    }}
-                                    placeholder={`Agenda ${noteIdx + 1}`}
-                                    className="w-full text-base font-bold text-gray-900 dark:text-slate-100 bg-transparent focus:outline-none placeholder-gray-400 dark:placeholder-slate-500"
-                                  />
-                                ) : (
-                                  <div
-                                    className="text-base font-bold text-gray-900 dark:text-slate-100 cursor-text"
-                                    onClick={() => {
-                                      titleEditMode.current[note.id] = true;
-                                      forceRerender((v) => v + 1);
-                                      setTimeout(() => {
-                                        const el = inputRefs.current[`title-${note.id}`];
-                                        if (el) el.focus();
-                                      }, 0);
-                                    }}
-                                  >
-                                    {note.title || `Agenda ${noteIdx + 1}`}
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    titleEditMode.current[note.id] = false;
+                                    forceRerender((v) => v + 1);
+                                  }}
+                                  placeholder={`Agenda ${noteIdx + 1}`}
+                                  className="w-full text-base font-bold text-gray-900 dark:text-slate-100 bg-transparent focus:outline-none placeholder-gray-400 dark:placeholder-slate-500"
+                                />
+                              ) : (
+                                <div
+                                  className="text-base font-bold text-gray-900 dark:text-slate-100 cursor-text whitespace-pre-wrap"
+                                  onClick={() => {
+                                    titleEditMode.current[note.id] = true;
+                                    forceRerender((v) => v + 1);
+                                    setTimeout(() => {
+                                      const el = inputRefs.current[`title-${note.id}`];
+                                      if (el) el.focus();
+                                    }, 0);
+                                  }}
+                                >
+                                  {note.title || `Agenda ${noteIdx + 1}`}
+                                </div>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
@@ -1826,6 +1930,88 @@ const AddMeeting = () => {
               </div>
             )}
           </form>
+
+          {showBulkAgendaModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-700 flex flex-col max-h-[85vh]">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Bulk Add Agenda</h3>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      Paste an agenda list from Word or anywhere else. If your list is numbered ("1.", "2.", ...), each
+                      numbered line starts a new agenda item — everything under it (bullets, lettered points, plain
+                      text) is folded into that same agenda's title, not split up. With no numbering, indentation
+                      decides grouping. The Minutes for each item are left blank for you to fill in during the meeting.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setShowBulkAgendaModal(false); setBulkAgendaText(""); }}
+                    className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors flex-shrink-0 ml-4"
+                    aria-label="Close"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="p-6 overflow-y-auto space-y-4">
+                  <textarea
+                    value={bulkAgendaText}
+                    onChange={(e) => setBulkAgendaText(e.target.value)}
+                    placeholder={"1. Budget planning\n   a. Review Q1 spending\n   b. Approve Q2 budget\n2. Team performance review\n3. Marketing strategy"}
+                    rows={10}
+                    autoFocus
+                    className="w-full bg-white dark:bg-slate-950 border-2 border-gray-300 dark:border-slate-700 rounded-lg px-4 py-3 text-gray-900 dark:text-slate-100 text-sm font-mono placeholder-gray-400 dark:placeholder-slate-600 focus:outline-none focus:border-slate-600 dark:focus:border-slate-500 focus:ring-2 focus:ring-slate-600 focus:ring-opacity-20 transition-colors resize-y"
+                  />
+
+                  {bulkAgendaPreview.length > 0 && (
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Preview — {bulkAgendaPreview.length} agenda item{bulkAgendaPreview.length === 1 ? '' : 's'}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">
+                        Each block below becomes one agenda item's title. The Minutes section for it starts blank, ready to fill in during the meeting.
+                      </p>
+                      <div className="border border-slate-200 dark:border-slate-700 rounded-lg divide-y divide-slate-200 dark:divide-slate-700 max-h-56 overflow-y-auto">
+                        {bulkAgendaPreview.map((item, idx) => (
+                          <div key={idx} className="px-4 py-2.5">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{idx + 1}. {item.title}</p>
+                            {item.points.length > 0 && (
+                              <ul className="mt-1 ml-4 space-y-0.5 list-disc list-inside">
+                                {item.points.map((pt, pIdx) => (
+                                  <li key={pIdx} className="text-xs text-slate-600 dark:text-slate-400">{pt}</li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700">
+                  <button
+                    type="button"
+                    onClick={() => { setShowBulkAgendaModal(false); setBulkAgendaText(""); }}
+                    className="px-5 py-2.5 border-2 border-gray-300 dark:border-slate-700 rounded-lg font-semibold text-sm text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={applyBulkAgenda}
+                    disabled={bulkAgendaPreview.length === 0}
+                    className="px-5 py-2.5 bg-slate-700 dark:bg-slate-600 text-white font-semibold rounded-lg hover:bg-slate-800 dark:hover:bg-slate-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+                  >
+                    Add {bulkAgendaPreview.length > 0 ? bulkAgendaPreview.length : ''} Agenda Item{bulkAgendaPreview.length === 1 ? '' : 's'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

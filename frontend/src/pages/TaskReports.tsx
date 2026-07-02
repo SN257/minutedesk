@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getAllCardsForReportsApi } from '../services/api';
 import { Tooltip, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
+import { getLocalDateString, parseLocalDate } from '../utils/date';
 
 interface Card {
   id: string;
@@ -63,14 +64,14 @@ const TaskReports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
     let csvContent = 'TASKS REPORT\n\n';
     csvContent += 'Title,List,Due Date,Priority,Status,Labels\n';
     tasks.forEach(t => {
-      csvContent += `"${t.title}","${t.list?.title || ''}","${t.dueDate ? new Date(t.dueDate).toLocaleDateString() : ''}","${t.priority || ''}","${t.archived ? 'Completed' : 'Active'}","${t.labels?.join(', ') || ''}"\n`;
+      csvContent += `"${t.title}","${t.list?.title || ''}","${t.dueDate ? parseLocalDate(t.dueDate).toLocaleDateString() : ''}","${t.priority || ''}","${t.archived ? 'Completed' : 'Active'}","${t.labels?.join(', ') || ''}"\n`;
     });
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `tasks_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `tasks_report_${getLocalDateString()}.csv`;
     a.click();
   };
 
@@ -162,7 +163,7 @@ const TaskReports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
     color: priorityColors[key] || '#94a3b8'
   })).sort((a, b) => b.value - a.value);
 
-  const overdueTasks = tasks.filter(t => !t.archived && t.dueDate && new Date(t.dueDate) < new Date()).length;
+  const overdueTasks = tasks.filter(t => !t.archived && t.dueDate && t.dueDate < getLocalDateString()).length;
   const onTrackTasks = activeTasks - overdueTasks;
   const deadlineData = [
     { name: 'Overdue', value: overdueTasks, color: '#ef4444' },
@@ -341,8 +342,8 @@ const TaskReports = ({ isEmbedded = false }: { isEmbedded?: boolean }) => {
                           <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md text-xs font-bold">{task.list?.title || 'Unknown List'}</span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`text-xs font-bold ${task.archived ? 'text-slate-400' : task.dueDate && new Date(task.dueDate) < new Date() ? 'text-red-500' : 'text-slate-600 dark:text-slate-400'}`}>
-                            {task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}
+                          <span className={`text-xs font-bold ${task.archived ? 'text-slate-400' : task.dueDate && task.dueDate < getLocalDateString() ? 'text-red-500' : 'text-slate-600 dark:text-slate-400'}`}>
+                            {task.dueDate ? parseLocalDate(task.dueDate).toLocaleDateString() : '-'}
                           </span>
                         </td>
                       </tr>

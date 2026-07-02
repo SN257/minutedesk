@@ -148,6 +148,15 @@ export const getCurrentUser = async (): Promise<User | null> => {
   }
 };
 
+// Sync the browser's detected timezone to the user's profile
+export const updateUserTimezone = async (timezone: string): Promise<void> => {
+  await authFetch(`${API_URL}/users/timezone`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ timezone }),
+  });
+};
+
 // Logout function
 export const logout = async (): Promise<void> => {
   await authFetch(`${API_URL}/auth/logout`, {

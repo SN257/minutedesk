@@ -64,6 +64,20 @@ export class UsersController {
     };
   }
 
+  @Put('timezone')
+  @UseGuards(AuthGuard)
+  async updateTimezone(@Req() req: Request, @Body() body: { timezone?: string }) {
+    const userId = this.getAuthenticatedUserId(req);
+    if (!body.timezone || typeof body.timezone !== 'string') {
+      throw new HttpException('timezone is required', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.updateTimezone(userId, body.timezone);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return { id: user.id, timezone: user.timezone };
+  }
+
   @Post('change-password/request-otp')
   @UseGuards(AuthGuard)
   async requestPasswordChangeOtp(@Req() req: Request) {
