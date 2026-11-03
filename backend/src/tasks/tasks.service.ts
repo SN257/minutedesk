@@ -29,6 +29,15 @@ export class TasksService {
     const existing = await this.findOneForUser(userId, id);
     if (!existing) return null;
     const updated = this.repo.merge(existing, dto);
+
+    const wasDone = existing.completed || existing.status === 'done';
+    const isDone = updated.completed || updated.status === 'done';
+    if (isDone && !wasDone) {
+      updated.completedAt = new Date();
+    } else if (!isDone && wasDone) {
+      updated.completedAt = undefined;
+    }
+
     return this.repo.save(updated);
   }
 

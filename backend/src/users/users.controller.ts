@@ -64,6 +64,23 @@ export class UsersController {
     };
   }
 
+  @Get('preferences')
+  @UseGuards(AuthGuard)
+  async getPreferences(@Req() req: Request) {
+    const userId = this.getAuthenticatedUserId(req);
+    const user = await this.usersService.findById(userId);
+    return user?.preferences ?? {};
+  }
+
+  @Put('preferences')
+  @UseGuards(AuthGuard)
+  async updatePreferences(@Req() req: Request, @Body() body: { preferences?: unknown }) {
+    const userId = this.getAuthenticatedUserId(req);
+    const saved = await this.usersService.updatePreferences(userId, body?.preferences);
+    if (!saved) throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    return saved;
+  }
+
   @Put('timezone')
   @UseGuards(AuthGuard)
   async updateTimezone(@Req() req: Request, @Body() body: { timezone?: string }) {
@@ -125,11 +142,26 @@ export class UsersController {
     return this.usersService.adminFindAll();
   }
 
+  /**
+   * Admins who were only given the People section may manage ordinary accounts, but they can
+   * never create or edit a super admin, hand out super-admin rights, or change anyone's admin sections.
+   */
+  private async requireSuperAdminForPrivilege(req: Request, role?: string, adminTabs?: unknown, targetId?: string) {
+    const actor = await this.usersService.findById(this.getAuthenticatedUserId(req));
+    if (actor?.role === 'super_admin') return;
+    const target = targetId ? await this.usersService.findById(targetId) : null;
+    if (role === 'super_admin' || target?.role === 'super_admin' || adminTabs !== undefined) {
+      throw new HttpException('Only a super admin can do that.', HttpStatus.FORBIDDEN);
+    }
+  }
+
   @Post('admin/create')
   @UseGuards(SuperAdminGuard)
   async adminCreateUser(
-    @Body() body: { email: string; password: string; name?: string; role?: string },
+    @Body() body: { email: string; password: string; name?: string; role?: string; allowedPages?: string[] | null; adminTabs?: string[] | null },
+    @Req() req: Request,
   ) {
+    await this.requireSuperAdminForPrivilege(req, body.role, body.adminTabs);
     if (!body.email || !body.password) {
       throw new HttpException('Email and password are required', HttpStatus.BAD_REQUEST);
     }
@@ -137,15 +169,17 @@ export class UsersController {
     if (existing) {
       throw new HttpException('User with this email already exists', HttpStatus.CONFLICT);
     }
-    return this.usersService.adminCreateUser(body.email, body.password, body.name, body.role);
+    return this.usersService.adminCreateUser(body.email, body.password, body.name, body.role, body.allowedPages, body.adminTabs);
   }
 
   @Put('admin/:id')
   @UseGuards(SuperAdminGuard)
   async adminUpdateUser(
     @Param('id') id: string,
-    @Body() body: { name?: string; email?: string; role?: string },
+    @Body() body: { name?: string; email?: string; role?: string; allowedPages?: string[] | null; adminTabs?: string[] | null },
+    @Req() req: Request,
   ) {
+    await this.requireSuperAdminForPrivilege(req, body.role, body.adminTabs, id);
     const user = await this.usersService.adminUpdateUser(id, body);
     if (!user) {
       throw new HttpException('User not found', HttpStatus.NOT_FOUND);
@@ -156,6 +190,7 @@ export class UsersController {
   @Delete('admin/:id')
   @UseGuards(SuperAdminGuard)
   async adminDeleteUser(@Param('id') id: string, @Req() req: Request) {
+    await this.requireSuperAdminForPrivilege(req, undefined, undefined, id);
     const currentUserId = (req.session as any)?.userId;
     if (id === currentUserId) {
       throw new HttpException('Cannot delete your own account', HttpStatus.BAD_REQUEST);

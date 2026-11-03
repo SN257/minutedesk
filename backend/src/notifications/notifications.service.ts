@@ -33,6 +33,10 @@ export class NotificationsService {
   ) {}
 
   async createForUser(userId: string, title: string, body?: string, meta?: any) {
+    // honour the person's own notification choices (Settings → Notifications)
+    const target = await this.userRepo.findOne({ where: { id: userId } }).catch(() => null);
+    const prefs = target?.preferences ?? {};
+    if (meta?.type && prefs.notify?.[meta.type] === false) return null;
     // avoid duplicate notifications when identical meta is provided
     if (meta) {
       const exists = await this.repo.findOne({ where: { userId, meta } });
@@ -42,8 +46,8 @@ export class NotificationsService {
     const saved = await this.repo.save(n);
 
     // Send email notification asynchronously — never block on it
-    this.userRepo.findOne({ where: { id: userId } }).then(user => {
-      if (user?.email) {
+    Promise.resolve(target).then(user => {
+      if (user?.email && prefs.email !== false) {
         // Pass meta to mail service so it can generate contextual templates
         this.mailService.sendNotificationEmail(user.email, title, body, meta).catch(() => {});
       }
@@ -75,7 +79,7 @@ export class NotificationsService {
   // Gates the hourly cron so each user only gets a given daily reminder once, at
   // their own local morning, regardless of what timezone the server runs in.
   private isReminderHourForUser(user: User | undefined, now: Date): boolean {
-    return getZonedHourMinute(now, user?.timezone).hour === REMINDER_HOUR;
+    return getZonedHourMinute(now, user?.timezone).hour === (user?.preferences?.reminderHour ?? REMINDER_HOUR);
   }
 
   // Runs once an hour; each check below only acts on users for whom it's currently

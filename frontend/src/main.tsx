@@ -1,17 +1,10 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import './styles/theme.css'
-import App from './App.tsx'
-import { SnackbarProvider } from './contexts/SnackbarContext'
-import { ConfirmProvider } from './components/ConfirmProvider'
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import { App } from './App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <SnackbarProvider>
-      <ConfirmProvider>
-        <App />
-      </ConfirmProvider>
-    </SnackbarProvider>
+    <App />
   </StrictMode>,
-)
+);

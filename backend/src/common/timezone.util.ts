@@ -37,6 +37,21 @@ export function addDaysToDateString(dateStr: string, days: number): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/** Count of Mon–Fri weekdays between two YYYY-MM-DD strings, inclusive on both ends. */
+export function countWeekdays(startDateStr: string, endDateStr: string): number {
+  const [sy, sm, sd] = startDateStr.split('-').map(Number);
+  const [ey, em, ed] = endDateStr.split('-').map(Number);
+  const start = Date.UTC(sy, sm - 1, sd);
+  const end = Date.UTC(ey, em - 1, ed);
+  if (start > end) return 0;
+  let count = 0;
+  for (let t = start; t <= end; t += 86400000) {
+    const day = new Date(t).getUTCDay();
+    if (day !== 0 && day !== 6) count++;
+  }
+  return count;
+}
+
 /**
  * Converts a wall-clock date + time (as entered by a user in `timeZone`) into the
  * real UTC instant it refers to. Needed because plain "date" + "HH:mm" columns

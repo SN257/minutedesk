@@ -45,3 +45,5 @@ coverage/
 .cache/
 .turbo/
 /.parcel-cache/
+/frontend-classic/node_modules/
+/frontend-classic/dist/

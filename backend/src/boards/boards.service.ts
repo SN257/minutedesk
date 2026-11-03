@@ -233,6 +233,11 @@ export class BoardsService {
     }
 
     const merged = this.cardRepo.merge(existing, data);
+    if (merged.archived && !existing.archived) {
+      merged.archivedAt = new Date();
+    } else if (!merged.archived && existing.archived) {
+      merged.archivedAt = undefined;
+    }
     return this.cardRepo.save(merged);
   }
 
@@ -287,6 +292,7 @@ export class BoardsService {
     if (!card) return null;
 
     card.archived = true;
+    card.archivedAt = new Date();
     // Mark all checklist items as done
     if (card.checklist && card.checklist.length > 0) {
       card.checklist = card.checklist.map(item => ({ ...item, done: true }));
@@ -571,6 +577,11 @@ export class BoardsService {
     }
 
     const merged = this.cardRepo.merge(existing, data);
+    if (merged.archived && !existing.archived) {
+      merged.archivedAt = new Date();
+    } else if (!merged.archived && existing.archived) {
+      merged.archivedAt = undefined;
+    }
     return this.cardRepo.save(merged);
   }
 

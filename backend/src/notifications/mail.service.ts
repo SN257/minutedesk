@@ -33,6 +33,10 @@ export class MailService {
     }
   }
 
+  isConfigured(): boolean {
+    return this.transporter !== null;
+  }
+
   async sendNotificationEmail(
     to: string,
     title: string,
@@ -53,6 +57,28 @@ export class MailService {
       this.logger.log(`Email sent to ${to}: ${title}`);
     } catch (err) {
       this.logger.error(`Failed to send email to ${to}: ${err?.message}`);
+    }
+  }
+
+  async sendMailWithAttachment(
+    to: string,
+    subject: string,
+    html: string,
+    attachment: { filename: string; content: Buffer | string; contentType?: string },
+  ): Promise<void> {
+    if (!this.transporter) return;
+
+    try {
+      await this.transporter.sendMail({
+        from: `"Nexus" <${this.smtpFrom}>`,
+        to,
+        subject,
+        html,
+        attachments: [attachment],
+      });
+      this.logger.log(`Email with attachment sent to ${to}: ${subject}`);
+    } catch (err) {
+      this.logger.error(`Failed to send email with attachment to ${to}: ${err?.message}`);
     }
   }
 

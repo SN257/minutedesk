@@ -24,6 +24,8 @@ async function bootstrap() {
     ? true
     : [
         'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
         ...envCors.split(',').map((o) => o.trim()).filter((o) => o)
       ];
 

@@ -14,6 +14,6 @@ import { MailService } from './mail.service';
   imports: [TypeOrmModule.forFeature([Notification, Card, WorkLog, Meeting, ScheduledMeeting, User])],
   providers: [NotificationsService, MailService],
   controllers: [NotificationsController],
-  exports: [NotificationsService],
+  exports: [NotificationsService, MailService],
 })
 export class NotificationsModule {}

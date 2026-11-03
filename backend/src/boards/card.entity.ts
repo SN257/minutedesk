@@ -35,6 +35,9 @@ export class Card {
   @Column({ type: 'boolean', default: false })
   archived: boolean;
 
+  @Column({ type: 'timestamp', nullable: true })
+  archivedAt?: Date;
+
   @Column({ type: 'simple-json', nullable: true })
   checklist?: { id: string; text: string; done: boolean }[];
 

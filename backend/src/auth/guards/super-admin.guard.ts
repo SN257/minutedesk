@@ -2,6 +2,22 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { verifyToken } from '../token.util';
 import { UsersService } from '../../users/users.service';
 
+/** Which admin-panel section each admin API belongs to. Anything not listed needs a super admin. */
+const tabForPath = (rawUrl: string): string | null => {
+  const p = rawUrl.split('?')[0].replace(/^\/+|\/+$/g, '');
+  if (/^admin\/analytics\/users/.test(p)) return 'performance';
+  if (/^admin\/analytics\//.test(p)) return 'overview';
+  if (/^admin\/(activity|errors)/.test(p)) return 'logs';
+  if (/^admin\/(backups|system|broadcasts)/.test(p)) return 'system';
+  if (/^admin\/(settings|site-config|centers|roles|schema)/.test(p)) return 'setup';
+  if (/^users\/admin/.test(p)) return 'people';
+  return null;
+};
+
+/**
+ * Admin-API guard. Super admins can do everything. Other roles (for example "admin") can use only
+ * the admin sections a super admin switched on for them (users.adminTabs).
+ */
 @Injectable()
 export class SuperAdminGuard implements CanActivate {
   constructor(private usersService: UsersService) {}
@@ -29,10 +45,12 @@ export class SuperAdminGuard implements CanActivate {
     }
 
     const user = await this.usersService.findById(userId);
-    if (!user || user.role !== 'super_admin') {
-      throw new ForbiddenException('Super admin access required');
-    }
+    if (!user) throw new ForbiddenException('Unauthorized');
+    if (user.role === 'super_admin') return true;
 
-    return true;
+    const tab = tabForPath(String(request.originalUrl || request.url || ''));
+    if (tab && user.role !== 'user' && Array.isArray(user.adminTabs) && user.adminTabs.includes(tab)) return true;
+
+    throw new ForbiddenException('Super admin access required');
   }
 }

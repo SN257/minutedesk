@@ -1,4 +1,4 @@
-import { Module, Controller, Get } from '@nestjs/common';
+import { Module, Controller, Get, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -10,6 +10,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { BoardsModule } from './boards/boards.module';
 import { WorkLogsModule } from './work-logs/work-logs.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { AdminModule } from './admin/admin.module';
+import { PageAccessMiddleware } from './common/page-access.middleware';
 
 @Controller()
 export class HealthController {
@@ -53,7 +55,12 @@ export class HealthController {
     WorkLogsModule,
     // Notifications
     NotificationsModule,
+    AdminModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule { }
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(PageAccessMiddleware).forRoutes('*');
+  }
+}

@@ -1,405 +1,68 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { lazy, Suspense } from "react";
-import ProtectedRoute from "./components/ProtectedRoute";
-import AppLayout from "./layouts/AppLayout";
-import { AuthProvider } from "./contexts/AuthContext";
-import { MeetingsProvider } from "./contexts/MeetingsContext";
-import { SettingsProvider } from "./contexts/SettingsContext";
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { AuthProvider, useAuth } from './lib/auth';
+import { ToastProvider } from './lib/toast';
+import { BrandingProvider } from './lib/branding';
+import { SiteConfigProvider } from './lib/siteConfig';
+import { PrefsProvider } from './lib/prefs';
+import { navigatePath, type View } from './lib/nav';
+import { Landing } from './landing/Landing';
+import { SignInPage } from './landing/SignInPage';
+import { Shell } from './shell/Shell';
+import { Spinner } from './ui';
 
-// Lazy load all page components to reduce initial bundle size
-// Pages are only loaded when their route is accessed
-const Login = lazy(() => import("./pages/Login"));
-const MeetingDashboard = lazy(() => import("./pages/MeetingDashboard"));
-const TaskDashboard = lazy(() => import("./pages/TaskDashboard"));
-const WorkLogDashboard = lazy(() => import("./pages/WorkLogDashboard"));
-const ReportDashboard = lazy(() => import("./pages/ReportDashboard"));
-const AddMeeting = lazy(() => import("./pages/MeetingMinutes"));
-const AddMeetingForm = lazy(() => import("./pages/AddMeetingForm"));
-const ViewMeeting = lazy(() => import("./pages/ViewMeeting"));
-const ScheduleMeeting = lazy(() => import("./pages/ScheduleMeeting"));
-const MeetingReports = lazy(() => import("./pages/MeetingReports"));
-const Settings = lazy(() => import("./pages/Settings"));
-const Board = lazy(() => import("./pages/Board"));
-const WorkLogs = lazy(() => import("./pages/WorkLogs"));
-const TaskReports = lazy(() => import("./pages/TaskReports"));
-const WorkLogReports = lazy(() => import("./pages/WorkLogReports"));
-const Home = lazy(() => import("./pages/Home"));
-const Platform = lazy(() => import("./pages/Platform"));
-const Launchpad = lazy(() => import("./pages/Launchpad"));
-const Capabilities = lazy(() => import("./pages/Capabilities"));
-const About = lazy(() => import("./pages/About"));
-const Support = lazy(() => import("./pages/Support"));
-const Documentation = lazy(() => import("./pages/Documentation"));
-const UserDashboard = lazy(() => import("./pages/UserDashboard"));
-const Insights = lazy(() => import("./pages/Insights"));
-const UserManagement = lazy(() => import("./pages/UserManagement"));
+const Today = lazy(() => import('./views/today/Today'));
+const Meetings = lazy(() => import('./views/meetings/Meetings'));
+const Tasks = lazy(() => import('./views/tasks/Tasks'));
+const WorkLog = lazy(() => import('./views/worklog/WorkLog'));
+const Insights = lazy(() => import('./views/reports/Insights'));
+const Admin = lazy(() => import('./views/admin/Admin'));
+const Settings = lazy(() => import('./views/settings/Settings'));
 
-// Loading fallback component
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center h-full min-h-[400px] w-full bg-slate-50 dark:bg-slate-900 transition-colors">
-    <div className="text-center">
-      <div className="relative inline-block">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 dark:border-slate-700 border-t-slate-600 dark:border-t-slate-400 mx-auto"></div>
-        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-slate-500/20 to-slate-700/20 dark:from-slate-400/10 dark:to-slate-600/10 blur-xl animate-pulse"></div>
-      </div>
-      <p className="mt-4 text-slate-500 dark:text-slate-400 font-medium text-base">Loading...</p>
-    </div>
-  </div>
-);
+const VIEW_MAP = { today: Today, meetings: Meetings, tasks: Tasks, worklog: WorkLog, reports: Insights, admin: Admin, settings: Settings } as const;
 
-function App() {
+const usePath = () => {
+  const [path, setPath] = useState(window.location.pathname);
+  useEffect(() => {
+    const on = () => setPath(window.location.pathname);
+    window.addEventListener('popstate', on);
+    return () => window.removeEventListener('popstate', on);
+  }, []);
+  return path;
+};
+
+const Gate = () => {
+  const { user, loading, hasAdmin } = useAuth();
+  const path = usePath();
+
+  if (loading) return <div className="h-full grid place-items-center text-muted"><Spinner size={28} /></div>;
+  if (path !== '/app') return <Landing />;
+  if (!user) {
+    return <SignInPage onSuccess={() => navigatePath('/app')} onClose={() => navigatePath('/')} />;
+  }
   return (
-    <AuthProvider>
-      <SettingsProvider>
-        <MeetingsProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Home />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/platform"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Platform />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/launchpad"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Launchpad />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/capabilities"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Capabilities />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/about"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <About />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/docs"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Documentation />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/support"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Support />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/login"
-                element={
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Login />
-                  </Suspense>
-                }
-              />
-
-              <Route
-                path="/user-dashboard"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <UserDashboard />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/dashboard"
-                element={<Navigate to="/user-dashboard" replace />}
-              />
-
-              <Route
-                path="/add-meeting"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <AddMeeting />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/add-meeting/new"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <AddMeetingForm />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/add-meeting/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <AddMeetingForm />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/add-meeting/:id"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <ViewMeeting />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/meetings"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <MeetingDashboard />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/meetings/reports"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <MeetingReports />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/meetings/schedule"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <ScheduleMeeting />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/tasks"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <TaskDashboard />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tasks/reports"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <TaskReports />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/boards"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <Board />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/boards/:boardId"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <Board />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/task/:cardId"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <Board />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/reports"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <ReportDashboard />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/reports/insights"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <Insights />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <Settings />
-                    </Suspense>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <UserManagement />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-
-              <Route
-                path="/work-logs"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <WorkLogDashboard />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/work-logs/reports"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <WorkLogReports />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/work-logs/daily"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout>
-                      <Suspense fallback={<LoadingFallback />}>
-                        <WorkLogs />
-                      </Suspense>
-                    </AppLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </BrowserRouter>
-        </MeetingsProvider>
-      </SettingsProvider>
-    </AuthProvider>
+    <Shell
+      render={(view: View, param, go) => {
+        const V = VIEW_MAP[view === 'admin' && !hasAdmin ? 'today' : view];
+        return (
+          <Suspense fallback={<div className="py-24 grid place-items-center text-muted"><Spinner size={26} /></div>}>
+            <V param={param} go={go} />
+          </Suspense>
+        );
+      }}
+    />
   );
-}
+};
 
-export default App;
+export const App = () => (
+  <BrandingProvider>
+    <SiteConfigProvider>
+      <AuthProvider>
+        <PrefsProvider>
+          <ToastProvider>
+            <Gate />
+          </ToastProvider>
+        </PrefsProvider>
+      </AuthProvider>
+    </SiteConfigProvider>
+  </BrandingProvider>
+);
