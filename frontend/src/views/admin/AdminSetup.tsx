@@ -89,7 +89,7 @@ const Centers = () => {
                 )}
                 <button type="button" onClick={() => toggle(c)} aria-pressed={c.isActive} aria-label={c.isActive ? 'Hide center' : 'Show center'} title={c.isActive ? 'Live: tap to hide' : 'Hidden: tap to show'}
                   className={`relative w-9 h-5 rounded-full transition-colors shrink-0 ${c.isActive ? 'bg-good' : 'bg-ink/20'}`}>
-                  <motion.span layout transition={spring} className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow ${c.isActive ? 'right-0.5' : 'left-0.5'}`} />
+                  <motion.span layout transition={spring} className={`absolute top-0.5 w-4 h-4 rounded-full shadow ${c.isActive ? 'bg-white right-0.5' : 'bg-white dark:bg-ink/70 left-0.5'}`} />
                 </button>
                 <button type="button" aria-label="Rename" title="Rename" className={chipBtn} onClick={() => { setEditId(c.id); setEditVal(c.name); }}>{G.edit}</button>
                 <button type="button" aria-label="Delete" title="Delete" className={`${chipBtn} hover:!text-bad`} onClick={() => { setDel(c); setDelOpen(true); }}>{G.trash}</button>
@@ -263,7 +263,7 @@ const Branding = () => {
         <div className="grid lg:grid-cols-5 gap-6 items-stretch">
           {/* live stage */}
           <div className="lg:col-span-3 min-w-0">
-            <div className="relative rounded-[1.75rem] overflow-hidden p-6 sm:p-8 min-h-[320px] flex flex-col items-center justify-center text-center transition-colors duration-500" style={{ background: `radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, ${accent} 70%, white), transparent 60%), linear-gradient(135deg, ${accent}, #06141b)` }}>
+            <div className="pin-light relative rounded-[1.75rem] overflow-hidden p-6 sm:p-8 min-h-[320px] flex flex-col items-center justify-center text-center transition-colors duration-500" style={{ background: `radial-gradient(120% 90% at 20% 0%, color-mix(in srgb, ${accent} 70%, white), transparent 60%), linear-gradient(135deg, ${accent}, #06141b)` }}>
               <span aria-hidden className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
               <motion.div key={accent} initial={{ scale: 0.9, opacity: 0.6 }} animate={{ scale: 1, opacity: 1 }} transition={spring}>{logo(64, 'rounded-[1.4rem]')}</motion.div>
               <p className="text-white font-extrabold text-2xl mt-4 break-words max-w-full">{name}</p>
@@ -322,8 +322,8 @@ const SETUP_TABS: { key: SetupTab; label: string; desc: string; title: string; s
 ];
 
 const Lists = () => (
-  <div className="space-y-4 sm:space-y-5">
-    <div className="grid xl:grid-cols-5 gap-4 sm:gap-5 items-stretch">
+  <div className="space-y-3 sm:space-y-5">
+    <div className="grid xl:grid-cols-5 gap-3 sm:gap-5 items-stretch">
       <Centers />
       <Roles />
     </div>
@@ -349,7 +349,7 @@ const AdminSetup = () => {
   const cur = SETUP_TABS.find((t) => t.key === tab)!;
   return (
     <DraftProvider>
-      <div className="grid lg:grid-cols-[17.5rem_minmax(0,1fr)] gap-4 sm:gap-6 items-start">
+      <div className="grid lg:grid-cols-[17.5rem_minmax(0,1fr)] gap-3 sm:gap-6 items-start">
         {/* left rail: sections + publish */}
         <aside className="lg:sticky lg:top-0 space-y-4 min-w-0">
           <nav className="liquid rounded-[1.75rem] p-2.5" aria-label="Setup sections">
@@ -358,9 +358,9 @@ const AdminSetup = () => {
                 const on = tab === t.key;
                 return (
                   <li key={t.key} className="shrink-0 lg:shrink">
-                    <button type="button" onClick={() => setTab(t.key)} aria-current={on ? 'page' : undefined} className={`relative w-full flex items-center gap-3 rounded-[1.25rem] px-3.5 py-3 text-left transition-colors ${on ? 'text-white' : 'text-ink hover:bg-white/50'}`}>
+                    <button type="button" onClick={() => setTab(t.key)} aria-current={on ? 'page' : undefined} className={`relative w-full flex items-center gap-3 rounded-[1.25rem] px-2.5 py-2 lg:px-3.5 lg:py-3 text-left transition-colors ${on ? 'text-white' : 'text-ink hover:bg-white/50'}`}>
                       {on && <motion.span layoutId="setup-rail" transition={spring} className="absolute inset-0 rounded-[1.25rem] bg-ink" />}
-                      <span className={`relative w-10 h-10 shrink-0 rounded-xl grid place-items-center ${on ? 'bg-white/15' : 'bg-ink/[0.07]'}`}>
+                      <span className={`relative w-9 h-9 lg:w-10 lg:h-10 shrink-0 rounded-xl grid place-items-center ${on ? 'bg-white/15' : 'bg-ink/[0.07]'}`}>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={IC[t.key]} /></svg>
                       </span>
                       <span className="relative min-w-0">
@@ -377,11 +377,11 @@ const AdminSetup = () => {
         </aside>
 
         {/* editor */}
-        <div className="min-w-0 space-y-5 sm:space-y-6">
+        <div className="min-w-0 space-y-3 sm:space-y-6">
           <SectionHeader eyebrow={`Setup · ${cur.label}`} title={cur.title} desc={cur.sub} right={<HeaderAction tab={tab} />} />
           <DraftGate>
             <AnimatePresence mode="wait" initial={false}>
-              <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-4 sm:space-y-5">
+              <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="space-y-3 sm:space-y-5">
                 {tab === 'brand' && <><Stagger><Branding /></Stagger><ThemeSection /></>}
                 {tab === 'menu' && <MenuSection />}
                 {tab === 'website' && <WebsiteSection />}

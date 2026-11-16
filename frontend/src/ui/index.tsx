@@ -304,10 +304,10 @@ export const Empty = ({ icon = '✨', title, hint, action }: { icon?: string; ti
 );
 
 export const Tabs = <T extends string>({ value, onChange, items, id }: { value: T; onChange: (v: T) => void; items: { key: T; label: string; count?: number }[]; id: string }) => (
-  <div className="inline-flex bg-ink/[0.05] rounded-xl p-1 gap-0.5">
+  <div className="inline-flex bg-ink/[0.05] dark:bg-ink/[0.08] rounded-xl p-1 gap-0.5">
     {items.map((it) => (
       <button key={it.key} onClick={() => onChange(it.key)} className={`relative px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${value === it.key ? 'text-ink' : 'text-muted hover:text-ink'}`}>
-        {value === it.key && <motion.span layoutId={`tab-${id}`} transition={spring} className="absolute inset-0 bg-white rounded-lg shadow-card" />}
+        {value === it.key && <motion.span layoutId={`tab-${id}`} transition={spring} className="absolute inset-0 bg-white dark:bg-ink/[0.16] rounded-lg shadow-card" />}
         <span className="relative">{it.label}{it.count !== undefined && <span className="ml-1.5 text-[11px] text-muted">{it.count}</span>}</span>
       </button>
     ))}

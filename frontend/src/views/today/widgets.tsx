@@ -50,8 +50,9 @@ const Card = ({ title, sub, right, children, className = '' }: { title?: string;
   </motion.section>
 );
 
-const Chip = ({ children, onClick }: { children: ReactNode; onClick?: () => void }) => (
-  <button onClick={onClick} className="shrink-0 inline-flex items-center gap-1 rounded-full border border-char/10 bg-white/60 px-3 py-1 text-[11.5px] text-char/70 hover:bg-white transition-colors">{children}</button>
+/** A small label showing which period a card covers. It is not clickable: the period is chosen with the filter icon in the heading. */
+const Chip = ({ children }: { children: ReactNode }) => (
+  <span className="shrink-0 inline-flex items-center rounded-full bg-char/[0.06] px-2.5 py-1 text-[11px] text-char/65 max-w-[11rem] truncate">{children}</span>
 );
 
 const Legend = ({ items }: { items: { label: string; color: string }[] }) => (
@@ -62,13 +63,14 @@ const Legend = ({ items }: { items: { label: string; color: string }[] }) => (
 
 /* ───────── heading ───────── */
 
-export const Heading = ({ title, sub, onMeeting, onTask }: { title: string; sub: string; onMeeting: () => void; onTask: () => void }) => (
+export const Heading = ({ title, sub, onMeeting, onTask, filter }: { title: string; sub: string; onMeeting: () => void; onTask: () => void; filter?: ReactNode }) => (
   <motion.div variants={cardIn} className="flex flex-wrap items-center justify-between gap-3 px-1 shrink-0">
     <div className="min-w-0">
       <h1 className="text-[1.7rem] sm:text-[1.9rem] leading-tight font-semibold tracking-tight">{title}</h1>
       <p className="text-[13px] text-char/55 truncate max-w-[60vw]">{sub}</p>
     </div>
-    <div className="flex gap-2">
+    <div className="flex items-center gap-2">
+      {filter}
       <motion.button whileTap={{ scale: 0.96 }} onClick={onMeeting} className="rounded-xl h-9 px-3.5 text-[13px] font-medium inline-flex items-center gap-1.5 bg-white/80 border border-char/10 hover:bg-white transition-colors">{Icon.plus(14)} Log minutes</motion.button>
       <motion.button whileTap={{ scale: 0.96 }} onClick={onTask} className="rounded-xl h-9 px-3.5 text-[13px] font-medium inline-flex items-center gap-1.5 bg-char text-white hover:opacity-90 transition">{Icon.tasks(14)} Review tasks</motion.button>
     </div>
@@ -77,8 +79,8 @@ export const Heading = ({ title, sub, onMeeting, onTask }: { title: string; sub:
 
 /* ───────── 1. stat card: up / down ───────── */
 
-export const StatCard = ({ up, upLabel, down, downLabel, range, loading }: { up: number; upLabel: string; down: number; downLabel: string; range: string; loading: boolean }) => (
-  <Card title="Weekly pulse" right={<Chip>{range}</Chip>}>
+export const StatCard = ({ up, upLabel, down, downLabel, range, loading, title = 'Pulse' }: { up: number; upLabel: string; down: number; downLabel: string; range: string; loading: boolean; title?: string }) => (
+  <Card title={title} right={<Chip>{range}</Chip>}>
     <div className="flex-1 min-h-0 flex flex-col justify-around mt-1">
       {[{ n: up, label: upLabel, icon: '↑', color: C.good }, { n: down, label: downLabel, icon: '↓', color: C.warn }].map((r, i) => (
         <div key={r.label}>
@@ -216,11 +218,11 @@ export const RadialWidget = ({ pct, title, sub, cta, onCta, loading }: { pct: nu
 
 /* ───────── 6. stacked horizontal bars ───────── */
 
-export const StackedWidget = ({ rows, legend, loading }: { rows: { label: string; segs: number[] }[]; legend: { label: string; color: string }[]; loading: boolean }) => {
+export const StackedWidget = ({ rows, legend, loading, title = 'Last four weeks', sub = 'Meetings and finished tasks per week' }: { rows: { label: string; segs: number[] }[]; legend: { label: string; color: string }[]; loading: boolean; title?: string; sub?: string }) => {
   const max = Math.max(1, ...rows.map((r) => r.segs.reduce((a, b) => a + b, 0)));
   const colors = [C.brand, C.good, C.warn];
   return (
-    <Card title="Last four weeks" sub="Meetings and finished tasks per week">
+    <Card title={title} sub={sub}>
       {loading ? <Skel className="mt-2 flex-1" /> : (
         <div className="flex-1 min-h-0 flex flex-col justify-around mt-1 gap-1">
           {rows.map((r) => (
@@ -242,7 +244,7 @@ export const StackedWidget = ({ rows, legend, loading }: { rows: { label: string
 
 /* ───────── 7. grouped vertical bars ───────── */
 
-export const GroupedWidget = ({ days, series, legend, loading }: { days: string[]; series: number[][]; legend: { label: string; color: string }[]; loading: boolean }) => {
+export const GroupedWidget = ({ days, series, legend, loading, title = 'This week by day', sub = 'Held, planned and finished' }: { days: string[]; series: number[][]; legend: { label: string; color: string }[]; loading: boolean; title?: string; sub?: string }) => {
   const [ref, { w, h }] = useBox();
   const padL = 24, padB = 18, padT = 8, padR = 4;
   const max = Math.max(3, ...series.flat()), step = Math.ceil(max / 3), top = step * 3;
@@ -251,7 +253,7 @@ export const GroupedWidget = ({ days, series, legend, loading }: { days: string[
   const bw = Math.min(11, gw / 4);
   const y = (v: number) => padT + (1 - v / top) * (h - padT - padB);
   return (
-    <Card title="This week by day" sub="Held, planned and finished">
+    <Card title={title} sub={sub}>
       <div ref={ref} className="relative flex-1 min-h-0 mt-1">
         {loading ? <Skel className="absolute inset-0" /> : (
           <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="absolute inset-0" role="img" aria-label="Weekly bars">
@@ -318,8 +320,8 @@ const Wave = ({ data, color, label, id }: { data: number[]; color: string; label
   );
 };
 
-export const WavesWidget = ({ a, b, aLabel, bLabel, loading }: { a: number[]; b: number[]; aLabel: string; bLabel: string; loading: boolean }) => (
-  <Card title="Rhythm" sub="Last 30 days">
+export const WavesWidget = ({ a, b, aLabel, bLabel, loading, title = 'Rhythm', sub = 'Last 30 days' }: { a: number[]; b: number[]; aLabel: string; bLabel: string; loading: boolean; title?: string; sub?: string }) => (
+  <Card title={title} sub={sub}>
     {loading ? <Skel className="mt-2 flex-1" /> : (
       <div className="flex-1 min-h-0 flex flex-col gap-1.5 mt-1.5">
         <Wave data={a} color="var(--color-brand)" label={aLabel} id="wv-a" />
@@ -349,20 +351,16 @@ export const SegmentWidget = ({ title, parts, loading }: { title: string; parts:
   );
 };
 
-/* ───────── 11. donut with Week / Month switch ───────── */
+/* ───────── 11. donut ───────── */
 
-export const DonutWidget = ({ title, tabs, active, onTab, parts, centerLabel, loading }: {
-  title: string; tabs: string[]; active: string; onTab: (t: string) => void; parts: { label: string; v: number; color: string }[]; centerLabel: string; loading: boolean;
+export const DonutWidget = ({ title, range, parts, centerLabel, loading }: {
+  title: string; range: string; parts: { label: string; v: number; color: string }[]; centerLabel: string; loading: boolean;
 }) => {
   const total = parts.reduce((a, p) => a + p.v, 0);
   const R = 52, CIR = 2 * Math.PI * R;
   let acc = 0;
   return (
-    <Card title={title} right={
-      <div className="flex rounded-full bg-char/[0.07] p-0.5 text-[11px]">
-        {tabs.map((t) => <button key={t} onClick={() => onTab(t)} className={`px-2.5 py-1 rounded-full transition-colors ${active === t ? 'bg-white shadow-sm text-char font-medium' : 'text-char/55'}`}>{t}</button>)}
-      </div>
-    }>
+    <Card title={title} right={<Chip>{range}</Chip>}>
       {loading ? <Skel className="mt-2 flex-1" /> : (
         <div className="flex-1 min-h-0 flex items-center justify-center gap-4 mt-1">
           <div className="relative h-full max-h-[8.5rem] aspect-square shrink min-w-0">

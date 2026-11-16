@@ -160,7 +160,7 @@ export class AdminAnalyticsService {
     const users = await this.userRepo.find({ order: { createdAt: 'ASC' } });
     const today = getZonedDateString(new Date());
 
-    const [meetingRows, taskRows, taskTimelinessRows, cardRows, cardDoneRows, cardTimelinessRows, workLogRows, lastActiveRows] = await Promise.all([
+    const [meetingRows, taskRows, taskTimelinessRows, cardRows, cardDoneRows, cardTimelinessRows, workLogRows, recentLogRows, lastActiveRows] = await Promise.all([
       this.meetingRepo.createQueryBuilder('m').select('m."userId"', 'userId').addSelect('COUNT(*)', 'count').groupBy('m."userId"').getRawMany(),
       this.taskRepo
         .createQueryBuilder('t')
@@ -193,6 +193,7 @@ export class AdminAnalyticsService {
         .groupBy(AdminAnalyticsService.CARD_OWNER)
         .getRawMany(),
       this.workLogRepo.createQueryBuilder('w').select('w."userId"', 'userId').addSelect('COUNT(*)', 'count').groupBy('w."userId"').getRawMany(),
+      this.workLogRepo.createQueryBuilder('w').select('w."userId"', 'userId').addSelect(`to_char(w.date, 'YYYY-MM-DD')`, 'date').where('w.date >= :since', { since: addDaysToDateString(today, -35) }).getRawMany(),
       this.activityLogRepo
         .createQueryBuilder('a')
         .select('a."userId"', 'userId')
@@ -202,6 +203,8 @@ export class AdminAnalyticsService {
         .getRawMany(),
     ]);
 
+    const recentLogs = new Map<string, Set<string>>();
+    recentLogRows.forEach((r) => { const set = recentLogs.get(r.userId) ?? new Set<string>(); set.add(r.date); recentLogs.set(r.userId, set); });
     const countMap = (rows: any[]) => new Map(rows.map((r) => [r.userId, Number(r.count)]));
     const meetingsMap = countMap(meetingRows);
     const cardsMap = countMap(cardRows);
@@ -215,8 +218,19 @@ export class AdminAnalyticsService {
     const cardTimelinessMap = timelinessMap(cardTimelinessRows);
 
     return users.map((u) => {
-      const workingDays = countWeekdays(getZonedDateString(u.createdAt, u.timezone), today);
-      const loggedDays = workLogsMap.get(u.id) || 0;
+      // Log habit is measured over the last 30 days: working days that have passed (Mon to Fri, after the person joined),
+      // and how many of them have a log. Leave and holiday entries count as logged, and today is never held against anyone.
+      const userToday = getZonedDateString(new Date(), u.timezone);
+      const joined = getZonedDateString(u.createdAt, u.timezone);
+      const from = joined > addDaysToDateString(userToday, -29) ? joined : addDaysToDateString(userToday, -29);
+      const to = addDaysToDateString(userToday, -1);
+      const workingDays = from <= to ? countWeekdays(from, to) : 0;
+      const logged = recentLogs.get(u.id) ?? new Set<string>();
+      let loggedDays = 0;
+      for (let d = from; d <= to; d = addDaysToDateString(d, 1)) {
+        const dow = new Date(`${d}T00:00:00Z`).getUTCDay();
+        if (dow !== 0 && dow !== 6 && logged.has(d)) loggedDays++;
+      }
       const missedDays = Math.max(workingDays - loggedDays, 0);
       const tt = taskTimelinessMap.get(u.id) || { early: 0, onTime: 0, late: 0 };
       const ct = cardTimelinessMap.get(u.id) || { early: 0, onTime: 0, late: 0 };
@@ -232,7 +246,7 @@ export class AdminAnalyticsService {
         tasksCount: (taskMap.get(u.id)?.count || 0) + (cardsMap.get(u.id) || 0),
         tasksCompleted: (taskMap.get(u.id)?.completed || 0) + (cardsDoneMap.get(u.id) || 0),
         cardsCount: cardsMap.get(u.id) || 0,
-        workLogsCount: loggedDays,
+        workLogsCount: workLogsMap.get(u.id) || 0,
         lastActive: lastActiveMap.get(u.id) || null,
         timeliness: {
           early: tt.early + ct.early,
@@ -243,7 +257,8 @@ export class AdminAnalyticsService {
           workingDays,
           loggedDays,
           missedDays,
-          rate: workingDays > 0 ? Math.round((Math.min(loggedDays, workingDays) / workingDays) * 100) : 100,
+          rate: workingDays > 0 ? Math.round((loggedDays / workingDays) * 100) : 100,
+          windowDays: 30,
         },
       };
     });
@@ -254,7 +269,7 @@ export class AdminAnalyticsService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) return null;
 
-    const today = getZonedDateString(new Date());
+    const today = getZonedDateString(new Date(), user.timezone);
     const sevenDaysAgo = addDaysToDateString(today, -7);
     const thirtyDaysAgo = addDaysToDateString(today, -30);
 
@@ -326,7 +341,7 @@ export class AdminAnalyticsService {
         .andWhere('c."dueDate" IS NOT NULL')
         .andWhere('c."dueDate" < :today', { today })
         .getCount(),
-      this.ownedCards().where(`${AdminAnalyticsService.CARD_OWNER} = :userId`, { userId }).orderBy('c."createdAt"', 'DESC').take(10).getMany(),
+      this.ownedCards().where(`${AdminAnalyticsService.CARD_OWNER} = :userId`, { userId }).orderBy('c."createdAt"', 'DESC').limit(10).getMany(),
       this.ownedCards()
         .select("COALESCE(NULLIF(c.priority, ''), 'None')", 'label')
         .addSelect('COUNT(*)', 'count')
@@ -348,7 +363,7 @@ export class AdminAnalyticsService {
       this.workLogRepo.find({ where: { userId }, order: { date: 'DESC' }, take: 14 }),
       this.workLogRepo.count({ where: { userId, todayOnLeave: true } }),
       this.workLogRepo.count({ where: { userId, todayHoliday: true } }),
-      this.workLogRepo.createQueryBuilder('w').select('w.date', 'date').where('w."userId" = :userId', { userId }).andWhere('w.date >= :since', { since: thirtyDaysAgo }).getRawMany(),
+      this.workLogRepo.createQueryBuilder('w').select(`to_char(w.date, 'YYYY-MM-DD')`, 'date').where('w."userId" = :userId', { userId }).andWhere('w.date >= :since', { since: addDaysToDateString(today, -35) }).getRawMany(),
 
       this.activityLogRepo.count({ where: { userId } }),
       this.activityLogRepo.createQueryBuilder('a').where('a."userId" = :userId', { userId }).andWhere('a."createdAt" >= :since', { since: sevenDaysAgo }).getCount(),
@@ -365,14 +380,23 @@ export class AdminAnalyticsService {
       return 'late';
     };
 
-    const workingDays = countWeekdays(getZonedDateString(user.createdAt, user.timezone), today);
-    const missedDays = Math.max(workingDays - workLogsTotal, 0);
+    // Log compliance is measured over the last 30 days, the same way the Performance page does it: working days that have
+    // passed (Mon to Fri, after the person joined) and how many of them have a log. Today is never counted as missed.
+    const joined = getZonedDateString(user.createdAt, user.timezone);
+    const windowStart = addDaysToDateString(today, -29);
+    const winFrom = joined > windowStart ? joined : windowStart;
+    const winTo = addDaysToDateString(today, -1);
     const loggedDatesLast30d = new Set(workLogDatesLast30d.map((r: any) => String(r.date).slice(0, 10)));
     const missedRecentDates: string[] = [];
-    for (let d = thirtyDaysAgo; d <= today; d = addDaysToDateString(d, 1)) {
+    let workingDays = 0;
+    let loggedDays = 0;
+    for (let d = winFrom; d <= winTo; d = addDaysToDateString(d, 1)) {
       const dow = new Date(`${d}T00:00:00Z`).getUTCDay();
-      if (dow !== 0 && dow !== 6 && !loggedDatesLast30d.has(d)) missedRecentDates.push(d);
+      if (dow === 0 || dow === 6) continue;
+      workingDays++;
+      if (loggedDatesLast30d.has(d)) loggedDays++; else missedRecentDates.push(d);
     }
+    const missedDays = workingDays - loggedDays;
 
     return {
       user: { id: user.id, name: user.name, email: user.email, role: user.role, timezone: user.timezone, createdAt: user.createdAt },
@@ -427,9 +451,9 @@ export class AdminAnalyticsService {
         holiday: workLogsHoliday,
         compliance: {
           workingDays,
-          loggedDays: workLogsTotal,
+          loggedDays,
           missedDays,
-          rate: workingDays > 0 ? Math.round((Math.min(workLogsTotal, workingDays) / workingDays) * 100) : 100,
+          rate: workingDays > 0 ? Math.round((loggedDays / workingDays) * 100) : 100,
           missedRecentDates,
         },
         recent: workLogsRecent.map((w) => ({

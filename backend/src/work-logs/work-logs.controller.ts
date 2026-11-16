@@ -1,5 +1,5 @@
 
-import { Controller, Get, Post, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { WorkLogsService } from './work-logs.service';
 import { AuthGuard } from '../auth/guards/auth.guard';
 import { UsersService } from '../users/users.service';
@@ -12,6 +12,14 @@ export class WorkLogsController {
         private readonly workLogsService: WorkLogsService,
         private readonly usersService: UsersService,
     ) { }
+
+    /** The days in a date range that have a log, for the dashboard's period filter. Declared before ':date' so it is not read as a date. */
+    @Get('range/list')
+    async range(@Req() req: any, @Query('from') from?: string, @Query('to') to?: string) {
+        const ok = (d?: string) => !!d && /^\d{4}-\d{2}-\d{2}$/.test(d);
+        if (!ok(from) || !ok(to)) throw new HttpException('from and to must be YYYY-MM-DD dates', HttpStatus.BAD_REQUEST);
+        return this.workLogsService.getRange(req.session.userId, from as string, to as string);
+    }
 
     @Get(':date')
     async getLog(@Req() req: any, @Param('date') date: string) {

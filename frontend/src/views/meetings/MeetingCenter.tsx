@@ -5,9 +5,11 @@ import { parseLocalDate } from '../../lib/date';
 import { useToast } from '../../lib/toast';
 import { deleteMeeting, getMeetings } from '../../lib/api';
 import { Badge, Button, Card, Empty, Input, Skeleton, useAsync } from '../../ui';
+import { FilterMenu } from '../../ui/filter';
 import { Icon } from '../../shell/icons';
 import { BackLink, ConfirmModal, Ico, IconBtn } from './bits';
-import { d10, longDate, meetingStats, meetingTitle, monthKey, monthLabel, timeRange, titleCase, typeTone, type Meeting } from './helpers';
+import { d10, inMeetingPeriod, longDate, matchesFlags, meetingStats, meetingTitle, MEETING_FLAGS, MEETING_PERIODS, monthKey, monthLabel, timeRange, titleCase, typeTone, type Meeting, type MeetingPeriod } from './helpers';
+import { getLocalDateString } from '../../lib/date';
 
 const PAGE = 25;
 export const NO_CENTER = 'No center';
@@ -18,7 +20,10 @@ const MeetingCenter = ({ name, go }: { name: string } & Pick<ViewProps, 'go'>) =
   const toast = useToast();
   const { data, loading, error, reload, setData } = useAsync<Meeting[]>(() => getMeetings(), []);
   const [q, setQ] = useState('');
-  const [type, setType] = useState<string | null>(null);
+  const [typesSel, setTypesSel] = useState<string[]>([]);
+  const [period, setPeriod] = useState<MeetingPeriod>('any');
+  const [flags, setFlags] = useState<string[]>([]);
+  const today = getLocalDateString();
   const [shown, setShown] = useState(PAGE);
   const [del, setDel] = useState<Meeting | null>(null);
   const [busy, setBusy] = useState(false);
@@ -35,7 +40,8 @@ const MeetingCenter = ({ name, go }: { name: string } & Pick<ViewProps, 'go'>) =
 
   const needle = q.trim().toLowerCase();
   const filtered = all.filter((m) => {
-    if (type && (m.meetingType || 'Others') !== type) return false;
+    if (typesSel.length && !typesSel.includes(m.meetingType || 'Others')) return false;
+    if (!inMeetingPeriod(m.date, period, today) || !matchesFlags(m, flags)) return false;
     if (!needle) return true;
     const hay = [m.place, m.personName, m.meetingType, m.presentSantName, ...(m.agenda || []), ...(m.notes || []).flatMap((n) => [n.title, ...(n.points || []).map((p) => p.text)])].filter(Boolean).join(' ').toLowerCase();
     return hay.includes(needle);
@@ -71,7 +77,7 @@ const MeetingCenter = ({ name, go }: { name: string } & Pick<ViewProps, 'go'>) =
   return (
     <>
       <BackLink onClick={back}>All meetings</BackLink>
-      <div className="rounded-[2rem] bg-ink text-white p-6 sm:p-8 relative overflow-hidden mb-5">
+      <div className="rounded-[2rem] hero-ink p-6 sm:p-8 relative overflow-hidden mb-3 sm:mb-5">
         <span aria-hidden className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0">
@@ -83,21 +89,20 @@ const MeetingCenter = ({ name, go }: { name: string } & Pick<ViewProps, 'go'>) =
         </div>
       </div>
 
-      <div className="relative mb-3">
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">{Icon.search(17)}</span>
-        <Input value={q} onChange={(e) => { setQ(e.target.value); setShown(PAGE); }} placeholder={`Search in ${name}`} className="pl-11 !rounded-full !py-3" aria-label="Search this center" />
-      </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-5 [scrollbar-width:none]" role="group" aria-label="Filter by type">
-        {[[null, all.length] as [string | null, number], ...types].map(([t, n]) => (
-          <button key={t ?? 'all'} type="button" aria-pressed={type === t} onClick={() => { setType(t); setShown(PAGE); }}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors ${type === t ? 'bg-ink text-white' : 'bg-ink/[0.06] hover:bg-ink/[0.1] text-ink-2'}`}>
-            {t ?? 'All'} <span className="opacity-60 ml-1">{n}</span>
-          </button>
-        ))}
+      <div className="flex items-center gap-2.5 mb-3 sm:mb-5">
+        <div className="relative flex-1 min-w-0">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">{Icon.search(17)}</span>
+          <Input value={q} onChange={(e) => { setQ(e.target.value); setShown(PAGE); }} placeholder={`Search in ${name}`} className="pl-11 !rounded-full !py-3" aria-label="Search this center" />
+        </div>
+        <FilterMenu title="Filter meetings" groups={[
+          { id: 'type', kind: 'multi', label: 'Meeting type', value: typesSel, onChange: (v) => { setTypesSel(v); setShown(PAGE); }, options: types.map(([t, n]) => ({ value: t, label: t, count: n })) },
+          { id: 'period', kind: 'single', label: 'Held', value: period, defaultValue: 'any', onChange: (v) => { setPeriod(v as MeetingPeriod); setShown(PAGE); }, options: MEETING_PERIODS },
+          { id: 'flags', kind: 'multi', label: 'Minutes', value: flags, onChange: (v) => { setFlags(v); setShown(PAGE); }, options: MEETING_FLAGS },
+        ]} />
       </div>
 
       {filtered.length === 0 ? (
-        <Card><Empty icon="🔍" title="Nothing matches" hint="Try a different word or type." action={<Button variant="soft" onClick={() => { setQ(''); setType(null); }}>Clear filters</Button>} /></Card>
+        <Card><Empty icon="🔍" title="Nothing matches" hint="Try a different word or type." action={<Button variant="soft" onClick={() => { setQ(''); setTypesSel([]); setPeriod('any'); setFlags([]); }}>Clear filters</Button>} /></Card>
       ) : (
         <div className="space-y-6">
           {groups.map((g) => (

@@ -5,12 +5,13 @@ import { useAuth } from '../../lib/auth';
 import { useToast } from '../../lib/toast';
 import { addDaysToDateString, formatLocalDate, getLocalDateString, parseLocalDate } from '../../lib/date';
 import {
-  getAssignedToMeCardsApi, getMeetings, getScheduledMeetings, getTasks, getWorkLogApi,
+  getAssignedToMeCardsApi, getMeetings, getScheduledMeetings, getTasks, getWorkLogRange,
   updateCardApi, updateTask,
 } from '../../lib/api';
+import { DateRangeButton, resolvePeriod, usePeriod } from './period';
 import { groupIn } from '../../landing/bits';
 import { useAsync } from '../../ui';
-import { type Evt, type Item } from './parts';
+import { type Item } from './parts';
 import {
   BarsWidget, CalendarWidget, DonutWidget, GroupedWidget, Heading, LineWidget, ListWidget, RadialWidget,
   SegmentWidget, StackedWidget, StatCard, WavesWidget,
@@ -25,17 +26,37 @@ const localDay = (s?: string | null) => {
 };
 const arr = (x: unknown): any[] => (Array.isArray(x) ? x : []);
 const isWeekday = (d: string) => { const g = parseLocalDate(d).getDay(); return g >= 1 && g <= 5; };
-const namesOf = (m: any): string[] => {
-  const raw = Array.isArray(m.attendance) ? m.attendance : String(m.attendance || '').split(/[,;\n]/);
-  const all = [m.presentSantName, ...raw].map((n) => String(n || '').trim()).filter(Boolean);
-  return [...new Set(all)];
+const daysIn = (from: string, to: string) => {
+  const out: string[] = [];
+  for (let d = from; d <= to && out.length < 4000; d = addDaysToDateString(d, 1)) out.push(d);
+  return out;
 };
-const toEvt = (m: any, logged: boolean): Evt => ({
-  key: `${logged ? 'l' : 's'}-${m.id}`, id: String(m.id), logged, date: day(m.date),
-  start: String(m.startTime || '').slice(0, 5), end: String(m.endTime || '').slice(0, 5),
-  title: m.meetingType || 'Meeting', sub: m.place || m.center || '', names: namesOf(m),
-});
-const byTime = (a: Evt, b: Evt) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start);
+type Gran = 'day' | 'week' | 'month';
+interface Bucket { start: string; end: string; label: string }
+const mondayOf = (d: string) => addDaysToDateString(d, -((parseLocalDate(d).getDay() + 6) % 7));
+/** Splits a period into days, weeks or months, whichever keeps the charts readable. */
+const makeBuckets = (from: string, to: string, force?: 'week'): { gran: Gran; list: Bucket[] } => {
+  const span = daysIn(from, to).length;
+  const gran: Gran = force ?? (span <= 45 ? 'day' : span <= 210 ? 'week' : 'month');
+  const list: Bucket[] = [];
+  if (gran === 'day') {
+    daysIn(from, to).forEach((d) => list.push({ start: d, end: d, label: formatLocalDate(d, { month: 'short', day: 'numeric' }) }));
+  } else if (gran === 'week') {
+    for (let ws = mondayOf(from); ws <= to && list.length < 80; ws = addDaysToDateString(ws, 7)) {
+      const start = ws < from ? from : ws;
+      const end = addDaysToDateString(ws, 6) > to ? to : addDaysToDateString(ws, 6);
+      list.push({ start, end, label: formatLocalDate(start, { month: 'short', day: 'numeric' }) });
+    }
+  } else {
+    for (let ms = `${from.slice(0, 7)}-01`; ms <= to && list.length < 120; ) {
+      const d = parseLocalDate(ms);
+      const last = getLocalDateString(new Date(d.getFullYear(), d.getMonth() + 1, 0));
+      list.push({ start: ms < from ? from : ms, end: last > to ? to : last, label: formatLocalDate(ms, { month: 'short', year: '2-digit' }) });
+      ms = getLocalDateString(new Date(d.getFullYear(), d.getMonth() + 1, 1));
+    }
+  }
+  return { gran, list };
+};
 
 /* ───────── view ───────── */
 const Today = ({ go }: ViewProps) => {
@@ -43,23 +64,32 @@ const Today = ({ go }: ViewProps) => {
   const toast = useToast();
 
   const today = getLocalDateString();
-  const dow = (parseLocalDate(today).getDay() + 6) % 7; // Monday = 0
-  const weekStart = addDaysToDateString(today, -dow);
-  const weekEnd = addDaysToDateString(weekStart, 6);
-  const weekDays = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysToDateString(weekStart, i)), [weekStart]);
-  const lastSeven = useMemo(() => Array.from({ length: 7 }, (_, i) => addDaysToDateString(today, i - 6)), [today]);
+  const [pState, setPState] = usePeriod();
 
   const tasksQ = useAsync(() => getTasks().then(arr), []);
   const cardsQ = useAsync(() => getAssignedToMeCardsApi().then(arr), []);
   const meetingsQ = useAsync(() => getMeetings().then(arr), []);
-  const schedQ = useAsync(() => getScheduledMeetings(weekStart, weekEnd).then(arr), [weekStart]);
-  const rangeFrom = addDaysToDateString(today, -35);
-  const rangeTo = addDaysToDateString(today, 60);
-  const rangeQ = useAsync(() => getScheduledMeetings(rangeFrom, rangeTo).then(arr), [rangeFrom]);
-  const logsQ = useAsync(
-    () => Promise.all(lastSeven.map((d) => getWorkLogApi(d).then((l) => ({ d, l })).catch(() => ({ d, l: null as any })))),
-    [today],
-  );
+
+  // "All time" starts on the first day that has anything in it.
+  const earliest = useMemo(() => {
+    const ds = [
+      ...(tasksQ.data || []).flatMap((t) => [localDay((t as any).createdAt), day(t.dueDate), localDay((t as any).completedAt)]),
+      ...(cardsQ.data || []).flatMap((c) => [localDay(c.createdAt), day(c.dueDate), localDay(c.archivedAt)]),
+      ...(meetingsQ.data || []).map((m) => day(m.date)),
+    ].filter(Boolean).sort();
+    return ds[0] ?? null;
+  }, [tasksQ.data, cardsQ.data, meetingsQ.data]);
+  const period = useMemo(() => resolvePeriod(pState, today, earliest), [pState, today, earliest]);
+  const { from, to } = period;
+  const inPeriod = (d: string) => !!d && d >= from && d <= to;
+  const periodDays = useMemo(() => daysIn(from, to), [from, to]);
+
+  // Planned meetings: the period itself, plus a little either side so the calendar always has its dots.
+  const fetchFrom = from < addDaysToDateString(today, -35) ? from : addDaysToDateString(today, -35);
+  const fetchTo = to > addDaysToDateString(today, 60) ? to : addDaysToDateString(today, 60);
+  const rangeQ = useAsync(() => getScheduledMeetings(fetchFrom, fetchTo).then(arr), [fetchFrom, fetchTo]);
+  const logTo = to < today ? to : today;
+  const logsQ = useAsync(() => (from > today ? Promise.resolve([]) : getWorkLogRange(from, logTo)), [from, logTo]);
 
   const [justDone, setJustDone] = useState<Set<string>>(new Set());
 
@@ -108,63 +138,43 @@ const Today = ({ go }: ViewProps) => {
     return m;
   }, [tasksQ.data, cardsQ.data, justDone, today]);
 
+  const dueLimit = period.key === 'all' ? '9999-12-31' : to;
   const stats = useMemo(() => {
     const tasks = tasksQ.data || [];
     const cards = cardsQ.data || [];
-    const doneWeek = weekDays.reduce((n, d) => n + (doneByDay[d] || 0), 0);
-    const open = Math.max(0, [
-      ...tasks.filter((t) => !t.completed && t.status !== 'done' && day(t.dueDate) && day(t.dueDate) <= weekEnd),
-      ...cards.filter((c) => !c.archived && day(c.dueDate) && day(c.dueDate) <= weekEnd),
-    ].length - justDone.size);
-    const total = doneWeek + open;
-    return { doneWeek, open, pct: total ? Math.round((doneWeek / total) * 100) : null };
-  }, [tasksQ.data, cardsQ.data, doneByDay, weekDays, weekEnd, justDone]);
+    const doneIn = periodDays.reduce((n, d) => n + (doneByDay[d] || 0), 0);
+    // Still open: not finished yet, and due by the end of the period (for "All time", every open item).
+    const openList = [
+      ...tasks.filter((t) => !t.completed && t.status !== 'done' && (period.key === 'all' || (day(t.dueDate) && day(t.dueDate) <= dueLimit))),
+      ...cards.filter((c) => !c.archived && (period.key === 'all' || (day(c.dueDate) && day(c.dueDate) <= dueLimit))),
+    ];
+    const justNow = items.filter((i) => justDone.has(i.key) && i.due <= dueLimit).length;
+    const open = Math.max(0, openList.length - justNow);
+    const total = doneIn + open;
+    return { done: doneIn, open, pct: total ? Math.round((doneIn / total) * 100) : null };
+  }, [tasksQ.data, cardsQ.data, doneByDay, periodDays, dueLimit, period.key, justDone, items]);
 
-  /* work log */
+  /* work log: how many of the working days so far in this period have an entry */
   const logStats = useMemo(() => {
-    const entries = logsQ.data || [];
-    const has = (e: { l: any }) => !!(e.l && ((e.l.todayWork || '').trim() || e.l.todayOnLeave || e.l.todayHoliday));
-    const logged = new Set(entries.filter(has).map((e) => e.d));
-    let streak = 0;
-    let i = lastSeven.length - 1;
-    if (!logged.has(lastSeven[i])) i--; // today still has time
-    for (; i >= 0 && logged.has(lastSeven[i]); i--) streak++;
-    const elapsed = Math.max(1, weekDays.filter((d) => d <= today && isWeekday(d)).length);
-    const workLogged = Math.min(elapsed, weekDays.filter((d) => d <= today && isWeekday(d) && logged.has(d)).length);
-    const weekLogged = weekDays.filter((d) => d <= today && logged.has(d)).length;
-    const missed = lastSeven.filter((d) => d < today && isWeekday(d) && !logged.has(d));
-    const series = lastSeven.map((d) => (logged.has(d) ? 1 : 0));
-    return {
-      series, streak, weekLogged, workLogged, elapsed, missed,
-      pct: Math.round((workLogged / elapsed) * 100),
-      todayLogged: logged.has(today),
-    };
-  }, [logsQ.data, lastSeven, weekDays, today]);
+    const logged = new Set((logsQ.data || []).filter((e) => e.written || e.leave || e.holiday).map((e) => e.date));
+    const workDays = from > today ? [] : daysIn(from, logTo).filter(isWeekday);
+    const done = workDays.filter((d) => logged.has(d)).length;
+    return { pct: workDays.length ? Math.round((done / workDays.length) * 100) : null };
+  }, [logsQ.data, from, logTo, today]);
 
-  /* meetings */
-  const loggedMeetings = useMemo(
-    () => (meetingsQ.data || []).filter((m) => day(m.date) >= weekStart && day(m.date) <= weekEnd),
-    [meetingsQ.data, weekStart, weekEnd],
-  );
-  const plannedWeek = useMemo(
-    () => (schedQ.data || []).filter((m) => day(m.date) >= weekStart && day(m.date) <= weekEnd),
-    [schedQ.data, weekStart, weekEnd],
-  );
-  const events: Evt[] = useMemo(
-    () => [...loggedMeetings.map((m) => toEvt(m, true)), ...plannedWeek.map((m) => toEvt(m, false))].sort(byTime),
-    [loggedMeetings, plannedWeek],
-  );
-
+  /* meetings in the period */
+  const loggedMeetings = useMemo(() => (meetingsQ.data || []).filter((m) => inPeriod(day(m.date))), [meetingsQ.data, from, to]); // eslint-disable-line react-hooks/exhaustive-deps
+  const plannedMeetings = useMemo(() => (rangeQ.data || []).filter((m) => inPeriod(day(m.date))), [rangeQ.data, from, to]); // eslint-disable-line react-hooks/exhaustive-deps
   const meetingStats = useMemo(() => {
     const logged = loggedMeetings.length;
-    const planned = plannedWeek.length;
+    const planned = plannedMeetings.length;
     return { logged, planned, total: logged + planned, pct: logged + planned ? Math.round((logged / (logged + planned)) * 100) : null };
-  }, [loggedMeetings, plannedWeek]);
+  }, [loggedMeetings, plannedMeetings]);
 
   /* header numbers */
   const first = (user?.name || user?.email || '').split(/[ @]/)[0];
   const itemsLoading = tasksQ.loading && cardsQ.loading;
-  const meetingsLoading = meetingsQ.loading && schedQ.loading;
+  const meetingsLoading = meetingsQ.loading && rangeQ.loading;
   const overdueCount = items.filter((i) => !i.done && i.late).length;
   const openCount = items.filter((i) => !i.done).length;
   const tagline = itemsLoading
@@ -198,25 +208,28 @@ const Today = ({ go }: ViewProps) => {
     ...(cardsQ.data || []).filter((c) => !c.archived).map((c) => day(c.dueDate)),
   ].filter(Boolean)), [tasksQ.data, cardsQ.data]);
 
-  const last14 = useMemo(() => Array.from({ length: 14 }, (_, i) => addDaysToDateString(today, i - 13)), [today]);
-  const last30 = useMemo(() => Array.from({ length: 30 }, (_, i) => addDaysToDateString(today, i - 29)), [today]);
-  const weeks4 = useMemo(() => Array.from({ length: 4 }, (_, i) => addDaysToDateString(weekStart, (i - 3) * 7)), [weekStart]);
-  const weekRows = weeks4.map((ws, i) => {
-    const days = Array.from({ length: 7 }, (_, k) => addDaysToDateString(ws, k));
-    return { label: i === 3 ? 'This wk' : formatLocalDate(ws, { month: 'short', day: 'numeric' }), segs: [days.reduce((n, d) => n + meetingsOn(d), 0), days.reduce((n, d) => n + (doneByDay[d] || 0), 0)] };
-  });
+  // Charts: the period is cut into days, weeks or months so a long stretch stays readable.
+  const buckets = useMemo(() => makeBuckets(from, to), [from, to]);
+  const sumOver = (b: Bucket, fn: (d: string) => number) => daysIn(b.start, b.end).reduce((n, d) => n + fn(d), 0);
+  const trendMeetings = buckets.list.map((b) => sumOver(b, meetingsOn));
+  const trendDone = buckets.list.map((b) => sumOver(b, (d) => doneByDay[d] || 0));
+  const running = (xs: number[]) => xs.reduce<number[]>((acc, v) => [...acc, (acc[acc.length - 1] ?? 0) + v], []);
+  const stackBuckets = useMemo(() => (buckets.gran === 'day' ? makeBuckets(from, to, 'week').list : buckets.list).slice(-6), [buckets, from, to]);
+  const stackRows = stackBuckets.map((b) => ({ label: b.label, segs: [sumOver(b, meetingsOn), sumOver(b, (d) => doneByDay[d] || 0)] }));
+  const stackUnit = buckets.gran === 'month' ? 'month' : 'week';
 
-  const [donutTab, setDonutTab] = useState('Week');
-  const monthPrefix = today.slice(0, 7);
-  const donutParts = donutTab === 'Week'
-    ? [{ label: 'Logged', v: meetingStats.logged, color: 'var(--color-brand)' }, { label: 'Planned', v: meetingStats.planned, color: 'var(--color-warn)' }]
-    : [
-      { label: 'Logged', v: Object.entries(loggedByDay).filter(([d]) => d.startsWith(monthPrefix)).reduce((n, [, v]) => n + v, 0), color: 'var(--color-brand)' },
-      { label: 'Planned', v: Object.entries(plannedByDay).filter(([d]) => d.startsWith(monthPrefix)).reduce((n, [, v]) => n + v, 0), color: 'var(--color-warn)' },
-    ];
+  // By weekday, added up over the whole period.
+  const byWeekday = useMemo(() => {
+    const held = Array(7).fill(0), planned = Array(7).fill(0), done = Array(7).fill(0);
+    periodDays.forEach((d) => {
+      const i = (parseLocalDate(d).getDay() + 6) % 7;
+      held[i] += loggedByDay[d] || 0; planned[i] += plannedByDay[d] || 0; done[i] += doneByDay[d] || 0;
+    });
+    return { held, planned, done };
+  }, [periodDays, loggedByDay, plannedByDay, doneByDay]);
 
   const openNotOverdue = Math.max(0, stats.open - overdueCount);
-  const range14 = `${formatLocalDate(last14[0], { month: 'short', day: 'numeric' })} – ${formatLocalDate(today, { month: 'short', day: 'numeric' })}`;
+  const stillOpenLabel = period.key === 'all' ? 'Still open' : period.key === 'week' ? 'Still open to finish this week' : `Still open, due by ${formatLocalDate(to, { month: 'short', day: 'numeric' })}`;
   const listRows = items.map((a) => ({
     key: a.key, title: a.title, done: a.done, late: a.late, tag: a.done ? 'Done' : a.late ? `Overdue · ${formatLocalDate(a.due, { month: 'short', day: 'numeric' })}` : 'Today',
     onToggle: () => complete(a),
@@ -227,35 +240,36 @@ const Today = ({ go }: ViewProps) => {
       <Heading
         title={`${greeting}${first ? `, ${first}` : ''}`} sub={`${prettyToday} · ${tagline}`}
         onMeeting={() => go('meetings', 'new')} onTask={() => go('tasks')}
+        filter={<DateRangeButton state={pState} onChange={setPState} period={period} />}
       />
 
       {/* On large, tall screens this widget grid fills the screen (no scrolling). Elsewhere it stacks. */}
       <div className="grid grid-cols-1 big:grid-cols-12 gap-3 big:flex-1 big:min-h-0">
         {/* left block: 9 columns x 3 rows */}
         <div className="big:col-span-9 min-h-0 grid grid-cols-1 md:grid-cols-2 big:grid-cols-9 big:grid-rows-3 gap-3 [&>*]:min-w-0 [&>*]:min-h-[13rem] big:[&>*]:min-h-0">
-          <div className="big:col-span-3"><StatCard up={stats.doneWeek} upLabel="Tasks finished this week" down={stats.open} downLabel="Still open to finish this week" range="This week" loading={itemsLoading} /></div>
+          <div className="big:col-span-3"><StatCard title="Pulse" up={stats.done} upLabel="Tasks finished" down={stats.open} downLabel={stillOpenLabel} range={period.label} loading={itemsLoading} /></div>
           <div className="big:col-span-3"><CalendarWidget meetingDays={meetingDays} taskDays={taskDays} onOpen={() => go('meetings')} /></div>
           <div className="big:col-span-3"><BarsWidget loading={itemsLoading && meetingsLoading} rows={[
             { label: 'Tasks finished', pct: stats.pct, color: 'var(--color-good)', hint: 'No tasks' },
             { label: 'Meetings logged', pct: meetingStats.pct, color: 'var(--color-brand)', hint: 'No meetings' },
-            { label: 'Work log this week', pct: logStats.pct, color: 'var(--color-warn)', hint: 'No data' },
+            { label: 'Work log days', pct: logStats.pct, color: 'var(--color-warn)', hint: 'No data' },
           ]} /></div>
 
-          <div className="md:col-span-2 big:col-span-6"><LineWidget labels={last14.map((d) => formatLocalDate(d, { month: 'short', day: 'numeric' }))} a={last14.map(meetingsOn)} b={last14.map((d) => doneByDay[d] || 0)} aLabel="Meetings" bLabel="Tasks finished" range={range14} loading={itemsLoading && meetingsLoading} /></div>
-          <div className="md:col-span-2 big:col-span-3"><RadialWidget pct={stats.pct} title="Week progress" sub={stats.pct === null ? 'Nothing due this week yet' : `${stats.doneWeek} finished · ${stats.open} still open`} cta="Review tasks" onCta={() => go('tasks')} loading={itemsLoading} /></div>
+          <div className="md:col-span-2 big:col-span-6"><LineWidget labels={buckets.list.map((b) => b.label)} a={trendMeetings} b={trendDone} aLabel="Meetings" bLabel="Tasks finished" range={period.label} loading={itemsLoading && meetingsLoading} /></div>
+          <div className="md:col-span-2 big:col-span-3"><RadialWidget pct={stats.pct} title="Progress" sub={stats.pct === null ? 'Nothing due in this period' : `${stats.done} finished · ${stats.open} still open`} cta="Review tasks" onCta={() => go('tasks')} loading={itemsLoading} /></div>
 
-          <div className="md:col-span-2 big:col-span-4"><StackedWidget loading={meetingsLoading} rows={weekRows} legend={[{ label: 'Meetings', color: 'var(--color-brand)' }, { label: 'Tasks finished', color: 'var(--color-good)' }]} /></div>
-          <div className="md:col-span-2 big:col-span-5"><GroupedWidget loading={meetingsLoading && itemsLoading} days={weekDays.map((d) => formatLocalDate(d, { weekday: 'short' }))}
-            series={[weekDays.map((d) => events.filter((e) => e.date === d && e.logged).length), weekDays.map((d) => events.filter((e) => e.date === d && !e.logged).length), weekDays.map((d) => doneByDay[d] || 0)]}
+          <div className="md:col-span-2 big:col-span-4"><StackedWidget loading={meetingsLoading} title={`By ${stackUnit}`} sub={`Meetings and finished tasks per ${stackUnit}`} rows={stackRows} legend={[{ label: 'Meetings', color: 'var(--color-brand)' }, { label: 'Tasks finished', color: 'var(--color-good)' }]} /></div>
+          <div className="md:col-span-2 big:col-span-5"><GroupedWidget loading={meetingsLoading && itemsLoading} title="By day of the week" sub="Held, planned and finished, added up over the period" days={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']}
+            series={[byWeekday.held, byWeekday.planned, byWeekday.done]}
             legend={[{ label: 'Held', color: 'var(--color-brand)' }, { label: 'Planned', color: 'var(--color-muted)' }, { label: 'Tasks finished', color: 'var(--color-good)' }]} /></div>
         </div>
 
         {/* right column */}
         <div className="big:col-span-3 min-h-0 grid grid-cols-1 md:grid-cols-2 big:flex big:flex-col gap-3 [&>*]:min-w-0 [&>*]:min-h-[11rem] big:[&>*]:min-h-0">
           <div className="big:flex-[1.15]"><ListWidget title="Action items" sub="Due today and overdue" empty="You're all caught up. Nothing is due today." rows={listRows} onAll={() => go('tasks')} /></div>
-          <div className="big:flex-[1.15]"><WavesWidget loading={itemsLoading && meetingsLoading} a={last30.map(meetingsOn)} b={last30.map((d) => doneByDay[d] || 0)} aLabel="Meetings per day" bLabel="Tasks finished per day" /></div>
-          <div className="md:col-span-2 big:flex-none"><SegmentWidget title="Task status" loading={itemsLoading} parts={[{ label: 'Finished', v: stats.doneWeek, color: 'var(--color-good)' }, { label: 'Open', v: openNotOverdue, color: 'var(--color-brand)' }, { label: 'Overdue', v: overdueCount, color: 'var(--color-bad)' }]} /></div>
-          <div className="md:col-span-2 big:flex-[1.3]"><DonutWidget title="Meetings" tabs={['Week', 'Month']} active={donutTab} onTab={setDonutTab} parts={donutParts} centerLabel="meetings" loading={meetingsLoading} /></div>
+          <div className="big:flex-[1.15]"><WavesWidget loading={itemsLoading && meetingsLoading} title="Running total" sub={period.label} a={running(trendMeetings)} b={running(trendDone)} aLabel="Meetings so far" bLabel="Tasks finished so far" /></div>
+          <div className="md:col-span-2 big:flex-none"><SegmentWidget title="Task status" loading={itemsLoading} parts={[{ label: 'Finished', v: stats.done, color: 'var(--color-good)' }, { label: 'Open', v: openNotOverdue, color: 'var(--color-brand)' }, { label: 'Overdue', v: overdueCount, color: 'var(--color-bad)' }]} /></div>
+          <div className="md:col-span-2 big:flex-[1.3]"><DonutWidget title="Meetings" range={period.label} parts={[{ label: 'Logged', v: meetingStats.logged, color: 'var(--color-brand)' }, { label: 'Planned', v: meetingStats.planned, color: 'var(--color-warn)' }]} centerLabel="meetings" loading={meetingsLoading} /></div>
         </div>
       </div>
     </motion.div>

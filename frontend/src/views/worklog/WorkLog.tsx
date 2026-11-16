@@ -44,7 +44,7 @@ const WorkLog = ({ param, go }: ViewProps) => {
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-3 sm:mb-5">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{t('worklog.title')}</h1>
           <p className="text-muted mt-1">{t('worklog.sub')}</p>
@@ -72,22 +72,24 @@ const WorkLog = ({ param, go }: ViewProps) => {
         {stillMissing && missing && (
           <motion.div
             key="banner"
-            initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 16 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }} animate={{ opacity: 1, height: 'auto', marginBottom: 12 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }}
             transition={spring} className="overflow-hidden"
           >
             <div className="flex flex-wrap items-center gap-3 liquid rounded-2xl pl-4 pr-3 py-2.5 border-l-4 !border-l-warn">
-              <p className="flex-1 min-w-[200px] text-sm"><span className="font-bold">{missingLabel} is not logged yet.</span> <span className="text-ink-2">It only takes a minute.</span></p>
-              <Button size="sm" onClick={() => select(missing)} className="!rounded-full">Write it now</Button>
-              <button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss" className="w-8 h-8 rounded-full text-muted hover:bg-ink/5 grid place-items-center">✕</button>
+              <p className="flex-1 basis-56 text-sm"><span className="font-bold">{missingLabel} is not logged yet.</span> <span className="text-ink-2">It only takes a minute.</span></p>
+              <div className="ml-auto flex items-center gap-1">
+                <Button size="sm" onClick={() => select(missing)} className="!rounded-full">Write it now</Button>
+                <button type="button" onClick={() => setDismissed(true)} aria-label="Dismiss" className="w-8 h-8 rounded-full text-muted hover:bg-ink/5 grid place-items-center">✕</button>
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <Stagger>
-        <div className="space-y-5">
+        <div className="space-y-3 sm:space-y-5">
           <DateStrip selected={date} today={today} onSelect={select} />
-          <div className="grid xl:grid-cols-[minmax(0,1fr)_21rem] gap-5 items-stretch">
+          <div className="grid xl:grid-cols-[minmax(0,1fr)_21rem] gap-3 sm:gap-5 items-stretch">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={date} className="min-w-0 h-full" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
                 <Editor date={date} today={today} />

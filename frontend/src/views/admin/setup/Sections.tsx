@@ -58,7 +58,7 @@ export const ThemeSection = () => {
   const upd = (p: Partial<SiteCfg['theme']>) => d.set('theme', { ...t, ...p });
   const card = 'liquid rounded-[1.75rem] p-6';
   return (
-    <div className="grid md:grid-cols-3 gap-4 sm:gap-5">
+    <div className="grid md:grid-cols-3 gap-3 sm:gap-5">
       <div className={card}>
         <h3 className="text-lg font-extrabold">Glass strength</h3>
         <p className="text-sm text-muted mt-1 mb-5">How see-through the cards and panels are.</p>

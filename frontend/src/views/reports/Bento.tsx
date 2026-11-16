@@ -91,7 +91,7 @@ export const Bento = (ctx: InsightCtx) => {
   if (ms.followUps > 0) attention.push({ text: `${plural(ms.followUps, 'meeting note')} flagged for follow-up`, cta: 'See meetings', run: () => go('meetings'), tone: 'warn' });
 
   return (
-    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-4 sm:gap-5">
+    <motion.div initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-12 gap-3 sm:gap-5">
       {/* Tasks: the big one */}
       <Tile className="sm:col-span-2 xl:col-span-6 xl:row-span-2" glow="brand">
         <Label icon="checklist" right={<Legend items={[{ label: 'Completed', color: C.brand }, { label: 'Open backlog', color: C.warn }]} />}>Tasks</Label>

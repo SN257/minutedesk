@@ -6,12 +6,12 @@ import { Button, Card, Empty, Skeleton, useAsync } from '../../ui';
 import { getAllCardsApi, getAssignedToMeCardsApi, getMeetings, getTasks } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { addDaysToDateString, formatLocalDate, getLocalDateString } from '../../lib/date';
-import { spring } from '../../lib/motion';
 import { useToast } from '../../lib/toast';
 import { loadLogs, useLogStore, peekLog } from '../worklog/logStore';
 import { downloadCsv } from './csv';
 import { boundsFor, logStats, logWindow, meetingStats, RANGES, taskStats, toMeetingRows, toTaskRows, type InsightCtx, type RangeKey } from './data';
 import { Bento } from './Bento';
+import { FilterMenu } from '../../ui/filter';
 
 const Loading = () => (
   <div className="space-y-4">
@@ -114,21 +114,16 @@ const Insights = ({ go }: ViewProps) => {
   return (
     <div>
       {/* Heading + period */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-3 sm:mb-5">
         <div className="min-w-0">
           <p className="text-xs font-extrabold uppercase tracking-wider text-brand">{t('insights.eyebrow')}</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight mt-1">{t('insights.title')}</h1>
           <p className="text-muted mt-1.5">{formatLocalDate(bounds.start, { day: 'numeric', month: 'short' })} – {formatLocalDate(bounds.end, { day: 'numeric', month: 'short', year: 'numeric' })}, just for you.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-full liquid p-1 gap-0.5" role="group" aria-label="Date range">
-            {RANGES.map((r) => (
-              <button key={r.key} type="button" onClick={() => setRange(r.key)} aria-pressed={range === r.key} className={`relative px-4 py-2 rounded-full text-sm font-bold transition-colors ${range === r.key ? 'text-white' : 'text-muted hover:text-ink'}`}>
-                {range === r.key && <motion.span layoutId="insights-range" transition={spring} className="absolute inset-0 rounded-full bg-ink" />}
-                <span className="relative">{r.label}</span>
-              </button>
-            ))}
-          </div>
+          <FilterMenu size="sm" title="Filter insights" groups={[
+            { id: 'range', kind: 'single', label: 'Period', value: range, defaultValue: '30d', onChange: (v) => setRange(v as RangeKey), options: RANGES.map((r) => ({ value: r.key, label: r.label })) },
+          ]} />
           <Button variant="soft" onClick={exportCsv} disabled={!ctx} className="!rounded-full">Export CSV</Button>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { shortcut } from '../../lib/platform';
 import { AnimatePresence, Reorder, motion, useDragControls } from 'framer-motion';
 import { spring } from '../../lib/motion';
 import { useToast } from '../../lib/toast';
@@ -189,7 +190,7 @@ export const AgendaStep = ({ items, onChange }: { items: EAgendaItem[]; onChange
         </Reorder.Group>
       )}
 
-      {items.length > 0 && <p className="text-[11px] text-muted mt-3 text-center">Tip: press Ctrl/⌘ + Enter inside an item to add a new one right below it.</p>}
+      {items.length > 0 && <p className="text-[11px] text-muted mt-3 text-center">Tip: press {shortcut('Enter')} inside an item to add a new one right below it.</p>}
     </div>
   );
 };

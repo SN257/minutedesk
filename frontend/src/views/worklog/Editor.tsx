@@ -31,7 +31,7 @@ const Switch = ({ checked, onChange, label }: { checked: boolean; onChange: (v: 
   >
     <span className={`relative w-9 h-5 rounded-full transition-colors ${checked ? 'bg-brand' : 'bg-ink/15'}`}>
       <motion.span
-        className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-card"
+        className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full shadow-card ${checked ? 'bg-white' : 'bg-white dark:bg-ink/70'}`}
         animate={{ x: checked ? 16 : 0 }}
         transition={spring}
       />

@@ -46,7 +46,7 @@ export const NotificationPanel = ({ items, pos, onRead, onReadAll, onClose }: { 
     <motion.div
       initial={{ opacity: 0, y: -10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}
       style={{ transformOrigin: 'top right', '--np-top': `${pos.top}px`, '--np-right': `${pos.right}px` } as React.CSSProperties}
-      className="glass-pop fixed inset-x-3 top-[4.75rem] sm:inset-x-auto sm:top-[var(--np-top)] sm:right-[var(--np-right)] sm:w-[25rem] z-[60] rounded-[1.75rem] overflow-hidden flex flex-col max-h-[min(34rem,calc(100vh-7rem))]"
+      className="glass-pop fixed inset-x-3 top-[4.75rem] sm:inset-x-auto sm:top-[var(--np-top)] sm:right-[var(--np-right)] sm:w-[25rem] z-[60] rounded-[1.75rem] overflow-hidden flex flex-col max-h-[min(34rem,calc(100dvh-11rem))] sm:max-h-[min(34rem,calc(100vh-7rem))]"
     >
       <div className="px-5 pt-5 pb-3">
         <div className="flex items-center justify-between gap-3">

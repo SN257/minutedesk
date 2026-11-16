@@ -5,6 +5,7 @@ import { UsersService } from '../../users/users.service';
 /** Which admin-panel section each admin API belongs to. Anything not listed needs a super admin. */
 const tabForPath = (rawUrl: string): string | null => {
   const p = rawUrl.split('?')[0].replace(/^\/+|\/+$/g, '');
+  if (/^admin\/followup/.test(p)) return 'followup';
   if (/^admin\/analytics\/users/.test(p)) return 'performance';
   if (/^admin\/analytics\//.test(p)) return 'overview';
   if (/^admin\/(activity|errors)/.test(p)) return 'logs';

@@ -15,6 +15,9 @@ import { AppSettingsService } from './app-settings.service';
 import { BackupRecord } from './backup-record.entity';
 import { BackupService } from './backup.service';
 import { AdminAnalyticsService } from './admin-analytics.service';
+import { AdminFollowupService } from './admin-followup.service';
+import { AdminFollowupController } from './admin-followup.controller';
+import { Notification } from '../notifications/notification.entity';
 import { SystemHealthService } from './system-health.service';
 import { Broadcast } from './broadcast.entity';
 import { BroadcastService } from './broadcast.service';
@@ -60,11 +63,12 @@ import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
       Card,
       Comment,
       WorkLog,
+      Notification,
     ]),
     UsersModule,
     NotificationsModule,
   ],
-  controllers: [AdminController, PublicListsController, SchemaController],
+  controllers: [AdminController, AdminFollowupController, PublicListsController, SchemaController],
   providers: [
     ActivityLogService,
     ErrorLogService,
@@ -72,6 +76,7 @@ import { SuperAdminGuard } from '../auth/guards/super-admin.guard';
     SiteConfigService,
     BackupService,
     AdminAnalyticsService,
+    AdminFollowupService,
     SystemHealthService,
     BroadcastService,
     CenterService,

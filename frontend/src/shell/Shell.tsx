@@ -9,7 +9,8 @@ import { spring, viewTransition } from '../lib/motion';
 import { getNotifications, markNotificationRead } from '../lib/api';
 import { formatLocalDate, getLocalDateString } from '../lib/date';
 import { Avatar } from '../ui';
-import { CommandPalette, type Command } from './CommandPalette';
+import { type Command } from './CommandPalette';
+import { HeaderSearch } from './HeaderSearch';
 import { useExtraCrumbs } from '../lib/crumbs';
 import { Icon } from './icons';
 import { useNeeds } from './needs';
@@ -56,13 +57,12 @@ const readTheme = (fallback: boolean) => {
 };
 
 export const Shell = ({ render }: { render: (view: View, param: string | null, go: ReturnType<typeof useRoute>['go']) => ReactNode }) => {
-  const { user, hasAdmin, can, logout } = useAuth();
+  const { user, hasAdmin, canAdmin, can, logout } = useAuth();
   const brand = useBranding();
   const { cfg } = useSiteConfig();
   const { view, param, go } = useRoute();
   const { needs } = useNeeds();
-  const [palette, setPalette] = useState(false);
-  const [pop, setPop] = useState<null | 'bell' | 'new' | 'user'>(null);
+  const [pop, setPop] = useState<null | 'bell' | 'new' | 'user' | 'account'>(null);
   const [notifs, setNotifs] = useState<Notif[]>([]);
   const [dark, setDark] = useState(() => readTheme(cfg.theme.defaultTheme === 'dark'));
   const [bellPos, setBellPos] = useState({ top: 76, right: 120 });
@@ -76,6 +76,9 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
     mq?.addEventListener?.('change', sync);
     return () => { window.removeEventListener('md-theme', sync); mq?.removeEventListener?.('change', sync); };
   }, [cfg.theme.defaultTheme]);
+  // A new page always opens at its top, not wherever the last one was scrolled to.
+  const mainRef = useRef<HTMLElement>(null);
+  useEffect(() => { mainRef.current?.scrollTo({ top: 0 }); setPop(null); }, [view, param]);
   // Open on the person's chosen start page, once, when they arrive without a page in the address.
   const { prefs } = usePrefs();
   const started = useRef(false);
@@ -107,6 +110,11 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
     return shaped.filter((i) => i.key === 'admin' || can(i.key));
   }, [hasAdmin, needs, can, cfg.app.nav]);
 
+  // One page assigned: no menu to switch with, so the rail and bottom bar disappear and the header carries the app name and page title.
+  const single = nav.length <= 1;
+  const home: View = (nav[0]?.key ?? 'settings') as View;
+  const homeLabel = nav[0]?.label ?? 'Home';
+  const showBack = single && view === 'settings' && !!nav[0];
   const allowedHere = view === 'settings' || (view === 'admin' ? hasAdmin : can(view));
   useEffect(() => { if (!allowedHere) go(nav[0]?.key ?? 'settings'); }, [allowedHere, nav, go]);
 
@@ -114,7 +122,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
   useEffect(() => { loadNotifs(); const t = setInterval(loadNotifs, 60000); return () => clearInterval(t); }, [loadNotifs]);
 
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPalette((p) => !p); } };
+    const k = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); window.dispatchEvent(new Event('md2:search-focus')); } };
     window.addEventListener('keydown', k);
     return () => window.removeEventListener('keydown', k);
   }, []);
@@ -134,7 +142,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
   const unread = notifs.filter((n) => !n.read).length;
   const current = view === 'settings' ? 'Settings' : nav.find((n) => n.key === view)?.label ?? 'Dashboard';
   const extra = useExtraCrumbs();
-  const nice = (t: string) => t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' ');
+  const nice = (t: string) => (t === 'followup' ? 'Follow-up' : t.charAt(0).toUpperCase() + t.slice(1).replace(/-/g, ' '));
   /** Levels under the section, taken from the route. Screens can add more through lib/crumbs. */
   const routeCrumb: string | null =
     view === 'meetings' ? (!param ? null : param === 'new' || param.startsWith('start:') ? 'Log minutes' : param === 'schedule' ? 'Schedule' : param.startsWith('edit:') ? 'Edit minutes' : param.startsWith('center:') ? decodeURIComponent(param.slice(7)) || 'Center' : 'Minutes')
@@ -142,7 +150,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
     : view === 'admin' ? (param ? nice(param) : null)
     : null;
   const crumbs: { label: string; run?: () => void }[] = [
-    { label: brand.siteName, run: () => go('today') },
+    { label: brand.siteName, run: () => go(single ? home : 'today') },
     { label: current, run: view === 'today' ? undefined : () => { go(view); if (view === 'tasks') window.dispatchEvent(new Event('md2:tasks-home')); } },
     ...(view === 'tasks' ? extra : []),
     ...(routeCrumb ? [{ label: routeCrumb }] : []),
@@ -171,7 +179,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
   return (
     <div data-app-root className={`${dark ? 'app-dark' : 'app-light theme-light'} h-full flex font-display text-char relative overflow-hidden md:p-3`} style={{ background: dark ? DARK_FIELD : LIGHT_FIELD }}>
       {/* ───── Icon rail ───── */}
-      <aside className="hidden md:flex glass-chrome z-50 w-[4.75rem] shrink-0 flex-col items-center py-4 gap-1.5 rounded-[2rem] mr-3">
+      {!single && <aside className="hidden md:flex glass-chrome z-50 w-[4.75rem] shrink-0 flex-col items-center py-4 gap-1.5 rounded-[2rem] mr-3">
         <Tip label={`${brand.siteName} home`}><button onClick={() => go('today')} aria-label={`${brand.siteName} home`} className="w-11 h-11 rounded-2xl bg-char text-white grid place-items-center text-lg font-semibold mb-3 shadow-[0_12px_24px_-10px_rgba(6,20,27,0.6)] hover:scale-105 transition-transform overflow-hidden">{brand.logoUrl ? <img src={brand.logoUrl} alt="" className="w-full h-full object-cover" /> : brand.siteName.charAt(0).toUpperCase()}</button></Tip>
         {nav.map((n) => {
           const active = view === n.key;
@@ -204,7 +212,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
             </AnimatePresence>
           </div>
         </div>
-      </aside>
+      </aside>}
 
       {/* ───── Second menu: only when the open page has sub-items ───── */}
       <AnimatePresence initial={false}>
@@ -251,8 +259,20 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
       {/* ───── Main column ───── */}
       <div className="flex-1 min-w-0 flex flex-col relative">
         <header className="glass-chrome absolute inset-x-3 top-3 md:inset-x-0 md:top-0 z-40 h-16 px-3 sm:px-4 rounded-full flex items-center gap-2 sm:gap-3">
-          <button onClick={() => go('today')} className="md:hidden w-10 h-10 rounded-xl bg-char text-white grid place-items-center text-base font-semibold" aria-label="Home">M</button>
-          <nav className="hidden lg:block min-w-0" aria-label="Breadcrumb">
+          <button onClick={() => go(single ? home : 'today')} className={`${single ? '' : 'md:hidden'} w-10 h-10 shrink-0 rounded-xl bg-char text-white grid place-items-center text-base font-semibold overflow-hidden`} aria-label={`${brand.siteName} home`}>{brand.logoUrl ? <img src={brand.logoUrl} alt="" className="w-full h-full object-cover" /> : brand.siteName.charAt(0).toUpperCase()}</button>
+          {showBack && (
+            <button type="button" onClick={() => go(home)} aria-label={`Back to ${homeLabel}`} className="shrink-0 inline-flex items-center gap-1.5 h-10 rounded-full pl-2.5 pr-3.5 text-[13.5px] font-semibold text-char bg-char/[0.07] hover:bg-char/[0.12] transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+              <span className="max-w-[12rem] sm:max-w-none truncate"><span className="hidden sm:inline">Back to </span>{homeLabel}</span>
+            </button>
+          )}
+          {single && (
+            <div className="min-w-0 leading-tight">
+              <p className="text-[11px] font-medium text-char/55 truncate">{brand.siteName}</p>
+              <p className="text-[15px] sm:text-base font-semibold text-char truncate">{crumbs[crumbs.length - 1].label}</p>
+            </div>
+          )}
+          <nav className={`hidden ${single ? '' : 'lg:block'} min-w-0`} aria-label="Breadcrumb">
             <ol className="flex items-center gap-0.5 text-[13px] min-w-0">
               {crumbs.map((c, i) => {
                 const last = i === crumbs.length - 1;
@@ -271,12 +291,9 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
           </nav>
 
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-            <button onClick={() => setPalette(true)} className="h-10 w-10 sm:w-[19rem] rounded-full sm:rounded-xl bg-white/55 border border-white/80 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] px-0 sm:px-3.5 flex items-center justify-center sm:justify-start gap-2.5 text-[13.5px] text-char/55 hover:bg-white/80 transition-colors">
-              {Icon.search(16)}<span className="hidden sm:block flex-1 text-left truncate">Search meetings, tasks, people…</span>
-              <kbd className="hidden sm:block text-[10px] rounded-md border border-char/10 bg-char/[0.04] px-1.5 py-0.5 text-char/55">⌘K</kbd>
-            </button>
-            <span className="hidden sm:inline-flex"><Tip side="bottom" label="Schedule"><button onClick={() => go('meetings', 'schedule')} className={iconBtn} aria-label="Schedule">{Icon.meetings(18)}</button></Tip></span>
-            <Tip side="bottom" label={dark ? 'Light theme' : 'Dark theme'}><button onClick={toggleTheme} className={iconBtn} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}>{dark ? <Sun /> : <Moon />}</button></Tip>
+            <HeaderSearch commands={commands} go={go} canSeePeople={canAdmin('people')} />
+            {can('meetings') && <span className="hidden sm:inline-flex"><Tip side="bottom" label="Schedule"><button onClick={() => go('meetings', 'schedule')} className={iconBtn} aria-label="Schedule">{Icon.meetings(18)}</button></Tip></span>}
+            <span className="hidden sm:inline-flex"><Tip side="bottom" label={dark ? 'Light theme' : 'Dark theme'}><button onClick={toggleTheme} className={iconBtn} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}>{dark ? <Sun /> : <Moon />}</button></Tip></span>
             <div className="relative">
               <Tip side="bottom" label="Notifications"><button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setBellPos({ top: r.bottom + 12, right: Math.max(12, window.innerWidth - r.right - 8) }); setPop(pop === 'bell' ? null : 'bell'); }} className={iconBtn} aria-label="Notifications">
                 {Icon.bell(18)}
@@ -285,7 +302,23 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
               <AnimatePresence>
               </AnimatePresence>
             </div>
-            <div className="relative">
+            {/* phones have no side rail, so the account menu (settings, theme, sign out) lives here */}
+            <div className={`relative ${single ? '' : 'sm:hidden'}`}>
+              <button onClick={() => setPop(pop === 'account' ? null : 'account')} aria-label="Account" className="relative block rounded-full"><Avatar name={user?.name || user?.email} size={40} /></button>
+              <AnimatePresence>
+                {pop === 'account' && (
+                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className={`${menuBox} right-0 mt-3 w-60 p-2`}>
+                    <div className="px-3 py-2"><p className="text-sm font-medium truncate">{user?.name || 'Account'}</p><p className="text-xs text-char/55 truncate">{user?.email}</p></div>
+                    {showBack
+                      ? <button onClick={() => { setPop(null); go(home); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Back to {homeLabel}</button>
+                      : <button onClick={() => { setPop(null); go('settings'); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Settings & profile</button>}
+                    <button onClick={() => { toggleTheme(); setPop(null); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">{dark ? 'Switch to light theme' : 'Switch to dark theme'}</button>
+                    <button onClick={signOut} className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-bad hover:bg-bad/10">Sign out</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {(create.length > 0 || can('worklog')) && <div className="relative">
               <button onClick={() => setPop(pop === 'new' ? null : 'new')} className="h-10 rounded-xl bg-char text-white px-3.5 sm:px-4 text-[13.5px] font-medium inline-flex items-center gap-1.5 shadow-[0_10px_20px_-10px_rgba(6,20,27,0.55)] hover:opacity-90 transition">{Icon.plus(15)}<span className="hidden sm:inline">New</span></button>
               <AnimatePresence>
                 {pop === 'new' && (
@@ -296,11 +329,11 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </div>}
           </div>
         </header>
 
-        <main className="relative flex-1 min-h-0 scroll-y max-md:[container-type:size] px-3 md:px-1 pt-[5.25rem] md:pt-[6.25rem] pb-24 md:pb-3 md:-mt-3 md:-mb-3" onClick={() => setPop(null)}>
+        <main ref={mainRef} className={`relative flex-1 min-h-0 scroll-y max-md:[container-type:size] px-3 md:px-1 pt-[6rem] md:pt-[6.25rem] ${single ? 'pb-6' : 'pb-[5.875rem]'} md:pb-3 md:-mt-3 md:-mb-3`} onClick={() => setPop(null)}>
           <AnimatePresence mode="wait">
             <motion.div key={view} variants={view === 'today' ? fadeOnly : viewTransition} initial="initial" animate="animate" exit="exit" className={view === 'today' ? 'w-full big:h-full' : 'max-w-[1400px] mx-auto'}>
               {allowedHere ? render(view, param, go) : null}
@@ -310,7 +343,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
       </div>
 
       {/* ───── Mobile bottom bar ───── */}
-      <nav className="md:hidden glass-chrome glass-bar absolute bottom-3 left-3 right-3 z-40 rounded-full flex items-center justify-around px-2 py-2.5">
+      {!single && <nav className="md:hidden glass-chrome glass-bar absolute bottom-3 left-3 right-3 z-40 rounded-full flex items-center justify-around px-2 py-2.5">
         {nav.map((n) => {
           const active = view === n.key;
           return (
@@ -325,7 +358,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
             </button>
           );
         })}
-      </nav>
+      </nav>}
 
       <AnimatePresence>
         {pop === 'bell' && (
@@ -337,7 +370,6 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
         )}
       </AnimatePresence>
 
-      <CommandPalette open={palette} onClose={() => setPalette(false)} commands={commands} />
     </div>
   );
 };

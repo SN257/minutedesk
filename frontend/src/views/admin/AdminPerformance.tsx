@@ -1,12 +1,13 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import { AnimatedNumber, Avatar, Button, Empty, Skeleton, Stagger, useAsync } from '../../ui';
 import { getAdminUsersOverview, type AdminUserSummary } from '../../lib/api';
 import { getLocalDateString } from '../../lib/date';
 import { spring } from '../../lib/motion';
-import { ErrorNote, G, Pills, RefreshButton, RoleBadge, SearchBox, firstName, onTimeRate, rateTone, scoreOf, timeAgo } from './shared';
+import { ErrorNote, G, RefreshButton, RoleBadge, SearchBox, firstName, onTimeRate, rateTone, scoreOf, timeAgo } from './shared';
 import { ATile, KpiTile } from './tiles';
 import { UserDrill } from './UserDrill';
+import { FilterMenu } from '../../ui/filter';
 
 interface Row {
   u: AdminUserSummary;
@@ -27,6 +28,24 @@ const METRICS: { key: Metric; label: string; pct?: boolean }[] = [
   { key: 'otr', label: 'On-time %', pct: true },
   { key: 'rate', label: 'Log compliance %', pct: true },
 ];
+
+/** What each ranking means, shown under the podium title. */
+/** The unit written under each podium figure, so it is clear exactly what the number counts. */
+const METRIC_UNIT: Record<Metric, (n: number) => string> = {
+  score: (n) => (n === 1 ? 'point' : 'points'),
+  tasks: (n) => (n === 1 ? 'task finished' : 'tasks finished'),
+  logs: (n) => (n === 1 ? 'work log' : 'work logs'),
+  otr: () => 'finished on time',
+  rate: () => 'days logged (30d)',
+};
+
+const METRIC_HELP: Record<Metric, string> = {
+  score: 'Score = 2 per finished task + 1 per work log, plus up to 10 for finishing on time and up to 10 for the last-30-day log habit.',
+  tasks: 'Tasks and board cards finished, all time.',
+  logs: 'Daily work logs written, all time.',
+  otr: 'Share of finished work (with a due date) that was done by its due date.',
+  rate: 'Share of working days in the last 30 that have a work log.',
+};
 
 const valueOf = (r: Row, k: Metric | 'last'): number => {
   switch (k) {
@@ -76,10 +95,11 @@ const MEDAL: Record<number, { tint: string; ring: string; label: string }> = {
   3: { label: 'Third', tint: 'color-mix(in srgb, var(--color-brand) 40%, transparent)', ring: 'conic-gradient(from 0deg, var(--color-brand), var(--color-warn), var(--color-brand))' },
 };
 
-const Podium = ({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row) => void }) => {
+const Podium = ({ rows, metric, onOpen }: { rows: Row[]; metric: Metric; onOpen: (r: Row) => void }) => {
+  const pct = !!METRICS.find((m) => m.key === metric)?.pct;
   const top = rows.slice(0, 3);
   const order = [top[1], top[0], top[2]].filter(Boolean) as Row[]; // 2nd, 1st, 3rd
-  const H: Record<number, number> = { 1: 150, 2: 108, 3: 80 };
+  const H: Record<number, number> = { 1: 176, 2: 140, 3: 116 };
   return (
     <div className="relative pt-6">
       {/* spotlight cone and drifting sparkles */}
@@ -118,7 +138,7 @@ const Podium = ({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row) => void }) => 
                   </span>
                 </motion.div>
                 <p className="text-sm sm:text-base font-extrabold mt-3 truncate w-full group-hover:text-brand transition-colors">{firstName(r.u)}</p>
-                <p className="text-[11px] text-muted truncate w-full">{r.u.tasksCompleted} tasks done · {r.u.workLogsCount} logs</p>
+                <p className="text-[11px] text-muted truncate w-full">{r.u.tasksCompleted} done · {r.u.workLogsCount} {r.u.workLogsCount === 1 ? 'log' : 'logs'}</p>
               </motion.div>
 
               <motion.div
@@ -130,12 +150,13 @@ const Podium = ({ rows, onOpen }: { rows: Row[]; onOpen: (r: Row) => void }) => 
                 style={{ background: `linear-gradient(180deg, ${m.tint}, color-mix(in srgb, ${m.tint} 15%, transparent))` }}
               >
                 {/* big faded rank numeral */}
-                <span aria-hidden className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[7rem] leading-none font-black text-white/35 select-none">{r.rank}</span>
+                <span aria-hidden className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[7rem] leading-none font-black text-white/35 dark:text-ink/[0.12] select-none">{r.rank}</span>
                 {/* light sweep */}
                 <motion.span aria-hidden className="absolute inset-y-0 -left-1/2 w-1/2 -skew-x-[20deg] bg-gradient-to-r from-transparent via-white/55 to-transparent"
                   animate={{ x: ['0%', '420%'] }} transition={{ duration: 2.4, repeat: Infinity, repeatDelay: 2.5 + i * 0.8, ease: 'easeInOut' }} />
-                <span className="relative text-3xl sm:text-4xl font-extrabold tabular-nums leading-none"><AnimatedNumber value={r.score} /></span>
-                <span className="relative text-[10px] font-extrabold uppercase tracking-[0.16em] mt-1.5 text-ink-2">{m.label}</span>
+                <span className="relative text-3xl sm:text-4xl font-extrabold tabular-nums leading-none"><AnimatedNumber value={Math.max(0, valueOf(r, metric))} />{pct && <span className="text-xl font-bold">%</span>}</span>
+                <span className="relative text-[11px] font-bold mt-1 text-ink-2 leading-tight text-center px-2">{METRIC_UNIT[metric](Math.max(0, valueOf(r, metric)))}</span>
+                <span className="relative text-[10px] font-extrabold uppercase tracking-[0.16em] mt-1.5 text-muted">{m.label}</span>
               </motion.div>
             </button>
           );
@@ -154,26 +175,68 @@ const Stat = ({ label, value }: { label: string; value: ReactNode }) => (
   </div>
 );
 
+/** Keeps the page live: refetches every `ms` while the tab is visible, and as soon as you come back to it. */
+const useLive = (reload: () => void, data: unknown, ms = 30000) => {
+  const latest = useRef(reload);
+  latest.current = reload;
+  const [stamp, setStamp] = useState(() => Date.now());
+  const [, setNow] = useState(0);
+  useEffect(() => { if (data) setStamp(Date.now()); }, [data]);
+  useEffect(() => {
+    const refetch = () => { if (document.visibilityState === 'visible') latest.current(); };
+    const poll = setInterval(refetch, ms);
+    const clock = setInterval(() => setNow((n) => n + 1), 5000);
+    document.addEventListener('visibilitychange', refetch);
+    window.addEventListener('focus', refetch);
+    return () => { clearInterval(poll); clearInterval(clock); document.removeEventListener('visibilitychange', refetch); window.removeEventListener('focus', refetch); };
+  }, [ms]);
+  const secs = Math.max(0, Math.round((Date.now() - stamp) / 1000));
+  return secs < 5 ? 'just now' : secs < 60 ? `${secs}s ago` : `${Math.floor(secs / 60)}m ago`;
+};
+
 const AdminPerformance = () => {
   const { data, loading, error, reload } = useAsync(getAdminUsersOverview, []);
+  const updated = useLive(reload, data);
   const [q, setQ] = useState('');
   const [metric, setMetric] = useState<Metric>('score');
+  const [roleSel, setRoleSel] = useState<string[]>([]);
+  const [activeIn, setActiveIn] = useState('any');
+  const [habit, setHabit] = useState('any');
+  const [openWork, setOpenWork] = useState('any');
   const [sel, setSel] = useState<{ id: string; name: string; lastActive: string | null } | null>(null);
 
-  const rows: Row[] = useMemo(() => {
-    const base = (data ?? []).map((u) => ({
-      u, name: u.name || u.email, score: scoreOf(u), otr: onTimeRate(u), rate: u.workLogCompliance.rate, rank: 0,
-      last: u.lastActive ? new Date(u.lastActive).getTime() : 0,
-    }));
-    [...base].sort((a, b) => b.score - a.score).forEach((r, i) => { r.rank = i + 1; });
-    return base;
-  }, [data]);
+  const allRows: Row[] = useMemo(() => (data ?? []).map((u) => ({
+    u, name: u.name || u.email, score: scoreOf(u), otr: onTimeRate(u), rate: u.workLogCompliance.rate, rank: 0,
+    last: u.lastActive ? new Date(u.lastActive).getTime() : 0,
+  })), [data]);
+  // The filters narrow who is compared: the podium, the cards and the team totals all follow them.
+  const rows: Row[] = useMemo(() => allRows.filter((r) => {
+    if (roleSel.length && !roleSel.includes(r.u.role)) return false;
+    if (activeIn !== 'any') {
+      const days = r.last ? (Date.now() - r.last) / 86400000 : Infinity;
+      if (activeIn === 'idle' ? days <= 30 : days > Number(activeIn)) return false;
+    }
+    if (habit === 'high' && r.rate < 80) return false;
+    if (habit === 'low' && r.rate >= 50) return false;
+    const open = r.u.tasksCount - r.u.tasksCompleted;
+    if (openWork === 'open' && open <= 0) return false;
+    if (openWork === 'clear' && open > 0) return false;
+    return true;
+  }), [allRows, roleSel, activeIn, habit, openWork]);
+  const roleKeys = useMemo(() => [...new Set(allRows.map((r) => r.u.role))], [allRows]);
 
-  const ranked = useMemo(() => [...rows].sort((a, b) => a.rank - b.rank), [rows]);
+  // Everyone, ranked by the metric chosen in "Rank by": the podium, the card order and the rank badges all follow it.
+  const ranked = useMemo(() => {
+    const sorted = [...rows].sort((a, b) => valueOf(b, metric) - valueOf(a, metric) || b.score - a.score || b.u.tasksCompleted - a.u.tasksCompleted || a.name.localeCompare(b.name));
+    return sorted.map((r, i) => ({ ...r, rank: i + 1 }));
+  }, [rows, metric]);
   const cards = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return rows.filter((r) => !s || `${r.u.name || ''} ${r.u.email}`.toLowerCase().includes(s)).sort((a, b) => valueOf(b, metric) - valueOf(a, metric));
-  }, [rows, q, metric]);
+    return ranked.filter((r) => !s || `${r.u.name || ''} ${r.u.email}`.toLowerCase().includes(s));
+  }, [ranked, q]);
+  // Only people who actually have something in this measure can stand on the podium.
+  const podiumRows = useMemo(() => ranked.filter((r) => valueOf(r, metric) > 0).slice(0, 3), [ranked, metric]);
+  const metricLabel = METRICS.find((m) => m.key === metric)?.label ?? 'Score';
 
   const open = (r: Row) => setSel({ id: r.u.id, name: r.name, lastActive: r.u.lastActive });
   const maxScore = Math.max(1, ...rows.map((r) => r.score));
@@ -209,39 +272,45 @@ const AdminPerformance = () => {
     );
   }
   if (error) return <ErrorNote message={error} onRetry={reload} />;
-  if (!rows.length) return <div className="liquid rounded-[2rem]"><Empty icon="🏁" title="No one to compare yet" hint="As people finish tasks and write daily work logs, the leaderboard fills in." /></div>;
+  if (!allRows.length) return <div className="liquid rounded-[2rem]"><Empty icon="🏁" title="No one to compare yet" hint="As people finish tasks and write daily work logs, the leaderboard fills in." /></div>;
 
   return (
-    <Stagger className="space-y-4 sm:space-y-5">
+    <Stagger className="space-y-3 sm:space-y-5">
       {/* Toolbar: find, export, and what the cards are ranked by */}
       <ATile glow="brand">
         <div className="flex flex-wrap items-center gap-3">
           <SearchBox value={q} onChange={setQ} placeholder="Find someone" />
+          <FilterMenu title="Filter and rank" groups={[
+            { id: 'role', kind: 'multi', label: 'Role', value: roleSel, onChange: setRoleSel, options: roleKeys.map((k) => ({ value: k, label: k === 'super_admin' ? 'Super admin' : k.charAt(0).toUpperCase() + k.slice(1), count: allRows.filter((r) => r.u.role === k).length })) },
+            { id: 'active', kind: 'single', label: 'Last active', value: activeIn, defaultValue: 'any', onChange: setActiveIn, options: [{ value: 'any', label: 'Any time' }, { value: '1', label: 'Last 24 hours' }, { value: '7', label: 'Last 7 days' }, { value: '30', label: 'Last 30 days' }, { value: 'idle', label: 'Not active in 30 days' }] },
+            { id: 'habit', kind: 'single', label: 'Log habit', value: habit, defaultValue: 'any', onChange: setHabit, options: [{ value: 'any', label: 'Any' }, { value: 'high', label: '80% or more' }, { value: 'low', label: 'Below 50%' }] },
+            { id: 'open', kind: 'single', label: 'Work', value: openWork, defaultValue: 'any', onChange: setOpenWork, options: [{ value: 'any', label: 'Any' }, { value: 'open', label: 'Has open work' }, { value: 'clear', label: 'Nothing open' }] },
+            { id: 'rank', kind: 'single', view: true, label: 'Rank by', value: metric, defaultValue: 'score', onChange: (v) => setMetric(v as Metric), options: METRICS.map((m) => ({ value: m.key, label: m.label })) },
+          ]} />
           <Button size="sm" variant="soft" onClick={exportCsv} className="!rounded-full">{G.download} Export CSV</Button>
+          <span className="inline-flex items-center gap-2 rounded-full bg-ink/[0.06] px-3 py-1.5 text-xs font-bold text-muted" title="This page refreshes itself every 30 seconds"><span className="relative flex w-2 h-2"><span className="absolute inset-0 rounded-full bg-good animate-ping opacity-60" /><span className="relative w-2 h-2 rounded-full bg-good" /></span>Live · updated {updated}</span>
           <RefreshButton onClick={reload} busy={loading} />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-4">
-          <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">Rank by</span>
-          <Pills value={metric} onChange={setMetric} items={METRICS.map((m) => ({ key: m.key, label: m.label }))} />
         </div>
       </ATile>
 
       {/* Team at a glance */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KpiTile icon={G.users} label="Team points" value={team.points} sub={`${rows.length} ${rows.length === 1 ? 'person' : 'people'}`} glow="brand" />
-        <KpiTile icon={G.check} label="Tasks done" value={team.done} sub={`of ${team.total} assigned`} glow="good" />
-        <KpiTile icon={G.refresh} label="On time" value={team.otr ?? 0} sub={team.otr === null ? 'no finished tasks yet' : 'average finish rate'} glow="warn" />
-        <KpiTile icon={G.download} label="Log habit" value={team.rate} sub="average work-log rate" glow="brand" />
+        <KpiTile icon={G.check} label="Tasks done" value={team.done} sub={`of ${team.total} tasks and board cards`} glow="good" />
+        <KpiTile icon={G.refresh} label="On time" value={team.otr ?? 0} suffix="%" empty={team.otr === null} sub={team.otr === null ? 'No finished work with a due date yet' : '% of finished work done by its due date'} glow="warn" />
+        <KpiTile icon={G.download} label="Log habit" value={team.rate ?? 0} suffix="%" empty={team.rate === null} sub="Working days logged, last 30 days" glow="brand" />
       </div>
 
       {/* Podium */}
-      {!q.trim() && ranked.length >= 2 && (
+      {!q.trim() && (
         <ATile glow="warn">
           <div className="mb-2">
-            <h3 className="text-base font-extrabold tracking-tight">Top performers</h3>
-            <p className="text-xs text-muted mt-0.5 max-w-xl">Score = 2 × tasks completed + daily work logs, nudged by on-time rate and log compliance.</p>
+            <h3 className="text-base font-extrabold tracking-tight">Top performers · by {metricLabel.toLowerCase()}</h3>
+            <p className="text-xs text-muted mt-0.5 max-w-xl">{METRIC_HELP[metric]}</p>
           </div>
-          <Podium rows={ranked} onOpen={open} />
+          {podiumRows.length >= 2
+            ? <Podium key={metric} rows={podiumRows} metric={metric} onOpen={open} />
+            : <p className="text-sm text-muted text-center py-10">Not enough data yet to rank people by {metricLabel.toLowerCase()}.</p>}
         </ATile>
       )}
 
@@ -249,7 +318,7 @@ const AdminPerformance = () => {
       {cards.length === 0 ? (
         <div className="liquid rounded-[2rem]"><Empty icon="🔎" title="No one matches that" hint="Try another name or email." /></div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-5">
           {cards.map((r, i) => (
             <motion.button
               key={r.u.id}
@@ -280,7 +349,7 @@ const AdminPerformance = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Meter label="On time" value={r.otr} />
-                <Meter label="Log habit" value={r.rate} />
+                <Meter label="Log habit · 30d" value={r.rate} />
               </div>
               <p className="text-[11px] text-muted">Last active {timeAgo(r.u.lastActive)}</p>
             </motion.button>

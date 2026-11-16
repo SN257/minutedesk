@@ -10,7 +10,7 @@ import type { BoardRec } from './model';
 import type { TasksData } from './useTasksData';
 import { useWorkspaces, type Workspace, type WorkspacesApi } from './workspaces';
 
-const FRAME = 'liquid rounded-[2rem] mt-1 md:-mt-3 h-[calc(100cqh-0.125rem)] md:h-[calc(100dvh-6.25rem)] min-h-[28rem] overflow-hidden';
+const FRAME = 'liquid rounded-[2rem] mt-0 md:-mt-3 h-[calc(100cqh-0.125rem)] md:h-[calc(100dvh-6.25rem)] min-h-[28rem] overflow-hidden';
 
 /** Workspace badge: first letter on a colour taken from the name. */
 const WsMark = ({ name, size = 36 }: { name: string; size?: number }) => (
@@ -81,7 +81,7 @@ const Swatches = ({ value, onChange }: { value: string; onChange: (k: string) =>
 );
 
 /* ───────── Step-by-step setup for a first-time user ───────── */
-const Onboarding = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; onOpen: (id: string) => void }) => {
+const Onboarding = ({ data, ws, onOpen, onView }: { data: TasksData; ws: WorkspacesApi; onOpen: (id: string) => void; onView?: (v: 'list' | 'calendar') => void }) => {
   const toast = useToast();
   const [step, setStep] = useState<1 | 2>(1);
   const [wsName, setWsName] = useState('');
@@ -112,7 +112,8 @@ const Onboarding = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; 
   const steps = ['Workspace', 'Board', 'Lists & cards'];
   return (
     <div className={`${FRAME} overflow-y-auto scroll-y`}>
-      <div className="max-w-xl mx-auto px-5 py-8 sm:py-12">
+      <div className="max-w-xl mx-auto px-5 py-6 sm:py-10">
+        {onView && <div className="flex justify-end mb-6"><ViewTabs onView={onView} /></div>}
         <ol className="flex items-center gap-2 mb-8" aria-label="Setup steps">
           {steps.map((s, i) => {
             const n = i + 1; const on = n === step; const done = n < step;
@@ -147,8 +148,17 @@ const Onboarding = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; 
   );
 };
 
+/** Switch the Tasks page back to its list or calendar. Board mode fills the screen, so this lives inside it. */
+const ViewTabs = ({ onView }: { onView: (v: 'list' | 'calendar') => void }) => (
+  <div className="inline-flex rounded-full bg-ink/[0.06] p-1" role="tablist" aria-label="View">
+    {([['list', 'List'], ['board', 'Board'], ['calendar', 'Calendar']] as const).map(([k, l]) => (
+      <button key={k} type="button" role="tab" aria-selected={k === 'board'} onClick={() => k !== 'board' && onView(k)} className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${k === 'board' ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>{l}</button>
+    ))}
+  </div>
+);
+
 /* ───────── Boards home: left menu, recently viewed, then every workspace ───────── */
-const Home = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; onOpen: (id: string) => void; openCard: (id: string) => void }) => {
+const Home = ({ data, ws, onOpen, onView }: { data: TasksData; ws: WorkspacesApi; onOpen: (id: string) => void; openCard: (id: string) => void; onView?: (v: 'list' | 'calendar') => void }) => {
   const toast = useToast();
   const [boardModal, setBoardModal] = useState<{ ws: string } | null>(null);
   const [wsModal, setWsModal] = useState<null | 'new' | { edit: Workspace }>(null);
@@ -217,6 +227,7 @@ const Home = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; onOpen
 
       {/* content */}
       <div className="flex-1 min-w-0 overflow-y-auto scroll-y px-5 sm:px-7 pt-4 pb-6 space-y-6">
+        {onView && <div className="flex justify-end"><ViewTabs onView={onView} /></div>}
         {starred.length > 0 && !focus && (
           <section>
             <h2 className="flex items-center gap-2 text-sm font-extrabold mb-4"><TIcon name="star" size={15} filled />Starred boards</h2>
@@ -300,13 +311,13 @@ const Home = ({ data, ws, onOpen }: { data: TasksData; ws: WorkspacesApi; onOpen
 };
 
 /* ───────── Entry: home or a board ───────── */
-export const BoardsArea = ({ data, onOpen }: { data: TasksData; onOpen: (id: string) => void }) => {
+export const BoardsArea = ({ data, onOpen, onView }: { data: TasksData; onOpen: (id: string) => void; onView?: (v: 'list' | 'calendar') => void }) => {
   const ws = useWorkspaces(data.me, data.boards, data.loading);
   const [boardId, setBoardId] = useState<string | null>(null);
   const open = useMemo(() => (boardId && data.boards.some((b) => b.id === boardId) ? boardId : null), [boardId, data.boards]);
 
   if (data.loading) return <div className={`${FRAME} p-4`}><Skeleton className="h-11 w-72 mb-4" /><div className="grid grid-cols-3 gap-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-32" />)}</div></div>;
   if (open) return <Boards data={data} onOpen={onOpen} boardId={open} onBoard={setBoardId} ws={ws} />;
-  if (ws.workspaces.length === 0 && data.boards.length === 0) return <Onboarding data={data} ws={ws} onOpen={setBoardId} />;
-  return <Home data={data} ws={ws} onOpen={setBoardId} openCard={onOpen} />;
+  if (ws.workspaces.length === 0 && data.boards.length === 0) return <Onboarding data={data} ws={ws} onOpen={setBoardId} onView={onView} />;
+  return <Home data={data} ws={ws} onOpen={setBoardId} openCard={onOpen} onView={onView} />;
 };

@@ -1,5 +1,5 @@
 import { formatClock } from '../../lib/formats';
-import { formatLocalDate, parseLocalDate } from '../../lib/date';
+import { addDaysToDateString, formatLocalDate, parseLocalDate } from '../../lib/date';
 
 export interface Point {
   id?: string;
@@ -152,4 +152,32 @@ export const getListTab = (): ListTab => {
 };
 export const setListTab = (t: ListTab) => {
   try { sessionStorage.setItem(TAB_KEY, t); } catch { /* ignore */ }
+};
+
+/* ───────── filters shared by the meeting lists ───────── */
+export type MeetingPeriod = 'any' | 'week' | 'month' | 'lastmonth' | '90d' | 'year';
+export const MEETING_PERIODS: { value: MeetingPeriod; label: string }[] = [
+  { value: 'any', label: 'Any time' }, { value: 'week', label: 'This week' }, { value: 'month', label: 'This month' },
+  { value: 'lastmonth', label: 'Last month' }, { value: '90d', label: 'Last 90 days' }, { value: 'year', label: 'This year' },
+];
+export const inMeetingPeriod = (date: string, p: MeetingPeriod, today: string) => {
+  const d = d10(date);
+  if (p === 'any') return true;
+  if (p === 'week') { const from = addDaysToDateString(today, -((parseLocalDate(today).getDay() + 6) % 7)); return d >= from && d <= addDaysToDateString(from, 6); }
+  if (p === 'month') return d.slice(0, 7) === today.slice(0, 7);
+  if (p === 'lastmonth') { const x = parseLocalDate(`${today.slice(0, 7)}-01`); const prev = new Date(x.getFullYear(), x.getMonth() - 1, 1); return d.slice(0, 7) === `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, '0')}`; }
+  if (p === '90d') return d >= addDaysToDateString(today, -89) && d <= today;
+  return d.slice(0, 4) === today.slice(0, 4);
+};
+export const MEETING_FLAGS: { value: string; label: string; hint: string }[] = [
+  { value: 'actions', label: 'Has action items', hint: 'Points with an owner or a task' },
+  { value: 'decisions', label: 'Has decisions', hint: 'At least one decision was recorded' },
+  { value: 'important', label: 'Marked important', hint: 'An agenda item is flagged important' },
+  { value: 'followup', label: 'Needs follow-up', hint: 'An agenda item is flagged for follow-up' },
+];
+/** A meeting matches when it has every flag that is switched on. */
+export const matchesFlags = (m: Meeting, flags: string[]) => {
+  if (!flags.length) return true;
+  const st = meetingStats(m);
+  return flags.every((f) => (f === 'actions' ? st.actions > 0 : f === 'decisions' ? st.decisions > 0 : f === 'important' ? st.important : st.followUp));
 };

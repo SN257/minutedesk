@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } 
 import { AnimatePresence, motion } from 'framer-motion';
 import type { View, ViewProps } from '../../lib/nav';
 import { navigatePath } from '../../lib/nav';
+import { shortcut } from '../../lib/platform';
 import { useAuth } from '../../lib/auth';
 import { useToast } from '../../lib/toast';
 import { spring } from '../../lib/motion';
@@ -36,7 +37,7 @@ const Panel = ({ title, desc, children, right }: { title: string; desc?: string;
 
 /** A big selectable tile. */
 const Choice = ({ on, onClick, children, label, className = '' }: { on: boolean; onClick: () => void; children?: ReactNode; label: string; className?: string }) => (
-  <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`relative text-left rounded-[1.4rem] border-2 p-4 transition-all ${on ? 'border-ink bg-white/70 shadow-card' : 'border-white/70 bg-white/40 hover:bg-white/60'} ${className}`}>
+  <button type="button" role="radio" aria-checked={on} onClick={onClick} className={`relative block w-full text-left rounded-[1.4rem] border-2 p-3 sm:p-4 transition-all ${on ? 'border-ink bg-white/70 shadow-card' : 'border-white/70 bg-white/40 hover:bg-white/60'} ${className}`}>
     {children}
     <span className="block text-[15px] font-extrabold mt-2">{label}</span>
     <span aria-hidden className={`absolute top-3 right-3 w-5 h-5 rounded-full grid place-items-center text-white transition-all ${on ? 'bg-ink scale-100' : 'bg-ink/10 scale-90'}`}>{on && <span className="scale-75">{Icon.check(14)}</span>}</span>
@@ -81,7 +82,7 @@ const ProfileSection = () => {
   };
 
   return (
-    <div className="grid lg:grid-cols-5 gap-4 sm:gap-5 items-start">
+    <div className="grid lg:grid-cols-5 gap-3 sm:gap-5 items-start">
       <div className="lg:col-span-3"><Panel title="Your details" desc="This is how you appear to your teammates.">
         <form onSubmit={submit} className="space-y-5">
           <Field label="Full name"><Input className="!py-3 !text-[15px] !rounded-2xl" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" autoComplete="name" /></Field>
@@ -127,12 +128,12 @@ const AppearanceSection = () => {
   const set = (p: Partial<Prefs['appearance']>) => update((x) => ({ ...x, appearance: { ...x.appearance, ...p } }));
   const theme = a.theme ?? (localStorage.getItem('md_theme') === 'dark' ? 'dark' : 'light');
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-3 sm:space-y-5">
       <Panel title="Theme" desc="Light, dark, or follow your device.">
         <div role="radiogroup" aria-label="Theme" className="grid grid-cols-3 gap-3 sm:gap-4">
           {([['light', 'Light'], ['dark', 'Dark'], ['auto', 'Auto']] as const).map(([k, l]) => (
             <Choice key={k} on={theme === k} label={l} onClick={() => { set({ theme: k }); applyTheme(k); }}>
-              <span className="block h-20 rounded-xl border border-black/10 relative overflow-hidden" style={{ background: THEME_PREVIEW[k] }}>
+              <span className="block w-full h-16 sm:h-20 rounded-xl border border-black/10 relative overflow-hidden" style={{ background: THEME_PREVIEW[k] }}>
                 <span className="absolute left-2 top-2 w-6 h-2 rounded-full bg-black/25" /><span className="absolute left-2 top-6 right-8 h-8 rounded-lg bg-white/50" />
               </span>
             </Choice>
@@ -140,7 +141,7 @@ const AppearanceSection = () => {
         </div>
       </Panel>
 
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid md:grid-cols-2 gap-3 sm:gap-5">
         <Panel title="Text size" desc="Makes everything larger or smaller.">
           <div role="radiogroup" aria-label="Text size" className="grid grid-cols-3 gap-3">
             {([['sm', 'Compact', 'text-base'], ['md', 'Standard', 'text-xl'], ['lg', 'Large', 'text-3xl']] as const).map(([k, l, c]) => (
@@ -156,7 +157,7 @@ const AppearanceSection = () => {
       <Panel title="Open on" desc="The page you land on when you open the app.">
         <div role="radiogroup" aria-label="Start page" className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
           {PAGE_LABELS.filter((p) => can(p.key as any)).map((p) => (
-            <Choice key={p.key} on={(a.startPage ?? 'today') === p.key} label={p.label} onClick={() => set({ startPage: p.key })}><span className="block text-xs text-muted">{p.hint}</span></Choice>
+            <Choice key={p.key} on={(a.startPage && can(a.startPage as any) ? a.startPage : (PAGE_LABELS.find((x) => can(x.key as any))?.key ?? 'today')) === p.key} label={p.label} onClick={() => set({ startPage: p.key })}><span className="block text-xs text-muted">{p.hint}</span></Choice>
           ))}
         </div>
       </Panel>
@@ -165,6 +166,8 @@ const AppearanceSection = () => {
 };
 
 /* ───────── Notifications ───────── */
+/** Which page each reminder belongs to; announcements (no page) are for everyone. */
+const NOTIFY_PAGE: Record<string, string | undefined> = { meeting_reminder: 'meetings', work_log_reminder: 'worklog', missed_work_log: 'worklog', due_date_alert: 'tasks', task_overdue: 'tasks', task_assigned: 'tasks' };
 const NOTIFY: { key: string; title: string; desc: string; icon: ReactNode }[] = [
   { key: 'meeting_reminder', title: 'Meetings starting soon', desc: 'A nudge 15 minutes before a meeting begins.', icon: Icon.meetings(20) },
   { key: 'work_log_reminder', title: 'Daily work-log reminder', desc: 'A morning reminder to write your log.', icon: Icon.worklog(20) },
@@ -177,28 +180,32 @@ const NOTIFY: { key: string; title: string; desc: string; icon: ReactNode }[] = 
 
 const NotificationsSection = () => {
   const { prefs, update } = usePrefs();
+  const { can } = useAuth();
+  // Only reminders for pages this person can open.
+  const items = NOTIFY.filter((n) => { const pg = NOTIFY_PAGE[n.key]; return !pg || can(pg as any); });
+  const hasReminders = items.some((n) => NOTIFY_PAGE[n.key]);
   const hour = prefs.reminderHour ?? 7;
   const hours = [5, 6, 7, 8, 9, 10, 11, 12];
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-3 sm:space-y-5">
       <Panel title="What to tell me about" desc="Choose which events notify you in the app and by email.">
         <div className="divide-y divide-white/60">
-          {NOTIFY.map((n) => (
+          {items.map((n) => (
             <SwitchRow key={n.key} icon={n.icon} title={n.title} desc={n.desc} on={prefs.notify[n.key] !== false} onChange={(v) => update((p) => ({ ...p, notify: { ...p.notify, [n.key]: v } }))} />
           ))}
         </div>
       </Panel>
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
+      <div className={`grid gap-3 sm:gap-5 ${hasReminders ? 'md:grid-cols-2' : ''}`}>
         <Panel title="Email" desc="Also send these to your inbox.">
           <SwitchRow icon={Icon.bell(20)} title="Email notifications" desc="Turn off to keep everything in the app." on={prefs.email !== false} onChange={(v) => update((p) => ({ ...p, email: v }))} />
         </Panel>
-        <Panel title="Daily reminder time" desc="When your morning reminders arrive, in your own timezone.">
+        {hasReminders && <Panel title="Daily reminder time" desc="When your morning reminders arrive, in your own timezone.">
           <div role="radiogroup" aria-label="Reminder time" className="flex flex-wrap gap-2">
             {hours.map((h) => (
               <button key={h} type="button" role="radio" aria-checked={hour === h} onClick={() => update((p) => ({ ...p, reminderHour: h }))} className={`px-4 py-2.5 rounded-full text-[15px] font-bold transition-colors ${hour === h ? 'bg-ink text-white' : 'bg-white/55 border border-white/70 text-muted hover:text-ink'}`}>{formatClock(`${h}:00`) || `${h}:00`}</button>
             ))}
           </div>
-        </Panel>
+        </Panel>}
       </div>
     </div>
   );
@@ -219,7 +226,7 @@ const RegionalSection = () => {
   const sync = async () => { setSyncing(true); try { await updateUserTimezone(tz); toast('Timezone synced to your account.'); } catch { toast("Couldn't sync your timezone.", 'error'); } finally { setSyncing(false); } };
   void today;
   return (
-    <div className="space-y-4 sm:space-y-5">
+    <div className="space-y-3 sm:space-y-5">
       <Panel title="Timezone" desc="Detected from this device, so dates, reminders and your daily log line up with your day.">
         <div className="flex flex-wrap items-center gap-4">
           <div className="rounded-2xl bg-white/50 border border-white/70 px-5 py-4 min-w-0">
@@ -229,7 +236,7 @@ const RegionalSection = () => {
           <Button variant="soft" className="!rounded-full" loading={syncing} onClick={sync}>Sync to my account</Button>
         </div>
       </Panel>
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
+      <div className="grid md:grid-cols-2 gap-3 sm:gap-5">
         <Panel title="Time format">
           <div role="radiogroup" aria-label="Time format" className="grid grid-cols-2 gap-3">
             {([['24h', '24-hour', '15:30'], ['12h', '12-hour', '3:30 PM']] as const).map(([k, l, e]) => <Choice key={k} on={(r.timeFormat ?? '24h') === k} label={l} onClick={() => set({ timeFormat: k })}><span className="block text-2xl font-extrabold tabular-nums">{e}</span></Choice>)}
@@ -444,9 +451,9 @@ const SecuritySection = () => {
     ['Your own data stays yours', 'Tasks, meetings and logs belong to your account.'],
   ];
   return (
-    <div className="grid xl:grid-cols-5 gap-4 sm:gap-5 items-start">
+    <div className="grid xl:grid-cols-5 gap-3 sm:gap-5 items-start">
       <div className="xl:col-span-3 min-w-0"><PasswordCard /></div>
-      <div className="xl:col-span-2 space-y-4 sm:space-y-5 min-w-0">
+      <div className="xl:col-span-2 space-y-3 sm:space-y-5 min-w-0">
         <Panel title="How your account is protected">
           <ul className="space-y-4">
             {checks.map(([t, d]) => (
@@ -470,15 +477,21 @@ const SecuritySection = () => {
 };
 
 /* ───────── Data & shortcuts ───────── */
-const SHORTCUTS: [string, string][] = [
-  ['⌘ K  /  Ctrl K', 'Open the command palette: jump anywhere, create anything'],
-  ['N', 'New task (on the Tasks page)'],
-  ['/', 'Search tasks (on the Tasks page)'],
-  ['Esc', 'Close a pop-up or menu'],
+/** Shortcut keys are written for this device: ⌘ on a Mac, Ctrl on Windows and Linux. `page` limits a shortcut to people who can open that page. */
+const SHORTCUTS: { keys: string; desc: string; page?: string }[] = [
+  { keys: shortcut('K'), desc: 'Open the search and command palette: jump anywhere, create anything' },
+  { keys: 'N', desc: 'New task (on the Tasks page)', page: 'tasks' },
+  { keys: '/', desc: 'Search tasks (on the Tasks page)', page: 'tasks' },
+  { keys: shortcut('S'), desc: 'Save your work log now (in the work-log editor)', page: 'worklog' },
+  { keys: shortcut('Enter'), desc: 'Add a new agenda item below (in the meeting editor)', page: 'meetings' },
+  { keys: 'Esc', desc: 'Close a pop-up or menu' },
 ];
 
 const DataSection = () => {
   const toast = useToast();
+  const { can } = useAuth();
+  const canTasks = can('tasks');
+  const canMeetings = can('meetings');
   const [busy, setBusy] = useState<string | null>(null);
   const [clearOpen, setClearOpen] = useState(false);
   const today = getLocalDateString();
@@ -506,22 +519,22 @@ const DataSection = () => {
   };
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="grid md:grid-cols-2 gap-4 sm:gap-5">
-        <Panel title="Export my data" desc="Download your own records as spreadsheets.">
+    <div className="space-y-3 sm:space-y-5">
+      <div className={`grid gap-3 sm:gap-5 ${canTasks || canMeetings ? 'md:grid-cols-2' : ''}`}>
+        {(canTasks || canMeetings) && <Panel title="Export my data" desc="Download your own records as spreadsheets.">
           <div className="flex flex-wrap gap-2.5">
-            <Button variant="soft" className="!rounded-full" loading={busy === 'tasks'} onClick={exportTasks}>Tasks (CSV)</Button>
-            <Button variant="soft" className="!rounded-full" loading={busy === 'meetings'} onClick={exportMeetings}>Meetings (CSV)</Button>
+            {canTasks && <Button variant="soft" className="!rounded-full" loading={busy === 'tasks'} onClick={exportTasks}>Tasks (CSV)</Button>}
+            {canMeetings && <Button variant="soft" className="!rounded-full" loading={busy === 'meetings'} onClick={exportMeetings}>Meetings (CSV)</Button>}
           </div>
-        </Panel>
+        </Panel>}
         <Panel title="Clear local data" desc="Removes saved drafts and view choices stored on this device. Your account data is not touched.">
           <Button variant="soft" className="!rounded-full" onClick={() => setClearOpen(true)}>Clear this device</Button>
         </Panel>
       </div>
       <Panel title="Keyboard shortcuts">
         <ul className="divide-y divide-white/60">
-          {SHORTCUTS.map(([k, d]) => (
-            <li key={k} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+          {SHORTCUTS.filter((x) => !x.page || can(x.page as any)).map(({ keys: k, desc: d }) => (
+            <li key={k + d} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
               <span className="text-[15px]">{d}</span>
               <kbd className="shrink-0 rounded-xl bg-white/60 border border-white/80 px-3 py-1.5 text-sm font-bold font-mono">{k}</kbd>
             </li>
@@ -566,31 +579,31 @@ const Settings = (_: ViewProps) => {
     regional: <RegionalSection />, security: <SecuritySection />, data: <DataSection />,
   }), []);
   return (
-    <div className="flex flex-col gap-5 sm:gap-6 mt-1 md:-mt-3 h-[calc(100cqh-0.125rem)] md:h-[calc(100dvh-6.25rem)] min-h-[30rem]">
+    <div className="flex flex-col gap-3 sm:gap-6 mt-0 md:-mt-3 md:h-[calc(100dvh-6.25rem)] md:min-h-[30rem]">
       {/* cover */}
-      <div className="shrink-0 liquid rounded-[2rem] p-5 sm:p-7 flex flex-wrap items-center gap-4 sm:gap-6 overflow-hidden relative">
+      <div className="shrink-0 liquid rounded-[2rem] p-4 sm:p-7 flex items-center gap-3 sm:gap-6 overflow-hidden relative">
         <span aria-hidden className="pointer-events-none absolute -right-16 -top-16 w-64 h-64 rounded-full bg-brand/15 blur-3xl" />
-        <span className="relative rounded-full ring-4 ring-white/70 shadow-card"><Avatar name={user?.name || user?.email} size={72} /></span>
-        <div className="relative min-w-0 flex-1 basis-56">
+        <span className="relative shrink-0 rounded-full ring-4 ring-white/70 shadow-card"><Avatar name={user?.name || user?.email} size={60} /></span>
+        <div className="relative min-w-0 flex-1">
           <p className="text-xs font-extrabold uppercase tracking-wider text-brand">Settings</p>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight truncate">{user?.name || 'Your settings'}</h1>
           <p className="text-[15px] text-muted truncate">{user?.email}</p>
         </div>
-        <span className="relative text-sm font-bold text-muted inline-flex items-center gap-2">
+        <span className="relative hidden sm:inline-flex text-sm font-bold text-muted items-center gap-2">
           <span className={`w-2.5 h-2.5 rounded-full ${saving ? 'bg-warn animate-pulse' : 'bg-good'}`} />{saving ? 'Saving…' : 'All changes saved'}
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 grid grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-[17.5rem_minmax(0,1fr)] gap-4 sm:gap-6">
+      <div className="md:flex-1 md:min-h-0 grid md:grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-[17.5rem_minmax(0,1fr)] gap-3 sm:gap-6">
         <nav className="liquid rounded-[1.75rem] p-2.5 lg:self-start lg:max-h-full lg:overflow-y-auto scroll-y" aria-label="Settings sections">
           <ul className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-visible [scrollbar-width:none]">
             {TABS.map((t) => {
               const on = tab === t.key;
               return (
                 <li key={t.key} className="shrink-0 lg:shrink">
-                  <button type="button" onClick={() => setTab(t.key)} aria-current={on ? 'page' : undefined} className={`relative w-full flex items-center gap-3 rounded-[1.25rem] px-3.5 py-3 text-left transition-colors ${on ? 'text-white' : 'text-ink hover:bg-white/50'}`}>
+                  <button type="button" onClick={() => setTab(t.key)} aria-current={on ? 'page' : undefined} className={`relative w-full flex items-center gap-3 rounded-[1.25rem] px-2.5 py-2 lg:px-3.5 lg:py-3 text-left transition-colors ${on ? 'text-white' : 'text-ink hover:bg-white/50'}`}>
                     {on && <motion.span layoutId="settings-rail" transition={spring} className="absolute inset-0 rounded-[1.25rem] bg-ink" />}
-                    <span className={`relative w-10 h-10 shrink-0 rounded-xl grid place-items-center ${on ? 'bg-white/15' : 'bg-ink/[0.07]'}`}>
+                    <span className={`relative w-9 h-9 lg:w-10 lg:h-10 shrink-0 rounded-xl grid place-items-center ${on ? 'bg-white/15' : 'bg-ink/[0.07]'}`}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={IC[t.key]} /></svg>
                     </span>
                     <span className="relative min-w-0">
@@ -604,12 +617,12 @@ const Settings = (_: ViewProps) => {
           </ul>
         </nav>
 
-        <div className="min-w-0 min-h-0 flex flex-col gap-5 sm:gap-6">
+        <div className="min-w-0 md:min-h-0 flex flex-col gap-3 sm:gap-6">
           <div className="px-1 shrink-0">
-            <h2 className="text-3xl font-extrabold tracking-tight">{cur.title}</h2>
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight">{cur.title}</h2>
             <p className="text-base text-muted mt-1.5">{cur.sub}</p>
           </div>
-          <div ref={scroller} className="flex-1 min-h-0 overflow-y-auto scroll-y pr-1 pb-2">
+          <div ref={scroller} className="md:flex-1 md:min-h-0 md:overflow-y-auto scroll-y md:pr-1 pb-2">
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={tab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 {body[tab]}

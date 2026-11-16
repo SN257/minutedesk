@@ -742,6 +742,13 @@ export const resetForgotPassword = async (data: { token: string; newPassword: st
   return res.json();
 };
 // Work Logs API
+/** Which days between two dates have a work log (and whether each is leave or a holiday). */
+export const getWorkLogRange = async (from: string, to: string): Promise<{ date: string; written: boolean; leave: boolean; holiday: boolean }[]> => {
+  const res = await authFetch(`${API_URL}/work-logs/range/list?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+  if (!res.ok) return [];
+  return res.json();
+};
+
 export const getWorkLogApi = async (date: string) => {
   const res = await authFetch(`${API_URL}/work-logs/${date}`, { method: 'GET' });
   if (!res.ok) {
@@ -837,6 +844,19 @@ export const adminUpdateUser = async (
   return res.json();
 };
 
+/** Set a person's password directly (no verification code). */
+export const adminSetPassword = async (id: string, newPassword: string, confirmPassword?: string): Promise<void> => {
+  const res = await authFetch(`${API_URL}/users/admin/${id}/password`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ newPassword, confirmPassword }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to set password');
+  }
+};
+
 export const adminDeleteUser = async (id: string): Promise<void> => {
   const res = await authFetch(`${API_URL}/users/admin/${id}`, {
     method: 'DELETE',
@@ -911,7 +931,7 @@ export interface AdminUserSummary {
   workLogsCount: number;
   lastActive: string | null;
   timeliness: { early: number; onTime: number; late: number };
-  workLogCompliance: { workingDays: number; loggedDays: number; missedDays: number; rate: number };
+  workLogCompliance: { workingDays: number; loggedDays: number; missedDays: number; rate: number; windowDays?: number };
 }
 
 export const getAdminUsersOverview = (): Promise<AdminUserSummary[]> => adminJson('/admin/analytics/users');
@@ -1171,3 +1191,44 @@ export const updateSchemaRow = (table: string, id: string, data: Record<string, 
   adminJson(`/admin/schema/tables/${table}/rows/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
 export const deleteSchemaRow = (table: string, id: string): Promise<void> =>
   adminJson(`/admin/schema/tables/${table}/rows/${id}`, { method: 'DELETE' });
+
+
+// ─── Admin follow-up: one person's work, meetings and work log, and reminders ───
+
+export interface FollowRow {
+  id: string; name: string | null; email: string; role: string;
+  total: number; overdue: number; pending: number; doneLate: number; done: number;
+  missedLogDays: number; lastLogDate: string | null; lastActive: string | null;
+}
+export interface FollowItem {
+  id: string; title: string; dueDate: string | null; done: boolean; doneOn: string | null; source: 'task' | 'card'; priority: string | null;
+  daysOverdue?: number; daysLate?: number; dueToday?: boolean;
+}
+export type FollowDayStatus = 'filled' | 'leave' | 'holiday' | 'missed' | 'today' | 'upcoming' | 'off' | 'before';
+export type ReminderKind = 'overdue_tasks' | 'worklog_missing' | 'custom';
+export interface FollowDetail {
+  user: { id: string; name: string | null; email: string; role: string; timezone: string | null; createdAt: string; lastActive: string | null };
+  today: string;
+  tasks: {
+    total: number; done: number; inTime: number; early: number; onTime: number; doneLate: number; pending: number; overdue: number; onTimeRate: number | null;
+    overdueList: FollowItem[]; pendingList: FollowItem[]; doneLateList: FollowItem[];
+  };
+  meetings: {
+    total: number; inMonth: number;
+    recent: { id: string; date: string; meetingType: string | null; center: string | null; place: string | null }[];
+    upcoming: { id: string; date: string; startTime: string; meetingType: string | null; center: string | null }[];
+  };
+  workLog: {
+    month: string; days: { date: string; status: FollowDayStatus; note?: string }[];
+    filled: number; leave: number; holiday: number; missed: number; rate: number | null;
+    missedRecent: string[]; missedRecentCount: number; lastLogDate: string | null;
+  };
+  reminders: { id: string; title: string; body: string | null; kind: ReminderKind; sentBy: string | null; read: boolean; createdAt: string }[];
+  defaults: { overdue_tasks: { title: string; body: string }; worklog_missing: { title: string; body: string } };
+}
+
+export const getFollowupUsers = (): Promise<FollowRow[]> => adminJson('/admin/followup/users');
+export const getFollowupDetail = (id: string, month?: string): Promise<FollowDetail> =>
+  adminJson(`/admin/followup/users/${id}${month ? `?month=${month}` : ''}`);
+export const sendFollowupReminder = (id: string, data: { kind: ReminderKind; title?: string; message?: string }): Promise<{ ok: boolean; title: string; body: string }> =>
+  adminJson(`/admin/followup/users/${id}/remind`, { method: 'POST', body: JSON.stringify(data) });

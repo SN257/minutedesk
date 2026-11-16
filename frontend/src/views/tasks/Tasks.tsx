@@ -12,6 +12,7 @@ import { BoardsArea } from './BoardsArea';
 import { NewTaskModal } from './NewTaskModal';
 import { iconPath } from './icons';
 import { TaskCalendar } from './TaskCalendar';
+import { FilterMenu } from '../../ui/filter';
 import { TaskDrawer } from './TaskDrawer';
 import { TaskList, type GroupBy, type SortBy } from './TaskList';
 import { PRIORITIES, bucketOf, dateOfTimestamp, dueLabel, normCard, parseQuickAdd, type Item, type Priority } from './model';
@@ -19,6 +20,7 @@ import { useTasksData } from './useTasksData';
 
 type View = 'list' | 'board' | 'calendar';
 type Scope = 'all' | 'today' | 'upcoming' | 'overdue' | 'done';
+type DueFilter = 'any' | 'overdue' | 'today' | 'week' | 'month' | 'none';
 
 const VIEW_KEY = 'md2.tasks.view';
 const loadView = (): View => { try { const v = localStorage.getItem(VIEW_KEY); return v === 'board' || v === 'calendar' ? v : 'list'; } catch { return 'list'; } };
@@ -54,8 +56,11 @@ const Tasks = ({ param, go }: ViewProps) => {
   const setView = (v: View) => { setViewState(v); try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ } };
   const [scope, setScope] = useState<Scope>('all');
   const [q, setQ] = useState('');
-  const [prio, setPrio] = useState('');
-  const [source, setSource] = useState('');
+  const [prios, setPrios] = useState<string[]>([]);
+  const [sources, setSources] = useState<string[]>([]);
+  const [labelsSel, setLabelsSel] = useState<string[]>([]);
+  const [due, setDue] = useState<DueFilter>('any');
+  const [hideDone, setHideDone] = useState(false);
   const [groupBy, setGroupBy] = useState<GroupBy>('due');
   const [sortBy, setSortBy] = useState<SortBy>('due');
   const [qa, setQa] = useState('');
@@ -115,14 +120,31 @@ const Tasks = ({ param, go }: ViewProps) => {
       const b = bucketOf(it, today);
       if (scope === 'upcoming' ? !(b === 'upcoming' || b === 'none') : b !== scope) return false;
     }
-    if (prio && (prio === 'none' ? it.priority : it.priority !== prio)) return false;
-    if (source && (source === 'personal' ? it.kind !== 'task' : it.boardId !== source)) return false;
+    if (prios.length && !prios.includes(it.priority || 'none')) return false;
+    if (sources.length && !sources.includes(it.kind === 'task' ? 'personal' : String(it.boardId))) return false;
+    if (labelsSel.length && !labelsSel.some((l) => it.labels.includes(l))) return false;
+    if (hideDone && it.done) return false;
+    if (due !== 'any') {
+      const d = it.dueDate;
+      if (due === 'none' ? !!d : !d) return false;
+      if (d && due === 'overdue' && !(d < today && !it.done)) return false;
+      if (d && due === 'today' && d !== today) return false;
+      if (d && due === 'week' && !(d >= today && d <= addDaysToDateString(today, 7))) return false;
+      if (d && due === 'month' && !(d >= today && d <= addDaysToDateString(today, 30))) return false;
+    }
     if (needle && !`${it.title} ${it.description} ${it.labels.join(' ')} ${it.boardTitle || ''}`.toLowerCase().includes(needle)) return false;
     return true;
-  }), [items, scope, prio, source, needle, today]);
+  }), [items, scope, prios, sources, labelsSel, hideDone, due, needle, today]);
 
-  const filtering = !!(prio || source || needle);
-  const clearFilters = () => { setQ(''); setPrio(''); setSource(''); };
+  const filtering = !!(prios.length || sources.length || labelsSel.length || hideDone || due !== 'any' || needle);
+  const allLabels = useMemo(() => {
+    const m = new Map<string, number>();
+    items.forEach((it) => it.labels.forEach((l) => m.set(l, (m.get(l) || 0) + 1)));
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [items]);
+  const countBy = (fn: (i: Item) => string) => { const m: Record<string, number> = {}; items.forEach((i) => { const k = fn(i); m[k] = (m[k] || 0) + 1; }); return m; };
+  const prioCount = useMemo(() => countBy((i) => i.priority || 'none'), [items]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sourceCount = useMemo(() => countBy((i) => (i.kind === 'task' ? 'personal' : String(i.boardId))), [items]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const parsed = useMemo(() => parseQuickAdd(qa, today), [qa, today]);
   const quickAdd = async (e: FormEvent) => {
@@ -164,22 +186,21 @@ const Tasks = ({ param, go }: ViewProps) => {
     { key: 'all', label: 'All', n: stats.open }, { key: 'today', label: 'Today', n: stats.dueToday }, { key: 'upcoming', label: 'Upcoming', n: stats.upcoming },
     { key: 'overdue', label: 'Overdue', n: stats.overdue }, { key: 'done', label: 'Done', n: stats.done },
   ];
-  const selectCls = '!rounded-full !py-2 !text-xs !font-bold !w-auto min-w-[8.5rem]';
 
   return (
     <div className={view === 'board' ? '' : 'pb-20'}>
       {view !== 'board' && (<>
       {/* Header */}
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-3 sm:mb-5">
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight">{t('tasks.title')}</h1>
-          <p className="text-muted mt-1">{stats.open === 0 ? 'Nothing open right now. Nice.' : `${stats.open} open${stats.overdue ? `, ${stats.overdue} overdue` : ''} · press N for a new task, / to search`}</p>
+          <p className="text-muted mt-1">{stats.open === 0 ? 'Nothing open right now. Nice.' : <>{`${stats.open} open${stats.overdue ? `, ${stats.overdue} overdue` : ''}`}<span className="hidden md:inline"> · press N for a new task, / to search</span></>}</p>
         </div>
         <Button onClick={() => go('tasks', 'new')}>{Icon.plus(16)} {t('tasks.new')}</Button>
       </div>
 
       {/* Overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-3 sm:mb-5">
         <div className="liquid rounded-[1.75rem] p-4 sm:p-5 flex items-center gap-4">
           <Ring value={stats.pct} size={68} stroke={8} label="Week" color="var(--color-good)" />
           <div><p className="text-[11px] font-extrabold uppercase tracking-wider text-muted">This week</p><p className="text-2xl font-extrabold tabular-nums"><AnimatedNumber value={stats.doneWeek} /></p><p className="text-xs text-muted">completed</p></div>
@@ -196,6 +217,18 @@ const Tasks = ({ param, go }: ViewProps) => {
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">{Icon.search(16)}</span>
             <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks, labels or boards   ( / )" aria-label="Search tasks" className="!pl-11 !rounded-full !py-2.5" />
           </div>
+          <FilterMenu title="Filter tasks" groups={[
+            { id: 'status', kind: 'single', label: 'Status', value: scope, defaultValue: 'all', onChange: (v) => setScope(v as Scope), options: scopes.map((x) => ({ value: x.key, label: x.label, count: x.n })) },
+            { id: 'due', kind: 'single', label: 'Due date', value: due, defaultValue: 'any', onChange: (v) => setDue(v as DueFilter), options: [
+              { value: 'any', label: 'Any time' }, { value: 'overdue', label: 'Overdue' }, { value: 'today', label: 'Today' }, { value: 'week', label: 'Next 7 days' }, { value: 'month', label: 'Next 30 days' }, { value: 'none', label: 'No due date' },
+            ] },
+            { id: 'priority', kind: 'multi', label: 'Priority', value: prios, onChange: setPrios, options: [...PRIORITIES.slice().reverse().map((p) => ({ value: p.key as string, label: p.label, count: prioCount[p.key] || 0 })), { value: 'none', label: 'No priority', count: prioCount.none || 0 }] },
+            { id: 'source', kind: 'multi', label: 'Source', value: sources, onChange: setSources, options: [{ value: 'personal', label: 'Personal tasks', count: sourceCount.personal || 0 }, ...data.boards.map((b) => ({ value: b.id, label: b.title, count: sourceCount[b.id] || 0 }))] },
+            { id: 'labels', kind: 'multi', label: 'Labels', value: labelsSel, onChange: setLabelsSel, hidden: allLabels.length === 0, options: allLabels.map(([l, n]) => ({ value: l, label: l, count: n })) },
+            { id: 'hideDone', kind: 'toggle', label: 'Hide completed', hint: 'Only show work that is still open', value: hideDone, onChange: setHideDone },
+            { id: 'group', kind: 'single', view: true, hidden: view !== 'list', label: 'Group by', value: groupBy, defaultValue: 'due', onChange: (v) => setGroupBy(v as GroupBy), options: [{ value: 'due', label: 'Due date' }, { value: 'priority', label: 'Priority' }, { value: 'source', label: 'Source' }, { value: 'none', label: 'No grouping' }] },
+            { id: 'sort', kind: 'single', view: true, hidden: view !== 'list', label: 'Sort by', value: sortBy, defaultValue: 'due', onChange: (v) => setSortBy(v as SortBy), options: [{ value: 'due', label: 'Due date' }, { value: 'priority', label: 'Priority' }, { value: 'title', label: 'Title' }, { value: 'recent', label: 'Recently done' }] },
+          ]} />
           <div className="inline-flex rounded-full bg-ink/[0.06] p-1" role="tablist" aria-label="View">
             {VIEWS.map((v) => (
               <button key={v.key} type="button" role="tab" aria-selected={view === v.key} onClick={() => setView(v.key)}
@@ -208,39 +241,6 @@ const Tasks = ({ param, go }: ViewProps) => {
           </div>
         </div>
 
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <div className="flex items-center gap-1 overflow-x-auto [scrollbar-width:none] -mx-1 px-1">
-              {scopes.map((s) => (
-                <button key={s.key} type="button" onClick={() => setScope(s.key)} aria-pressed={scope === s.key}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors ${scope === s.key ? 'bg-ink text-white' : 'text-muted hover:text-ink hover:bg-ink/[0.06]'}`}>
-                  {s.label}{s.n !== undefined && <span className={`ml-1.5 text-[11px] ${scope === s.key ? 'opacity-70' : 'opacity-60'}`}>{s.n}</span>}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap items-center gap-2 ml-auto">
-              <Select value={prio} onChange={(e) => setPrio(e.target.value)} aria-label="Filter by priority" className={selectCls}>
-                <option value="">All priorities</option>
-                {PRIORITIES.slice().reverse().map((p) => <option key={p.key} value={p.key}>{p.label}</option>)}
-                <option value="none">No priority</option>
-              </Select>
-              <Select value={source} onChange={(e) => setSource(e.target.value)} aria-label="Filter by source" className={selectCls}>
-                <option value="">All sources</option>
-                <option value="personal">Personal</option>
-                {data.boards.map((b) => <option key={b.id} value={b.id}>{b.title}</option>)}
-              </Select>
-              {view === 'list' && (
-                <>
-                  <Select value={groupBy} onChange={(e) => setGroupBy(e.target.value as GroupBy)} aria-label="Group by" className={selectCls}>
-                    <option value="due">Group: Due date</option><option value="priority">Group: Priority</option><option value="source">Group: Source</option><option value="none">No grouping</option>
-                  </Select>
-                  <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as SortBy)} aria-label="Sort by" className={selectCls}>
-                    <option value="due">Sort: Due date</option><option value="priority">Sort: Priority</option><option value="title">Sort: Title</option><option value="recent">Sort: Recently done</option>
-                  </Select>
-                </>
-              )}
-              {filtering && <button type="button" onClick={clearFilters} className="text-xs font-bold text-brand hover:underline px-1">Clear</button>}
-            </div>
-          </div>
       </Card>
 
       </>)}
@@ -256,7 +256,7 @@ const Tasks = ({ param, go }: ViewProps) => {
       {view === 'list' && (
         <form onSubmit={quickAdd} className="liquid rounded-full pl-5 pr-2 py-2 mb-4 flex items-center gap-3">
           <span className="text-muted">{Icon.plus(18)}</span>
-          <input value={qa} onChange={(e) => setQa(e.target.value)} disabled={adding} aria-label="Quick add a task" placeholder="Add a task and press Enter, e.g. Call Sam #tomorrow"
+          <input value={qa} onChange={(e) => setQa(e.target.value)} disabled={adding} aria-label="Quick add a task" placeholder="Add a task, e.g. Call Sam #tomorrow"
             className="flex-1 min-w-0 bg-transparent outline-none text-[15px] py-1.5 placeholder:text-muted/70" />
           <AnimatePresence>
             {qa.trim() && (
@@ -278,7 +278,7 @@ const Tasks = ({ param, go }: ViewProps) => {
               empty={filtering ? { icon: '🔍', title: 'Nothing matches', hint: 'Try different words or clear the filters.' } : EMPTY[scope]}
             />
           )}
-          {view === 'board' && <BoardsArea data={data} onOpen={(id) => go('tasks', id)} />}
+          {view === 'board' && <BoardsArea data={data} onOpen={(id) => go('tasks', id)} onView={setView} />}
           {view === 'calendar' && (
             <TaskCalendar items={filtered} today={today} onOpen={(it) => go('tasks', it.id)} onAdd={(title, date) => data.addTask(title, date)} />
           )}
@@ -288,7 +288,7 @@ const Tasks = ({ param, go }: ViewProps) => {
       {/* Bulk action bar */}
       <AnimatePresence>
         {selected.size > 0 && view === 'list' && (
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={spring} className="sticky bottom-[88px] md:bottom-4 z-30 mt-5 flex justify-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={spring} className="sticky bottom-0 md:bottom-4 z-30 mt-5 flex justify-center">
             <div className="glass-pop rounded-full p-2 pl-5 flex flex-wrap items-center gap-2 sm:gap-3 max-w-full">
               <span className="text-sm font-extrabold tabular-nums whitespace-nowrap">{selected.size} selected</span>
               <Button size="sm" onClick={bulkDone} className="!rounded-full">{Icon.check(14)} Done</Button>

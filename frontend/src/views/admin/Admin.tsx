@@ -8,6 +8,7 @@ import { useHealth, useSpin, type TabKey } from './shared';
 import AdminOverview from './AdminOverview';
 import AdminPeople from './AdminPeople';
 import AdminPerformance from './AdminPerformance';
+import AdminFollowUp from './AdminFollowUp';
 import AdminLogs from './AdminLogs';
 import AdminSystem from './AdminSystem';
 import AdminSetup from './AdminSetup';
@@ -16,6 +17,7 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
   { key: 'overview', label: 'Overview', icon: 'M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z' },
   { key: 'people', label: 'People', icon: 'M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75' },
   { key: 'performance', label: 'Performance', icon: 'M3 3v18h18M7 15l4-4 3 3 5-6' },
+  { key: 'followup', label: 'Follow-up', icon: 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z' },
   { key: 'logs', label: 'Logs', icon: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01' },
   { key: 'system', label: 'System', icon: 'M5 3h14a2 2 0 012 2v4H3V5a2 2 0 012-2zM3 13h18v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4zM7 7h.01M7 17h.01' },
   { key: 'setup', label: 'Setup', icon: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6' },
@@ -25,6 +27,7 @@ const SUBS: Record<TabKey, string> = {
   overview: 'Everything running across the workspace, at a glance.',
   people: 'Accounts, roles and access.',
   performance: 'Who is delivering, who is on time, and where to lend a hand.',
+  followup: 'One person’s work, meetings and work log, and a nudge when something slips.',
   logs: 'What people did, and what broke.',
   system: 'Server health, backups and announcements.',
   setup: 'Centers, roles and branding.',
@@ -73,12 +76,12 @@ const Admin = ({ param, go }: ViewProps) => {
           </div>
         </div>
 
-        <nav className="mt-5 -mx-1 px-1 overflow-x-auto [scrollbar-width:none]" aria-label="Admin sections">
+        <nav className="mt-5 -mx-4 px-4 sm:-mx-6 sm:px-6 overflow-x-auto [scrollbar-width:none] max-sm:[mask-image:linear-gradient(to_right,transparent,#000_18px,#000_calc(100%-18px),transparent)]" aria-label="Admin sections">
           <div className="inline-flex gap-1 rounded-full bg-ink/[0.05] p-1" role="tablist">
             {tabs.map((t) => {
               const on = tab === t.key;
               return (
-                <button key={t.key} type="button" role="tab" aria-selected={on} onClick={() => setTab(t.key)}
+                <button key={t.key} type="button" role="tab" aria-selected={on} ref={on ? (el) => el?.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }) : undefined} onClick={() => setTab(t.key)}
                   className={`relative shrink-0 inline-flex items-center gap-2 rounded-full px-4 py-2.5 text-sm font-bold transition-colors ${on ? 'text-white' : 'text-muted hover:text-ink'}`}>
                   {on && <motion.span layoutId="admin-tab" transition={spring} className="absolute inset-0 rounded-full bg-ink" />}
                   <svg className="relative" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={t.icon} /></svg>
@@ -100,6 +103,7 @@ const Admin = ({ param, go }: ViewProps) => {
           {tab === 'overview' && <AdminOverview onTab={setTab} />}
           {tab === 'people' && <AdminPeople />}
           {tab === 'performance' && <AdminPerformance />}
+          {tab === 'followup' && <AdminFollowUp />}
           {tab === 'logs' && <AdminLogs />}
           {tab === 'system' && <AdminSystem />}
           {tab === 'setup' && <AdminSetup />}

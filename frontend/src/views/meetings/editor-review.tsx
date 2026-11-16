@@ -33,7 +33,7 @@ const Toggle = ({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
     type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)}
     className={`relative w-11 h-6 rounded-full shrink-0 transition-colors ${on ? 'bg-brand' : 'bg-ink/20'}`}
   >
-    <motion.span layout transition={spring} className="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-card" style={{ left: on ? 22 : 2 }} />
+    <motion.span layout transition={spring} className={`absolute top-0.5 w-5 h-5 rounded-full shadow-card ${on ? 'bg-white' : 'bg-white dark:bg-ink/70'}`} style={{ left: on ? 22 : 2 }} />
   </button>
 );
 

@@ -6,13 +6,14 @@ import { rise, spring } from '../../lib/motion';
 import { getLocalDateString, parseLocalDate } from '../../lib/date';
 import { useToast } from '../../lib/toast';
 import { deleteScheduledMeeting, getMeetings, getScheduledMeetings } from '../../lib/api';
-import { Badge, Button, Card, Drawer, Empty, Input, Select, Skeleton, Stagger, Tabs, useAsync } from '../../ui';
+import { Badge, Button, Card, Drawer, Empty, Input, Skeleton, Stagger, Tabs, useAsync } from '../../ui';
+import { FilterMenu } from '../../ui/filter';
 import { Icon } from '../../shell/icons';
 import { ConfirmModal, Ico, IconBtn } from './bits';
 import { ScheduleForm } from './Schedule';
 import {
-  d10, durationLabel, getListTab, hhmm, longDate, monthKey, setListTab, shortDate, titleCase,
-  toMinutes, typeTone, type ListTab, type Meeting, type Scheduled,
+  d10, durationLabel, getListTab, hhmm, inMeetingPeriod, longDate, matchesFlags, MEETING_FLAGS, MEETING_PERIODS, monthKey, setListTab, shortDate, titleCase,
+  toMinutes, typeTone, type ListTab, type Meeting, type MeetingPeriod, type Scheduled,
 } from './helpers';
 
 type Go = ViewProps['go'];
@@ -22,7 +23,11 @@ const PAGE = 30;
 
 const Logged = ({ meetings, go }: { meetings: Meeting[]; go: Go }) => {
   const [q, setQ] = useState('');
-  const [center, setCenter] = useState<string | null>(null);
+  const [centersSel, setCentersSel] = useState<string[]>([]);
+  const [typesSel, setTypesSel] = useState<string[]>([]);
+  const [period, setPeriod] = useState<MeetingPeriod>('any');
+  const [flags, setFlags] = useState<string[]>([]);
+  const todayStr = getLocalDateString();
   const [, setShown] = useState(PAGE);
 
   const sorted = useMemo(
@@ -48,9 +53,16 @@ const Logged = ({ meetings, go }: { meetings: Meeting[]; go: Go }) => {
 
   const needle = q.trim().toLowerCase();
   const filtered = sorted.filter((m) =>
-    (!center || titleCase(m.center) === center) &&
+    (!centersSel.length || centersSel.includes(m.center ? titleCase(m.center) : 'No center')) &&
+    (!typesSel.length || typesSel.includes(m.meetingType || 'Others')) &&
+    inMeetingPeriod(m.date, period, todayStr) && matchesFlags(m, flags) &&
     (!needle || haystack.get(m.id)?.includes(needle)),
   );
+  const typeCounts = useMemo(() => {
+    const c = new Map<string, number>();
+    sorted.forEach((m) => { const t = m.meetingType || 'Others'; c.set(t, (c.get(t) || 0) + 1); });
+    return c;
+  }, [sorted]);
   const groups = useMemo(() => {
     const byCenter = new Map<string, Meeting[]>();
     filtered.forEach((m) => { const k = m.center ? titleCase(m.center) : 'No center'; (byCenter.get(k) || byCenter.set(k, []).get(k)!).push(m); });
@@ -62,7 +74,8 @@ const Logged = ({ meetings, go }: { meetings: Meeting[]; go: Go }) => {
       })
       .sort((x, y) => (x.center === 'No center' ? 1 : y.center === 'No center' ? -1 : y.items.length - x.items.length));
   }, [filtered]);
-  const filtering = !!(needle || center);
+  const filtering = !!(needle || centersSel.length || typesSel.length || period !== 'any' || flags.length);
+  const clearAll = () => { setQ(''); setCentersSel([]); setTypesSel([]); setPeriod('any'); setFlags([]); };
 
   if (meetings.length === 0) {
     return (
@@ -73,26 +86,23 @@ const Logged = ({ meetings, go }: { meetings: Meeting[]; go: Go }) => {
 
   return (
     <div>
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 mb-6">
+      <div className="flex items-center gap-2.5 mb-3 sm:mb-6">
         <div className="relative flex-1 min-w-0">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">{Icon.search(17)}</span>
           <Input value={q} onChange={(e) => { setQ(e.target.value); setShown(PAGE); }} placeholder="Search centers, people or minutes" className="pl-11 !rounded-full !py-3" aria-label="Search meetings" />
         </div>
-        <div className="flex gap-2.5">
-          {centers.length > 1 && (
-            <Select value={center || ''} onChange={(e) => { setCenter(e.target.value || null); setShown(PAGE); }} aria-label="Filter by center" className="!rounded-full !py-3 sm:w-44">
-              <option value="">All centers</option>
-              {centers.map(([c, n]) => <option key={c} value={c}>{c} ({n})</option>)}
-            </Select>
-          )}
-          {filtering && <button type="button" onClick={() => { setQ(''); setCenter(null); }} className="shrink-0 text-xs font-bold text-brand hover:underline px-2">Clear</button>}
-        </div>
+        <FilterMenu title="Filter meetings" groups={[
+          { id: 'type', kind: 'multi', label: 'Meeting type', value: typesSel, onChange: (v) => { setTypesSel(v); setShown(PAGE); }, options: [...typeCounts.entries()].sort((x, y) => y[1] - x[1]).map(([t, n]) => ({ value: t, label: t, count: n })) },
+          { id: 'center', kind: 'multi', label: 'Center', value: centersSel, onChange: (v) => { setCentersSel(v); setShown(PAGE); }, hidden: centers.length < 2, options: centers.map(([c, n]) => ({ value: c, label: c, count: n })) },
+          { id: 'period', kind: 'single', label: 'Held', value: period, defaultValue: 'any', onChange: (v) => { setPeriod(v as MeetingPeriod); setShown(PAGE); }, options: MEETING_PERIODS },
+          { id: 'flags', kind: 'multi', label: 'Minutes', value: flags, onChange: (v) => { setFlags(v); setShown(PAGE); }, options: MEETING_FLAGS },
+        ]} />
       </div>
 
       {filtered.length === 0 ? (
         <Card>
           <Empty icon="🔍" title="Nothing matches" hint="Try a different word, or clear the filters."
-            action={<Button variant="soft" onClick={() => { setQ(''); setCenter(null); }}>Clear filters</Button>} />
+            action={<Button variant="soft" onClick={clearAll}>Clear filters</Button>} />
         </Card>
       ) : (
         <div className="space-y-7">
@@ -290,8 +300,8 @@ const MeetingList = ({ go }: Pick<ViewProps, 'go'>) => {
   return (
     <Stagger>
       {/* Spotlight + week */}
-      <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-4 mb-5">
-        <motion.div variants={rise} className="rounded-[2rem] bg-ink text-white p-6 sm:p-8 flex flex-col min-h-[15rem] relative overflow-hidden">
+      <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)] gap-3 sm:gap-4 mb-3 sm:mb-5">
+        <motion.div variants={rise} className="rounded-[2rem] hero-ink p-6 sm:p-8 flex flex-col min-h-[15rem] relative overflow-hidden">
           <span aria-hidden className="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-white/10 blur-2xl" />
           <p className="relative text-xs font-extrabold uppercase tracking-wider opacity-70">{next ? (waitingCount > 0 && next === waiting0 ? 'Needs your minutes' : 'Next up') : 'Your meetings'}</p>
           {next ? (
@@ -349,7 +359,7 @@ const MeetingList = ({ go }: Pick<ViewProps, 'go'>) => {
         </Card>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3 sm:mb-5">
         <Tabs<ListTab>
           id="meetings"
           value={tab}

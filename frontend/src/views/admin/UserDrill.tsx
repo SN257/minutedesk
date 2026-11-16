@@ -201,7 +201,10 @@ const Body = ({ id, lastActive }: { id: string; lastActive: string | null }) => 
     );
   }
 
-  const taskRate = d.tasks.total > 0 ? Math.round((d.tasks.completed / d.tasks.total) * 100) : null;
+  // Personal tasks and board cards are both "tasks" to a person, as on the Performance cards; a card is done once archived.
+  const doneAll = d.tasks.completed + d.cards.archived;
+  const totalAll = d.tasks.total + d.cards.total;
+  const taskRate = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : null;
   const t = d.tasks.timeliness, c = d.cards.timeliness;
   const tl = t.early + t.onTime + t.late + c.early + c.onTime + c.late;
   const onTime = tl > 0 ? Math.round(((t.early + t.onTime + c.early + c.onTime) / tl) * 100) : null;
@@ -227,7 +230,7 @@ const Body = ({ id, lastActive }: { id: string; lastActive: string | null }) => 
       <div className="grid grid-cols-3 gap-2 mt-6 rounded-2xl border border-line py-4 px-2">
         <div className="flex flex-col items-center">
           <Ring value={taskRate} size={84} stroke={8} color={rateTone(taskRate)} label="Task completion" />
-          <span className="text-[10px] text-muted mt-0.5">{d.tasks.completed}/{d.tasks.total} done</span>
+          <span className="text-[10px] text-muted mt-0.5">{doneAll}/{totalAll} done</span>
         </div>
         <div className="flex flex-col items-center">
           <Ring value={onTime} size={84} stroke={8} color={rateTone(onTime)} label="On-time rate" />
@@ -235,7 +238,7 @@ const Body = ({ id, lastActive }: { id: string; lastActive: string | null }) => 
         </div>
         <div className="flex flex-col items-center">
           <Ring value={comp.rate} size={84} stroke={8} color={rateTone(comp.rate, 90, 70)} label="Log compliance" />
-          <span className="text-[10px] text-muted mt-0.5">{comp.missedDays} missed</span>
+          <span className="text-[10px] text-muted mt-0.5">{comp.missedDays} missed · last 30 days</span>
         </div>
       </div>
 

@@ -14,7 +14,7 @@ export interface FieldSpec<T> { key: keyof T & string; label: string; kind?: Kin
 /** A switch used for "show / hide" style choices. */
 export const Switch = ({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) => (
   <button type="button" role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={`relative w-12 h-7 rounded-full transition-colors shrink-0 ${on ? 'bg-good' : 'bg-ink/20'}`}>
-    <motion.span layout transition={spring} className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow ${on ? 'right-1' : 'left-1'}`} />
+    <motion.span layout transition={spring} className={`absolute top-1 w-5 h-5 rounded-full shadow ${on ? 'bg-white right-1' : 'bg-white dark:bg-ink/70 left-1'}`} />
   </button>
 );
 

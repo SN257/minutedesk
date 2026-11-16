@@ -13,6 +13,21 @@ export class WorkLogsService {
         private boardsService: BoardsService,
     ) { }
 
+    /** Which days between two dates (inclusive) have a log, and whether each is leave or a holiday. */
+    async getRange(userId: string, from: string, to: string): Promise<{ date: string; written: boolean; leave: boolean; holiday: boolean }[]> {
+        const rows = await this.workLogsRepository
+            .createQueryBuilder('w')
+            .select(`to_char(w.date, 'YYYY-MM-DD')`, 'date')
+            .addSelect(`(COALESCE(trim(w."todayWork"), '') <> '')`, 'written')
+            .addSelect('w."todayOnLeave"', 'leave')
+            .addSelect('w."todayHoliday"', 'holiday')
+            .where('w."userId" = :userId', { userId })
+            .andWhere('w.date >= :from AND w.date <= :to', { from, to })
+            .orderBy('w.date', 'ASC')
+            .getRawMany();
+        return rows.map((r) => ({ date: r.date, written: !!r.written, leave: !!r.leave, holiday: !!r.holiday }));
+    }
+
     async getLog(userId: string, date: string): Promise<WorkLog | null> {
         return this.workLogsRepository.findOne({
             where: { userId, date },

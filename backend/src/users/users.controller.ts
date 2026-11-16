@@ -187,6 +187,29 @@ export class UsersController {
     return user;
   }
 
+  /** An admin sets a new password directly: no OTP or old password is needed. Only a super admin can do this for a super admin. */
+  @Put('admin/:id/password')
+  @UseGuards(SuperAdminGuard)
+  async adminSetPassword(
+    @Param('id') id: string,
+    @Body() body: { newPassword?: string; confirmPassword?: string },
+    @Req() req: Request,
+  ) {
+    await this.requireSuperAdminForPrivilege(req, undefined, undefined, id);
+    const pw = body?.newPassword ?? '';
+    if (body?.confirmPassword !== undefined && body.confirmPassword !== pw) {
+      throw new HttpException('The two passwords do not match', HttpStatus.BAD_REQUEST);
+    }
+    if (pw.length < 6 || pw.length > 128) {
+      throw new HttpException('Password must be 6 to 128 characters', HttpStatus.BAD_REQUEST);
+    }
+    const user = await this.usersService.setPassword(id, pw);
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+    }
+    return { message: 'Password updated' };
+  }
+
   @Delete('admin/:id')
   @UseGuards(SuperAdminGuard)
   async adminDeleteUser(@Param('id') id: string, @Req() req: Request) {

@@ -11,7 +11,7 @@ export const PAGE_KEYS = ['today', 'meetings', 'tasks', 'worklog', 'reports'] as
 export const sanitizePages = (v: unknown): string[] | null =>
   Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === 'string' && (PAGE_KEYS as readonly string[]).includes(x)))] : null;
 
-export const ADMIN_TABS = ['overview', 'people', 'performance', 'logs', 'system', 'setup'] as const;
+export const ADMIN_TABS = ['overview', 'people', 'performance', 'followup', 'logs', 'system', 'setup'] as const;
 /** Only roles between "user" and "super_admin" can be given admin-panel sections; everyone else gets none. */
 export const sanitizeAdminTabs = (role: string | undefined, v: unknown): string[] | null =>
   role && role !== 'user' && role !== 'super_admin' && Array.isArray(v)

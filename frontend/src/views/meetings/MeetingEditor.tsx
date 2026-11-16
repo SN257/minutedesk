@@ -348,9 +348,9 @@ const MeetingEditor = ({ id, scheduledMeetingId = null, onDone }: MeetingEditorP
   const pointsN = data.notes.reduce((n, x) => n + x.points.filter((q) => q.text.trim()).length, 0);
 
   return (
-    <div ref={topRef} className="max-w-6xl mx-auto scroll-mt-4">
+    <div ref={topRef} className="max-w-6xl mx-auto scroll-mt-4 flex flex-col max-md:min-h-[100cqh]">
       {/* Header strip */}
-      <div className="liquid rounded-[2rem] p-3 sm:p-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-3">
+      <div className="liquid rounded-[2rem] p-3 sm:p-4 mb-3 sm:mb-5 flex flex-wrap items-center gap-x-4 gap-y-3">
         <button type="button" onClick={cancel} aria-label="Close editor" className="shrink-0 w-11 h-11 rounded-full bg-ink/[0.06] hover:bg-ink/[0.12] grid place-items-center text-muted hover:text-ink transition-colors">✕</button>
         <div className="min-w-0 flex-1 basis-52">
           <p className="text-[11px] font-extrabold uppercase tracking-wider text-brand">{isEdit ? 'Edit minutes' : 'Log minutes'} · Step {step + 1} of {STEPS.length}</p>
@@ -403,7 +403,7 @@ const MeetingEditor = ({ id, scheduledMeetingId = null, onDone }: MeetingEditorP
         </div>
       </Reveal>
 
-      <div className="grid xl:grid-cols-[minmax(0,1fr)_19rem] gap-5 items-start">
+      <div className="grid xl:grid-cols-[minmax(0,1fr)_19rem] gap-3 sm:gap-5 items-start">
         <div className="min-w-0">
       <div inert={!!draft} className={`min-w-0 ${draft ? 'opacity-50 transition-opacity' : 'transition-opacity'}`}>
         <AnimatePresence mode="wait" custom={dir} initial={false}>
@@ -449,7 +449,7 @@ const MeetingEditor = ({ id, scheduledMeetingId = null, onDone }: MeetingEditorP
 
         {/* Meeting pass: live ticket */}
         <aside aria-label="Meeting pass" className="hidden xl:block sticky top-0 liquid rounded-[2rem] overflow-hidden">
-          <div className="bg-ink text-white p-5 relative overflow-hidden">
+          <div className="hero-ink p-5 relative overflow-hidden">
             <span aria-hidden className="absolute -right-10 -top-10 w-36 h-36 rounded-full bg-white/10 blur-xl" />
             <p className="relative text-[10px] font-extrabold uppercase tracking-[0.18em] opacity-60">Meeting pass</p>
             <div className="relative flex items-end gap-4 mt-3">
@@ -483,7 +483,7 @@ const MeetingEditor = ({ id, scheduledMeetingId = null, onDone }: MeetingEditorP
       </div>
 
       {/* Action bar */}
-      <div className="sticky bottom-[88px] md:bottom-4 z-30 mt-5">
+      <div className="sticky bottom-0 md:bottom-4 z-30 mt-auto pt-3 sm:pt-5">
         <div className="glass-pop rounded-[2rem] p-2.5 sm:p-3 flex items-center gap-3 sm:gap-5">
           <button type="button" onClick={() => (step === 0 ? cancel() : go(step - 1))} className="shrink-0 rounded-full px-5 py-3 text-sm font-bold text-ink-2 hover:bg-ink/[0.06] transition-colors">
             {step === 0 ? 'Cancel' : '← Back'}

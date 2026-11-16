@@ -132,7 +132,7 @@ const MeetingView = ({ id, go }: { id: string } & Pick<ViewProps, 'go'>) => {
       <BackLink onClick={back}>All meetings</BackLink>
       <Stagger className="md-print space-y-5">
         {/* Hero */}
-        <motion.div variants={rise} className="rounded-[2rem] bg-ink text-white p-5 sm:p-7 relative overflow-hidden">
+        <motion.div variants={rise} className="rounded-[2rem] hero-ink p-5 sm:p-7 relative overflow-hidden">
           <span aria-hidden className="absolute -right-20 -top-20 w-72 h-72 rounded-full bg-white/10 blur-2xl md-noprint" />
           <div className="relative flex flex-wrap items-start gap-5">
             <div className="w-20 sm:w-24 shrink-0 rounded-3xl bg-white/15 text-center py-3 sm:py-4 leading-none">

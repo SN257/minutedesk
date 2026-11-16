@@ -19,7 +19,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   return (
     <Ctx.Provider value={push}>
       {children}
-      <div className="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-[200] flex flex-col items-center gap-2 pointer-events-none">
+      <div className="fixed inset-x-3 bottom-[6.25rem] md:inset-x-auto md:bottom-6 md:left-1/2 md:-translate-x-1/2 z-[200] flex flex-col items-center gap-2 pointer-events-none">
         <AnimatePresence>
           {items.map((t) => (
             <motion.div
@@ -29,9 +29,9 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={spring}
-              className="flex items-center gap-2.5 bg-ink text-white text-sm font-medium px-4 py-2.5 rounded-full shadow-pop"
+              className="flex items-center gap-2.5 w-fit max-w-full md:max-w-[34rem] bg-ink text-white text-sm font-medium leading-snug px-4 py-2.5 rounded-2xl shadow-pop"
             >
-              <span className={`w-2 h-2 rounded-full ${DOT[t.kind]}`} />
+              <span className={`w-2 h-2 shrink-0 rounded-full ${DOT[t.kind]}`} />
               {t.text}
             </motion.div>
           ))}

@@ -68,11 +68,11 @@ const AdminOverview = ({ onTab }: { onTab: (t: TabKey) => void }) => {
   const total14 = chart.reduce((n, d) => n + d.Meetings + d['Board cards'], 0);
 
   return (
-    <Stagger className="space-y-4 sm:space-y-5">
+    <Stagger className="space-y-3 sm:space-y-5">
       {error && <ErrorNote message={error} onRetry={reload} />}
 
       {/* Figures */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 sm:gap-5">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-5">
         <KpiTile icon={G.users} label="People" value={ov ? ov.totalUsers : null} sub={ov ? `${ov.superAdmins} super admin${ov.superAdmins === 1 ? '' : 's'}` : undefined} glow="brand" onClick={() => onTab('people')} />
         <KpiTile icon={G.bolt} label="Active this week" value={ov ? ov.activeUsers7d : null} sub={ov ? `${ov.activeUsers30d} in 30 days` : undefined} glow="good" onClick={() => onTab('performance')} />
         <KpiTile icon={Icon.meetings(18)} label="Meetings" value={ov ? ov.totalMeetings : null} sub={ov ? `${ov.totalCards} board cards` : undefined} glow="brand" />
@@ -82,7 +82,7 @@ const AdminOverview = ({ onTab }: { onTab: (t: TabKey) => void }) => {
       </div>
 
       {/* Growth + most active */}
-      <div className="grid xl:grid-cols-12 gap-4 sm:gap-5">
+      <div className="grid xl:grid-cols-12 gap-3 sm:gap-5">
         <ATile className="xl:col-span-8" glow="brand">
           <ATitle
             icon={Icon.reports(16)}
@@ -160,7 +160,7 @@ const AdminOverview = ({ onTab }: { onTab: (t: TabKey) => void }) => {
       </div>
 
       {/* Activity, tickets, backup, announcement */}
-      <div className="grid xl:grid-cols-12 gap-4 sm:gap-5">
+      <div className="grid xl:grid-cols-12 gap-3 sm:gap-5">
         <ATile className="xl:col-span-5" glow="brand">
           <ATitle icon={Icon.worklog(16)} right={<Button size="sm" variant="ghost" onClick={() => onTab('logs')}>See all</Button>}>Recent activity</ATitle>
           {loading ? (
@@ -212,7 +212,7 @@ const AdminOverview = ({ onTab }: { onTab: (t: TabKey) => void }) => {
           )}
         </ATile>
 
-        <div className="xl:col-span-3 grid gap-4 sm:gap-5">
+        <div className="xl:col-span-3 grid gap-3 sm:gap-5">
           <ATile glow="good" onClick={() => onTab('system')}>
             <ATitle icon={G.db}>Last backup</ATitle>
             {loading ? <Skeleton className="h-12" /> : lastBackup ? (

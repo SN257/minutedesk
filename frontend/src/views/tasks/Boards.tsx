@@ -10,6 +10,7 @@ import { AssigneeAvatar, CheckCircle } from './parts';
 import { TIcon, iconPath, type TIconName } from './icons';
 import { setCrumbs } from '../../lib/crumbs';
 import { Pop } from './pop';
+import { FilterMenu } from '../../ui/filter';
 import type { WorkspacesApi } from './workspaces';
 import type { TasksData } from './useTasksData';
 
@@ -29,7 +30,7 @@ export const readBg = (id: string) => { try { return localStorage.getItem(BG_KEY
 export const hash = (s: string) => [...s].reduce((a, c) => a + c.charCodeAt(0), 0);
 
 /** Cover gradients for tiles: stronger than the board canvas tints, still made from the theme colours. */
-const mix = (c: string, p: number, over = 'var(--color-ink)') => `color-mix(in srgb, var(--color-${c}) ${p}%, ${over})`;
+const mix = (c: string, p: number, over = '#06141b') => `color-mix(in srgb, var(--color-${c}) ${p}%, ${over})`;
 export const COVER: Record<string, string> = {
   ocean: `linear-gradient(135deg, ${mix('brand', 78)}, ${mix('good', 60, 'var(--color-brand)')})`,
   forest: `linear-gradient(135deg, ${mix('good', 82)}, ${mix('brand', 55, 'var(--color-good)')})`,
@@ -49,8 +50,8 @@ export const cover = (b: BoardRec) => {
 
 export const writeBg = (id: string, k: string) => { try { localStorage.setItem(BG_KEY + id, k); } catch { /* ignore */ } };
 
-interface Filters { q: string; members: string[]; labels: string[]; due: '' | 'overdue' | 'today' | 'week' | 'none'; hideDone: boolean }
-const NO_FILTERS: Filters = { q: '', members: [], labels: [], due: '', hideDone: false };
+interface Filters { q: string; members: string[]; labels: string[]; priorities: string[]; due: '' | 'overdue' | 'today' | 'week' | 'month' | 'none'; hideDone: boolean }
+const NO_FILTERS: Filters = { q: '', members: [], labels: [], priorities: [], due: '', hideDone: false };
 
 type Drag = { type: 'card' | 'list'; id: string } | null;
 interface Over { listId: string; beforeId: string | null }
@@ -339,16 +340,16 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
     if (f.q && !`${c.title} ${c.description} ${c.labels.join(' ')}`.toLowerCase().includes(f.q.toLowerCase())) return false;
     if (f.members.length && !f.members.some((m) => (m === 'none' ? !c.assignee : m === 'me' ? c.assignee === data.me : c.assignee === m))) return false;
     if (f.labels.length && !f.labels.some((l) => c.labels.includes(l))) return false;
+    if (f.priorities.length && !f.priorities.includes(c.priority || 'none')) return false;
+    if (f.due === 'month' && !(c.dueDate && c.dueDate >= today && c.dueDate <= addDaysToDateString(today, 30))) return false;
     if (f.due === 'none' && c.dueDate) return false;
     if (f.due === 'overdue' && !(c.dueDate && c.dueDate < today && !c.archived)) return false;
     if (f.due === 'today' && c.dueDate !== today) return false;
     if (f.due === 'week' && !(c.dueDate && c.dueDate >= today && c.dueDate <= weekEnd)) return false;
     return true;
   };
-  const activeFilters = (filters.q ? 1 : 0) + filters.members.length + filters.labels.length + (filters.due ? 1 : 0) + (filters.hideDone ? 1 : 0);
   const cardsFor = (l: ListRec) => data.cards.filter((c) => c.listId === l.id).map((c, i) => ({ c, i })).sort((a, b) => a.c.order - b.c.order || a.i - b.i).map((x) => x.c).filter(matches);
   const totalIn = (l: ListRec) => data.cards.filter((c) => c.listId === l.id).length;
-  const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v]);
 
   const setBg = (k: string) => { setBgKey(k); if (board) try { localStorage.setItem(BG_KEY + board.id, k); } catch { /* ignore */ } };
   const bg = BACKGROUNDS.find((b) => b.key === bgKey) ?? BACKGROUNDS[0];
@@ -398,7 +399,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
 
   if (data.loading) {
     return (
-      <div className="liquid rounded-[2rem] p-4 mt-1 md:-mt-3 h-[calc(100cqh-0.125rem)] min-h-[26rem]">
+      <div className="liquid rounded-[2rem] p-4 mt-0 md:-mt-3 h-[calc(100cqh-0.125rem)] min-h-[26rem]">
         <Skeleton className="h-11 w-72 mb-4" />
         <div className="flex gap-3 overflow-hidden">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-72 w-[286px] shrink-0" />)}</div>
       </div>
@@ -448,7 +449,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
   );
 
   return (
-    <div className="relative rounded-[2rem] overflow-hidden liquid mt-1 md:-mt-3 h-[calc(100cqh-0.125rem)] md:h-[calc(100dvh-6.25rem)] min-h-[28rem] flex flex-col">
+    <div className="relative rounded-[2rem] overflow-hidden liquid mt-0 md:-mt-3 h-[calc(100cqh-0.125rem)] md:h-[calc(100dvh-6.25rem)] min-h-[28rem] flex flex-col">
       <div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: bg.css }} />
 
       {/* header */}
@@ -476,53 +477,17 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
             <TIcon name="share" size={15} />
             Share
           </button>
-          <Pop align="right" width="w-80" button={(_, t) => (
-            <button type="button" onClick={t} className={barBtn}>
-              <TIcon name="filter" size={15} />
-              Filter{activeFilters > 0 && <span className="rounded-full bg-ink text-white text-[10px] px-1.5 py-0.5">{activeFilters}</span>}
-            </button>
-          )}>
-            {() => (
-              <div className="space-y-4 text-sm max-h-[60vh] overflow-y-auto scroll-y pr-1">
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted mb-1.5">Keyword</p>
-                  <Input value={filters.q} onChange={(e) => setFilters({ ...filters, q: e.target.value })} placeholder="Search cards…" className="!py-2" aria-label="Keyword" />
-                </div>
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted mb-1.5">Members</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[{ id: 'me', name: 'Assigned to me' }, { id: 'none', name: 'No members' }, ...members.filter((u) => u.id !== data.me).map((u) => ({ id: u.id, name: u.name || u.email || 'Member' }))].map((m) => (
-                      <button key={m.id} type="button" aria-pressed={filters.members.includes(m.id)} onClick={() => setFilters({ ...filters, members: toggle(filters.members, m.id) })}
-                        className={`rounded-full px-3 py-1.5 text-xs font-bold border ${filters.members.includes(m.id) ? 'bg-ink text-white border-ink' : 'border-line hover:border-ink/40'}`}>{m.name}</button>
-                    ))}
-                  </div>
-                </div>
-                {allLabels.length > 0 && (
-                  <div>
-                    <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted mb-1.5">Labels</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {allLabels.map((l) => (
-                        <button key={l} type="button" aria-pressed={filters.labels.includes(l)} onClick={() => setFilters({ ...filters, labels: toggle(filters.labels, l) })} className={`rounded-md ${filters.labels.includes(l) ? 'ring-2 ring-ink' : 'opacity-80 hover:opacity-100'}`}><LabelPill name={l} hex={labelHex(l, defs)} /></button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted mb-1.5">Due date</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {([['overdue', 'Overdue'], ['today', 'Due today'], ['week', 'Next 7 days'], ['none', 'No due date']] as const).map(([k, label]) => (
-                      <button key={k} type="button" aria-pressed={filters.due === k} onClick={() => setFilters({ ...filters, due: filters.due === k ? '' : k })}
-                        className={`rounded-full px-3 py-1.5 text-xs font-bold border ${filters.due === k ? 'bg-ink text-white border-ink' : 'border-line hover:border-ink/40'}`}>{label}</button>
-                    ))}
-                  </div>
-                </div>
-                <label className="flex items-center gap-2.5 font-semibold cursor-pointer">
-                  <input type="checkbox" checked={filters.hideDone} onChange={(e) => setFilters({ ...filters, hideDone: e.target.checked })} className="w-4 h-4 accent-[var(--color-brand)]" /> Hide completed cards
-                </label>
-                {activeFilters > 0 && <button type="button" onClick={() => setFilters(NO_FILTERS)} className="text-xs font-bold text-brand hover:underline">Clear all filters</button>}
-              </div>
-            )}
-          </Pop>
+          <FilterMenu size="sm" variant="bar" title="Filter cards" groups={[
+            { id: 'q', kind: 'text', label: 'Keyword', value: filters.q, onChange: (v) => setFilters({ ...filters, q: v }), placeholder: 'Search cards…' },
+            { id: 'members', kind: 'multi', label: 'Members', value: filters.members, onChange: (v) => setFilters({ ...filters, members: v }),
+              options: [{ value: 'me', label: 'Assigned to me' }, { value: 'none', label: 'No members' }, ...members.filter((u) => u.id !== data.me).map((u) => ({ value: u.id, label: u.name || u.email || 'Member' }))] },
+            { id: 'priority', kind: 'multi', label: 'Priority', value: filters.priorities, onChange: (v) => setFilters({ ...filters, priorities: v }),
+              options: [...PRIORITIES.slice().reverse().map((p) => ({ value: p.key as string, label: p.label })), { value: 'none', label: 'No priority' }] },
+            { id: 'labels', kind: 'multi', label: 'Labels', value: filters.labels, onChange: (v) => setFilters({ ...filters, labels: v }), hidden: allLabels.length === 0, options: allLabels.map((l) => ({ value: l, label: l })) },
+            { id: 'due', kind: 'single', label: 'Due date', value: filters.due, defaultValue: '', onChange: (v) => setFilters({ ...filters, due: v as Filters['due'] }),
+              options: [{ value: '', label: 'Any time' }, { value: 'overdue', label: 'Overdue' }, { value: 'today', label: 'Due today' }, { value: 'week', label: 'Next 7 days' }, { value: 'month', label: 'Next 30 days' }, { value: 'none', label: 'No due date' }] },
+            { id: 'hideDone', kind: 'toggle', label: 'Hide completed cards', value: filters.hideDone, onChange: (v) => setFilters({ ...filters, hideDone: v }) },
+          ]} />
 
           <Pop align="right" width="w-72" button={(_, t) => (
             <button type="button" onClick={t} aria-label="Board menu" className={`${barBtn} !px-2.5`}><Dots /></button>
@@ -626,10 +591,10 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
           {dock.map((d) => {
             const active = d.active;
             return (
-              <button key={d.key} type="button" onClick={d.run} aria-pressed={d.key === 'inbox' || d.key === 'planner' ? active : undefined} aria-current={d.key === 'board' ? 'page' : undefined}
-                className={`flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2.5 text-sm font-bold transition-colors ${active ? 'bg-brand-soft text-brand' : 'text-ink-2 hover:bg-ink/[0.07]'}`}>
+              <button key={d.key} type="button" onClick={d.run} aria-label={d.label} aria-pressed={d.key === 'inbox' || d.key === 'planner' ? active : undefined} aria-current={d.key === 'board' ? 'page' : undefined}
+                className={`flex shrink-0 items-center gap-2 rounded-xl px-3 sm:px-4 py-2.5 text-sm font-bold transition-colors ${active ? 'bg-brand-soft text-brand' : 'text-ink-2 hover:bg-ink/[0.07]'}`}>
                 <TIcon name={d.icon as TIconName} size={17} />
-                <span className={active || d.key === 'switch' ? '' : 'hidden sm:inline'}>{d.label}</span>
+                <span className={`whitespace-nowrap ${active ? '' : 'hidden sm:inline'}`}>{d.label}</span>
               </button>
             );
           })}

@@ -1,190 +1,213 @@
 import { useT } from '../lib/siteConfig';
-import { useState, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { softSpring } from '../lib/motion';
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion';
 import { Icon } from '../shell/icons';
+import { ArrowSwap } from './arrow';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
-const MENU = [
-  { icon: Icon.tasks, label: 'My tasks' },
-  { icon: Icon.dashboard, label: 'Dashboard' },
-  { icon: Icon.meetings, label: 'Meetings', active: true, badge: 3 },
-  { icon: Icon.worklog, label: 'Work log' },
-  { icon: Icon.reports, label: 'Insights' },
-];
-const TASKS = [
-  { t: 'Circulate the revised calendar', who: 'AK', due: 'Today' },
-  { t: 'Collect centre reports', who: 'MS', due: 'Mon' },
-  { t: 'Update the reporting template', who: 'RP', due: '21 Nov' },
-];
-const TONES = ['#253745', '#9ba8ab', '#4a5c6a', '#dfe2e1'];
+/** The hero is always a light stage in the web theme's colours. Fixed values, so the app's tokens never interfere. */
+const PAL = {
+  light: {
+    base: 'linear-gradient(170deg,#fbfcfc 0%,#eff3f4 55%,#e3e9eb 100%)',
+    glows: ['rgba(74,92,106,0.30)', 'rgba(155,168,171,0.34)', 'rgba(37,55,69,0.18)'],
+    glass: 'bg-[linear-gradient(145deg,rgba(255,255,255,0.97),rgba(244,247,248,0.93))] border border-[rgba(255,255,255,0.95)] shadow-[0_30px_60px_-30px_rgba(37,55,69,0.45),inset_0_1px_0_rgba(255,255,255,1)]',
+    root: 'text-[#06141b]', h1: 'text-[#0b1a24]', word: 'linear-gradient(95deg,#06141b 0%,#253745 55%,#4a5c6a 100%)', sub: 'text-[#4a5c6a]',
+    chip: 'text-[#253745] bg-[rgba(255,255,255,0.75)] border border-[rgba(255,255,255,1)] shadow-[0_8px_24px_-12px_rgba(37,55,69,0.4)] hover:bg-[#ffffff]',
+    primary: 'text-[#ffffff] bg-[#06141b] shadow-[0_18px_36px_-14px_rgba(6,20,27,0.6)]', primaryIcon: 'bg-[rgba(255,255,255,0.16)]',
+    ghost: 'text-[#253745] bg-[rgba(255,255,255,0.7)] border border-[rgba(6,20,27,0.14)] hover:bg-[#ffffff]',
+    proof: 'text-[#4a5c6a]', check: 'bg-[rgba(37,55,69,0.12)] text-[#253745]',
+    title: 'text-[#06141b]', muted: 'text-[#4a5c6a]', soft: 'text-[#6b7c86]', num: 'bg-[rgba(6,20,27,0.07)] text-[#253745]',
+    tile: 'bg-[rgba(6,20,27,0.045)] border border-[rgba(6,20,27,0.07)]', ring: 'ring-[rgba(255,255,255,0.9)]', idle: 'rgba(6,20,27,0.09)',
+    mint: '#253745', blue: '#4a5c6a', amber: '#6b7c86', mintBg: 'bg-[rgba(37,55,69,0.12)]', blueBg: 'bg-[rgba(74,92,106,0.14)]', amberBg: 'bg-[rgba(155,168,171,0.28)] text-[#253745]',
+    line: ['#4a5c6a', '#9ba8ab'],
+  },
+} as const;
+type Pal = (typeof PAL)['light'];
+const PalCtx = createContext<Pal>(PAL.light);
+const usePal = () => useContext(PalCtx);
 
-const Avatars = ({ names, ring = '#fff', size = 22 }: { names: string[]; ring?: string; size?: number }) => (
-  <div className="flex -space-x-1.5">
-    {names.map((n, i) => (
-      <span key={n} className="rounded-full grid place-items-center font-semibold shrink-0" style={{ width: size, height: size, fontSize: size * 0.4, background: TONES[i % 4], color: i % 4 === 1 || i % 4 === 3 ? '#06141b' : '#fff', border: `2px solid ${ring}` }}>{n}</span>
-    ))}
-  </div>
+const Rise = ({ children, delay, className = '' }: { children: ReactNode; delay: number; className?: string }) => (
+  <motion.div initial={{ opacity: 0, y: 22 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.75, ease }} className={className}>{children}</motion.div>
 );
 
-/* ───────────── product window (illustrative content) ───────────── */
+const Dot = ({ c }: { c: string }) => <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c }} />;
 
-const Dashboard = () => {
-  const [done, setDone] = useState([true, false, false]);
-  const count = done.filter(Boolean).length;
-  const [tab, setTab] = useState<'Active' | 'Completed'>('Active');
-  const rows = TASKS.map((t, i) => ({ ...t, i })).filter((r) => (tab === 'Active' ? !done[r.i] : done[r.i]));
+const Who = ({ n, bg }: { n: string; bg: string }) => (
+  <span className={`w-6 h-6 rounded-full grid place-items-center text-[9px] font-bold text-[#06141b] ring-2 shrink-0 ${usePal().ring}`} style={{ background: bg }}>{n}</span>
+);
+
+/** One floating glass card; `depth` decides how far it drifts when the pointer moves. */
+const Card = ({ children, className, depth, mx, my, float = 6, delay = 0 }: { children: ReactNode; className: string; depth: number; mx: MotionValue<number>; my: MotionValue<number>; float?: number; delay?: number }) => {
+  const p = usePal();
+  const x = useTransform(mx, (v) => v * depth);
+  const y = useTransform(my, (v) => v * depth);
+  return (
+    <motion.div style={{ x, y }} className={`absolute ${className}`}>
+      <motion.div
+        initial={{ opacity: 0, y: 30, scale: 0.94 }}
+        animate={{ opacity: 1, y: [0, -float, 0], scale: 1 }}
+        transition={{ opacity: { delay: 0.5 + delay, duration: 0.7 }, scale: { delay: 0.5 + delay, duration: 0.7, ease }, y: { delay: 0.5 + delay, duration: 5 + delay * 3, repeat: Infinity, ease: 'easeInOut' } }}
+        className={`${p.glass} rounded-[1.6rem] text-left font-sans will-change-transform`}
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+/** Agenda → minutes → task: the whole product idea as three glass cards joined by animated lines. */
+const FlowScene = () => {
+  const p = usePal();
+  const mx = useSpring(useMotionValue(0), { stiffness: 90, damping: 18 });
+  const my = useSpring(useMotionValue(0), { stiffness: 90, damping: 18 });
+  const [done, setDone] = useState(false);
+  // The scene is designed at 544px; on narrow screens it is scaled down as a whole so the cards never collide.
+  const box = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState(1);
+  useEffect(() => {
+    const el = box.current; if (!el) return;
+    const ro = new ResizeObserver(() => setFit(Math.min(1, el.clientWidth / 544)));
+    ro.observe(el); setFit(Math.min(1, el.clientWidth / 544));
+    return () => ro.disconnect();
+  }, []);
+  useEffect(() => { const t = setInterval(() => setDone((d) => !d), 2600); return () => clearInterval(t); }, []);
+  const move = (e: React.MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    mx.set(((e.clientX - r.left) / r.width - 0.5) * 2);
+    my.set(((e.clientY - r.top) / r.height - 0.5) * 2);
+  };
+  const reset = () => { mx.set(0); my.set(0); };
+  const px = (n: number) => n * 14;
+  const label = 'text-[11px] font-bold tracking-[0.16em] uppercase';
 
   return (
-    <div className="flex h-full bg-white text-[#06141b] text-left font-sans">
-      {/* sidebar */}
-      <aside className="hidden md:flex w-48 lg:w-56 xl:w-64 shrink-0 flex-col p-4 border-r border-[#06141b]/[0.07] bg-[#fafbfb]">
-        <div className="flex items-center gap-2.5">
-          <span className="w-9 h-9 rounded-full bg-[#253745] text-[#ccd0cf] text-xs font-semibold grid place-items-center">SN</span>
-          <div className="leading-tight"><p className="text-[13px] font-semibold">Siddhant</p><p className="text-[10px] text-[#4a5c6a]">Super admin</p></div>
-        </div>
-        <p className="mt-6 mb-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#6b7c86]">Menu</p>
-        <nav className="space-y-0.5">
-          {MENU.map((m) => (
-            <div key={m.label} className={`relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[12.5px] ${m.active ? 'bg-white ring-1 ring-[#06141b]/[0.06] font-medium text-[#06141b]' : 'text-[#4a5c6a]'}`}>
-              {m.active && <span className="absolute -left-4 top-1.5 bottom-1.5 w-[3px] rounded-r bg-[#253745]" />}
-              {m.icon(14)}<span className="flex-1">{m.label}</span>
-              {m.badge && <span className="text-[10px] font-semibold rounded-md bg-[#253745] text-white px-1.5">{m.badge}</span>}
-            </div>
-          ))}
-        </nav>
-      </aside>
+    <div ref={box} className="relative w-full max-w-[34rem] mx-auto" style={{ height: 544 * fit }} onMouseMove={move} onMouseLeave={reset}>
+    <div className="absolute left-0 top-0 w-[544px] h-[544px] origin-top-left" style={{ transform: `scale(${fit})` }}>
+      <svg aria-hidden viewBox="0 0 544 544" className="absolute inset-0 w-full h-full">
+        <defs>
+          <linearGradient id="hl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor={p.line[0]} stopOpacity="0.9" /><stop offset="1" stopColor={p.line[1]} stopOpacity="0.9" /></linearGradient>
+        </defs>
+        <motion.path d="M150 150 C 230 160, 230 215, 275 250" fill="none" stroke="url(#hl)" strokeWidth="2" strokeDasharray="6 8" animate={{ strokeDashoffset: [0, -28] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }} />
+        <motion.path d="M355 380 C 400 400, 400 420, 410 440" fill="none" stroke="url(#hl)" strokeWidth="2" strokeDasharray="6 8" animate={{ strokeDashoffset: [0, -28] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'linear' }} />
+      </svg>
 
-      {/* main */}
-      <main className="flex-1 min-w-0 p-4 sm:p-6 xl:p-8 flex flex-col">
-        <div className="flex items-center justify-between gap-4">
-          <p className="text-base sm:text-lg xl:text-xl font-semibold tracking-tight">Good morning, Siddhant!</p>
-          <div className="hidden sm:flex items-center gap-3 text-[11px] text-[#4a5c6a] shrink-0">
-            {count} of {TASKS.length} tasks completed
-            <span className="w-24 h-1.5 rounded-full bg-[#06141b]/10 overflow-hidden"><motion.span className="block h-full bg-[#253745] rounded-full" animate={{ width: `${(count / TASKS.length) * 100}%` }} transition={softSpring} /></span>
+      <Card mx={mx} my={my} depth={px(0.9)} className="left-0 top-0 w-[15.5rem]" float={7}>
+        <div className="p-5">
+          <div className="flex items-center gap-2.5" style={{ color: p.mint }}><span className={`w-8 h-8 rounded-xl grid place-items-center ${p.mintBg}`}>{Icon.meetings(16)}</span><span className={label}>Agenda</span></div>
+          <p className={`mt-3 text-[15px] font-semibold leading-snug ${p.title}`}>Weekly operations review</p>
+          <ul className={`mt-3 space-y-2 text-[12.5px] ${p.muted}`}>
+            {['Action points from last week', 'Centre reports', 'Calendar for Q4'].map((t, i) => (
+              <li key={t} className="flex items-center gap-2.5"><span className={`w-5 h-5 rounded-md text-[10px] font-bold grid place-items-center ${p.num}`}>{i + 1}</span>{t}</li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+
+      <Card mx={mx} my={my} depth={px(1.5)} className="left-[20%] top-[31%] w-[20rem] z-10" float={5} delay={0.25}>
+        <div className="p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5" style={{ color: p.blue }}><span className={`w-8 h-8 rounded-xl grid place-items-center ${p.blueBg}`}>{Icon.worklog(16)}</span><span className={label}>Minutes</span></div>
+            <span className={`text-[11px] ${p.soft}`}>Today · 10:30</span>
+          </div>
+          <div className="mt-4 space-y-2.5">
+            {[
+              ['Decision', p.mint, 'Circulate the revised calendar', 'AK', '#ccd0cf'],
+              ['Info', p.blue, 'Centre reports are due Monday', 'MS', '#9ba8ab'],
+              ['Lesson', p.amber, 'Share templates one week earlier', 'RP', '#b4c0c3'],
+            ].map(([k, c, t, w, bg]) => (
+              <div key={t} className={`flex items-center gap-3 rounded-2xl px-3.5 py-2.5 ${p.tile}`}>
+                <div className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: c }}><Dot c={c} />{k}</p>
+                  <p className={`text-[13px] truncate mt-0.5 ${p.title}`}>{t}</p>
+                </div>
+                <Who n={w} bg={bg} />
+              </div>
+            ))}
           </div>
         </div>
+      </Card>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="rounded-2xl p-4 text-white min-h-[7.5rem] xl:min-h-[9rem] flex flex-col" style={{ background: 'linear-gradient(145deg,#4a5c6a,#253745 60%,#11212d)' }}>
-            <span className="w-7 h-7 rounded-full bg-white/20 grid place-items-center">{Icon.meetings(14)}</span>
-            <p className="mt-auto text-[13px] sm:text-sm font-medium leading-snug">Weekly operations review</p>
-            <div className="mt-2"><Avatars names={['AK', 'MS', 'RP']} ring="#2d3f4e" /></div>
-          </div>
-          <div className="rounded-2xl p-4 text-[#06141b] min-h-[7.5rem] xl:min-h-[9rem] flex flex-col" style={{ background: 'linear-gradient(145deg,#dfe2e1,#9ba8ab)' }}>
-            <span className="w-7 h-7 rounded-full bg-white/50 grid place-items-center">{Icon.tasks(14)}</span>
-            <p className="mt-auto text-[13px] sm:text-sm font-medium leading-snug">Centre reports due Monday</p>
-            <div className="mt-2"><Avatars names={['JD', 'MS']} ring="#b9c2c4" /></div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex items-center justify-between">
-          <p className="text-[13px] font-semibold">Monthly tasks</p>
-          <span className="hidden sm:inline rounded-full bg-[#253745] text-white text-[11px] font-medium px-3 py-1">+ New</span>
-        </div>
-        <div className="mt-2 flex gap-5 text-[12px] border-b border-[#06141b]/[0.08]">
-          {(['Active', 'Completed'] as const).map((t) => (
-            <button key={t} onClick={() => setTab(t)} className={`pb-2 -mb-px transition-colors ${tab === t ? 'border-b-2 border-[#253745] font-medium text-[#253745]' : 'text-[#4a5c6a]'}`}>{t} tasks</button>
-          ))}
-        </div>
-        <div className="mt-2 divide-y divide-[#06141b]/[0.06] flex-1">
-          {rows.length === 0 && <p className="py-4 text-xs text-[#4a5c6a]">Nothing here yet.</p>}
-          {rows.map((r) => (
-            <button key={r.t} onClick={() => setDone((d) => d.map((v, j) => (j === r.i ? !v : v)))} className="w-full flex items-center gap-3 py-2.5 text-[12.5px] text-left hover:bg-[#06141b]/[0.02] transition-colors">
-              <motion.span animate={{ backgroundColor: done[r.i] ? '#253745' : '#ffffff', borderColor: done[r.i] ? '#253745' : '#9ba8ab' }} className="w-4 h-4 rounded-[5px] border grid place-items-center shrink-0 text-white">{done[r.i] && Icon.check(10)}</motion.span>
-              <span className="flex-1 truncate">{r.t}</span>
-              <span className="text-[11px] text-[#4a5c6a]">{r.due}</span>
-              <Avatars names={[r.who]} size={22} />
-            </button>
-          ))}
-        </div>
-      </main>
-
-      {/* schedule */}
-      <aside className="hidden lg:flex w-64 xl:w-80 shrink-0 flex-col gap-4 p-5 xl:p-6 border-l border-[#06141b]/[0.07]">
-        <p className="text-[13px] font-semibold">Today’s schedule</p>
-        <div>
-          <p className="text-[10px] text-[#8a3b3b]">30 minute call · 10:30</p>
-          <p className="text-[13px] font-medium">Centre heads sync</p>
-        </div>
-        <div className="rounded-xl p-3.5 text-[#06141b]" style={{ background: 'linear-gradient(135deg,#9fe0c9,#6fcbae)' }}>
-          <p className="text-[11px] font-medium">Weekly operations review</p>
-          <div className="mt-2 flex items-center justify-between"><Avatars names={['AK', 'MS', 'RP']} ring="#86d4b9" /><span className="text-xs font-semibold tabular-nums">28:35</span></div>
-        </div>
-        <div className="border-t border-[#06141b]/[0.07] pt-4">
-          <p className="text-[13px] font-medium">Reporting template</p>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-[10px] text-[#4a5c6a]">
-            <div><p>Completed</p><p className="mt-0.5 text-xl font-semibold text-[#06141b] tabular-nums">12</p></div>
-            <div><p>In progress</p><p className="mt-0.5 text-xl font-semibold text-[#06141b] tabular-nums">4</p></div>
-            <div><p>Team</p><div className="mt-1.5"><Avatars names={['AK', 'MS']} size={20} /></div></div>
+      <Card mx={mx} my={my} depth={px(2.1)} className="right-0 bottom-3 w-[16.5rem] z-20" float={9} delay={0.5}>
+        <div className="p-4 flex items-center gap-3.5">
+          <motion.span animate={{ backgroundColor: done ? '#253745' : p.idle }} transition={{ duration: 0.4 }} className="w-9 h-9 rounded-xl grid place-items-center text-[#ffffff] shrink-0">
+            <motion.span animate={{ scale: done ? 1 : 0.2, opacity: done ? 1 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 18 }}>{Icon.check(18)}</motion.span>
+          </motion.span>
+          <div className="min-w-0">
+            <p className="text-[10px] font-bold tracking-[0.14em] uppercase" style={{ color: p.mint }}>{done ? 'Done' : 'Task created'}</p>
+            <p className={`text-[14px] font-semibold leading-snug truncate ${p.title}`}>Circulate the calendar</p>
+            <p className={`text-[11px] mt-0.5 ${p.soft}`}>Owner AK · due Monday</p>
           </div>
         </div>
-      </aside>
+      </Card>
+
+      <Card mx={mx} my={my} depth={px(2.6)} className="right-[6%] top-0 z-20" float={8} delay={0.8}>
+        <div className="px-4 py-3 flex items-center gap-2.5">
+          <span className={`w-7 h-7 rounded-lg grid place-items-center ${p.amberBg}`}>{Icon.bell(14)}</span>
+          <span className={`text-[12px] font-semibold ${p.title}`}>Reminder · 7:00 AM</span>
+        </div>
+      </Card>
+    </div>
     </div>
   );
 };
 
-/* ───────────── hero ───────────── */
-
-const Rise = ({ children, delay, className = '' }: { children: ReactNode; delay: number; className?: string }) => (
-  <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay, duration: 0.7, ease }} className={className}>{children}</motion.div>
-);
-
-/** Centred, light hero: soft glow circle, glass pill, bold two-line headline, two buttons, and a dashboard window rising from the bottom edge. */
+/** Light hero; the header above it is dark glass. */
 export const Hero = ({ onStart, onLearn, signedIn }: { onStart: () => void; onLearn: () => void; signedIn: boolean }) => {
   const t = useT();
+  const p = PAL.light;
+  const proof = [t('hero.proof1'), t('hero.proof2'), t('hero.proof3')];
   return (
-  <div className="relative h-full min-h-[100svh] overflow-hidden text-[#06141b]">
-    {/* one soft light background: pale gradient + a large glow circle with a faint outline ring */}
-    <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(180deg,#fbfcfc 0%,#f1f3f3 60%,#e8ebeb 100%)' }} />
-    <div aria-hidden className="absolute left-1/2 top-[34%] -translate-x-1/2 -translate-y-1/2 w-[min(130vw,70rem)] aspect-square rounded-full" style={{ background: 'radial-gradient(closest-side, rgb(110 134 150 / 0.34), rgb(155 168 171 / 0.16) 55%, transparent 72%)' }} />
-    <div aria-hidden className="absolute left-1/2 top-[34%] -translate-x-1/2 -translate-y-1/2 w-[min(110vw,56rem)] aspect-square rounded-full border border-[#4a5c6a]/15" />
+    <PalCtx.Provider value={p}>
+      <div className={`relative h-full md:min-h-[100svh] overflow-hidden ${p.root}`}>
+        {/* stage: base colour and three softly drifting glows */}
+        <div aria-hidden className="absolute inset-0" style={{ background: p.base }} />
+        <motion.div aria-hidden className="absolute -left-[10%] bottom-[-10%] w-[min(60vw,46rem)] aspect-square rounded-full will-change-transform" style={{ background: `radial-gradient(closest-side, ${p.glows[0]}, transparent 72%)` }} animate={{ x: [0, 40, 0], y: [0, -30, 0] }} transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div aria-hidden className="absolute right-[-8%] top-[-12%] w-[min(60vw,44rem)] aspect-square rounded-full will-change-transform" style={{ background: `radial-gradient(closest-side, ${p.glows[1]}, transparent 72%)` }} animate={{ x: [0, -36, 0], y: [0, 36, 0] }} transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }} />
+        <motion.div aria-hidden className="absolute right-[22%] bottom-[8%] w-[min(40vw,30rem)] aspect-square rounded-full will-change-transform" style={{ background: `radial-gradient(closest-side, ${p.glows[2]}, transparent 72%)` }} animate={{ x: [0, 24, 0], y: [0, 24, 0] }} transition={{ duration: 22, repeat: Infinity, ease: 'easeInOut' }} />
 
-    <div className="relative h-full min-h-[100svh] flex flex-col items-center text-center px-4 sm:px-8 pt-28 md:pt-[clamp(5.5rem,10.5vh,7rem)]">
-      <Rise delay={0.1}>
-        <button onClick={onLearn} className="group inline-flex items-center gap-2.5 rounded-full pl-1.5 pr-4 py-1.5 text-[13px] font-sans text-[#253745] bg-white/70 border border-white shadow-[0_6px_20px_-8px_rgba(6,20,27,0.25)]">
-          <span className="rounded-full bg-[#253745] text-white text-[11px] font-semibold px-2.5 py-0.5">New</span>
-          Paste agendas straight from Word
-          <span className="transition-transform group-hover:translate-x-0.5">{Icon.arrow(13)}</span>
-        </button>
-      </Rise>
+        <div className="relative max-w-[1400px] mx-auto md:min-h-[100svh] grid lg:grid-cols-[1.05fr_1fr] items-center gap-6 lg:gap-8 px-5 sm:px-10 pt-24 sm:pt-28 pb-8 lg:pb-8">
+          <div className="text-left">
+            <Rise delay={0.1}>
+              <button onClick={onLearn} className={`group inline-flex items-center gap-2.5 rounded-full pl-1.5 pr-4 py-1.5 text-[13px] font-sans transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(37,55,69,0.5)] ${p.chip}`}>
+                <span className="rounded-full text-[#06141b] text-[11px] font-bold px-2.5 py-0.5" style={{ background: 'linear-gradient(135deg,#ccd0cf,#9ba8ab)' }}>New</span>
+                Paste agendas straight from Word
+                <ArrowSwap size={13} />
+              </button>
+            </Rise>
 
-      <Rise delay={0.2}>
-        <h1 className="mt-5 md:mt-[clamp(0.9rem,2.6vh,1.75rem)] font-semibold tracking-[-0.03em] leading-[1.06] text-[2.4rem] sm:text-6xl md:text-[clamp(2.2rem,min(7.2vh,6.4vw),6rem)] text-[#0b1a24]">
-          {t('hero.title1')}{' '}
-          <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg,#253745,#5f7a8c)' }}>{t('hero.title2')}</span>
-          <br />{t('hero.title3')}
-        </h1>
-      </Rise>
+            <Rise delay={0.2}>
+              <h1 className={`mt-6 font-semibold tracking-[-0.035em] leading-[1.02] text-balance text-[2.6rem] sm:text-[3.6rem] lg:text-[clamp(3rem,5.4vw,5.1rem)] ${p.h1}`}>
+                {t('hero.title1')}{' '}
+                <span className="bg-clip-text text-transparent" style={{ backgroundImage: p.word }}>{t('hero.title2')}</span>
+                <br />{t('hero.title3')}
+              </h1>
+            </Rise>
 
-      <Rise delay={0.32}>
-        <p className="mt-4 md:mt-[clamp(0.6rem,2vh,1.5rem)] max-w-3xl text-[15px] sm:text-lg md:text-[clamp(0.95rem,min(2.15vh,1.7vw),1.4rem)] leading-relaxed text-[#4a5c6a] font-sans">
-          {t('hero.sub')}
-        </p>
-      </Rise>
+            <Rise delay={0.32}>
+              <p className={`mt-6 max-w-xl text-[16px] sm:text-lg leading-relaxed font-sans text-pretty ${p.sub}`}>{t('hero.sub')}</p>
+            </Rise>
 
-      <Rise delay={0.42} className="mt-6 md:mt-[clamp(0.9rem,3vh,2rem)] flex flex-wrap justify-center gap-3 font-sans">
-        <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }} onClick={onStart} className="rounded-full bg-[#253745] text-white text-[15px] md:text-[clamp(0.95rem,1.9vh,1.1rem)] font-medium px-8 md:px-[clamp(2rem,3vw,3rem)] py-3.5 md:py-[clamp(0.7rem,1.9vh,1.1rem)] shadow-[0_14px_28px_-12px_rgba(37,55,69,0.75)]">
-          {signedIn ? 'Open workspace' : 'Get Started'}
-        </motion.button>
-        <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.97 }} onClick={onLearn}
-          className="rounded-full text-[15px] md:text-[clamp(0.95rem,1.9vh,1.1rem)] font-medium px-8 md:px-[clamp(2rem,3vw,3rem)] py-3.5 md:py-[clamp(0.7rem,1.9vh,1.1rem)] text-[#253745] border border-transparent"
-          style={{ background: 'linear-gradient(#fff,#fff) padding-box, linear-gradient(90deg,#9ba8ab,#4a5c6a) border-box' }}>
-          See how it works
-        </motion.button>
-      </Rise>
+            <Rise delay={0.42} className="mt-8 flex flex-wrap items-center gap-3 font-sans">
+              <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={onStart} className={`btn-shine group inline-flex items-center gap-2.5 rounded-full text-[15px] font-semibold pl-7 pr-5 py-3.5 ${p.primary}`}>
+                {signedIn ? 'Open workspace' : 'Get started'}
+                <span className={`w-7 h-7 rounded-full grid place-items-center transition-transform duration-300 group-hover:rotate-[-45deg] ${p.primaryIcon}`}>{Icon.arrow(14)}</span>
+              </motion.button>
+              <motion.button whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} onClick={onLearn} className={`group inline-flex items-center gap-2.5 rounded-full text-[15px] font-medium px-7 py-3.5 transition-all duration-300 hover:shadow-[0_16px_32px_-16px_rgba(37,55,69,0.5)] hover:border-[rgba(6,20,27,0.3)] ${p.ghost}`}>
+                See how it works <ArrowSwap size={15} />
+              </motion.button>
+            </Rise>
 
-      {/* window: taller than its frame, so the bottom is cropped by the hero edge */}
-      <motion.div initial={{ opacity: 0, y: 70 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, duration: 1, ease }}
-        className="relative w-full max-w-[min(94vw,1500px)] mt-8 md:mt-[clamp(1rem,3vh,2.25rem)] flex-1 min-h-[19rem] sm:min-h-[24rem] md:min-h-[9rem] rounded-t-[1.5rem] p-1.5 sm:p-2 pb-0 overflow-hidden bg-white/60 border border-b-0 border-white shadow-[0_-20px_70px_-30px_rgba(37,55,69,0.45)]">
-        <div className="absolute inset-x-1.5 sm:inset-x-2 top-1.5 sm:top-2 h-[34rem] rounded-t-[1.1rem] overflow-hidden border border-b-0 border-[#06141b]/10 bg-white">
-          <div className="flex items-center gap-1.5 px-4 h-8 border-b border-[#06141b]/[0.06] bg-[#fafbfb]">
-            <span className="w-2 h-2 rounded-full bg-[#e5a39d]" /><span className="w-2 h-2 rounded-full bg-[#e8cd8a]" /><span className="w-2 h-2 rounded-full bg-[#a9d6b5]" />
+            <Rise delay={0.52} className={`mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 font-sans text-[13px] ${p.proof}`}>
+              {proof.map((x) => (
+                <span key={x} className="inline-flex items-center gap-2"><span className={`w-5 h-5 rounded-full grid place-items-center ${p.check}`}>{Icon.check(12)}</span>{x}</span>
+              ))}
+            </Rise>
           </div>
-          <div className="h-[calc(100%-2rem)]"><Dashboard /></div>
+
+          <div className="hidden md:block"><FlowScene /></div>
         </div>
-      </motion.div>
-    </div>
-  </div>  );
+      </div>
+    </PalCtx.Provider>
+  );
 };

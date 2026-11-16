@@ -2,10 +2,18 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Avatar, Badge, Button, Empty, Skeleton, Stagger, useAsync } from '../../ui';
 import { spring } from '../../lib/motion';
+import { getRegional } from '../../lib/formats';
 import { useToast } from '../../lib/toast';
 import { getActivityLog, getErrorLogCounts, getErrorLogs, updateErrorLogStatus, type ErrorLogEntry } from '../../lib/api';
-import { ErrorNote, G, Pills, RefreshButton, SearchBox, fmtStamp, timeAgo } from './shared';
+import { ErrorNote, G, RefreshButton, SearchBox, fmtStamp, timeAgo } from './shared';
+import { FilterMenu } from '../../ui/filter';
 import { ATile, KpiTile } from './tiles';
+
+/** The time of day an entry happened, to the second, in the person's own 12/24-hour choice. */
+const clockOf = (iso: string) => {
+  const t = getRegional().timeFormat;
+  return new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit', ...(t ? { hour12: t === '12h' } : {}) });
+};
 
 const METHOD_TONE: Record<string, 'good' | 'brand' | 'warn' | 'bad' | 'neutral'> = { GET: 'neutral', POST: 'good', PUT: 'brand', PATCH: 'brand', DELETE: 'bad' };
 
@@ -22,14 +30,21 @@ const DOT = { good: 'bg-good', warn: 'bg-warn', bad: 'bg-bad' } as const;
 const ActivityLog = () => {
   const [limit, setLimit] = useState(200);
   const [q, setQ] = useState('');
-  const [method, setMethod] = useState('all');
+  const [methods, setMethods] = useState<string[]>([]);
+  const [outcome, setOutcome] = useState('any');
+  const [when, setWhen] = useState('any');
   const { data, loading, error, reload } = useAsync(() => getActivityLog(limit), [limit]);
 
   const entries = data ?? [];
   const counts = useMemo(() => entries.reduce<Record<string, number>>((a, e) => ({ ...a, [e.method]: (a[e.method] || 0) + 1 }), {}), [entries]);
   const rows = entries.filter((e) => {
     const s = q.trim().toLowerCase();
-    return (method === 'all' || e.method === method) && (!s || e.path.toLowerCase().includes(s) || (e.userEmail || '').toLowerCase().includes(s));
+    const code = e.statusCode ?? 0;
+    const age = (Date.now() - new Date(e.createdAt).getTime()) / 3600000; // hours
+    return (!methods.length || methods.includes(e.method))
+      && (outcome === 'any' || (outcome === 'ok' ? code < 400 : outcome === 'client' ? code >= 400 && code < 500 : code >= 500))
+      && (when === 'any' || age <= Number(when))
+      && (!s || e.path.toLowerCase().includes(s) || (e.userEmail || '').toLowerCase().includes(s));
   });
   const stats = useMemo(() => {
     const errs = entries.filter((e) => (e.statusCode ?? 0) >= 400).length;
@@ -44,8 +59,8 @@ const ActivityLog = () => {
   }, [rows]);
 
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+    <div className="space-y-3 sm:space-y-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <KpiTile icon={G.refresh} label="Requests" value={entries.length} sub={`last ${limit} recorded`} glow="brand" />
         <KpiTile icon={G.users} label="People" value={stats.people} sub="active in this window" glow="good" />
         <KpiTile icon={G.check} label="Avg speed" value={stats.avg} sub="milliseconds per request" glow="warn" />
@@ -55,14 +70,14 @@ const ActivityLog = () => {
       <ATile glow="brand">
         <div className="flex flex-wrap items-center gap-3">
           <SearchBox value={q} onChange={setQ} placeholder="Filter by person or path" />
-          <div className="inline-flex rounded-full bg-ink/[0.06] p-1" role="group" aria-label="How many entries">
-            {[100, 200, 500].map((n) => (
-              <button key={n} type="button" aria-pressed={limit === n} onClick={() => setLimit(n)} className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors ${limit === n ? 'bg-ink text-white' : 'text-muted hover:text-ink'}`}>Last {n}</button>
-            ))}
-          </div>
+          <FilterMenu title="Filter activity" groups={[
+            { id: 'method', kind: 'multi', label: 'Action', value: methods, onChange: setMethods, options: Object.entries(counts).map(([m, c]) => ({ value: m, label: m, count: c })) },
+            { id: 'outcome', kind: 'single', label: 'Result', value: outcome, defaultValue: 'any', onChange: setOutcome, options: [{ value: 'any', label: 'Everything' }, { value: 'ok', label: 'Succeeded' }, { value: 'client', label: 'Rejected (4xx)' }, { value: 'server', label: 'Failed (5xx)' }] },
+            { id: 'when', kind: 'single', label: 'When', value: when, defaultValue: 'any', onChange: setWhen, options: [{ value: 'any', label: 'Any time' }, { value: '1', label: 'Last hour' }, { value: '24', label: 'Last 24 hours' }, { value: '168', label: 'Last 7 days' }] },
+            { id: 'limit', kind: 'single', view: true, label: 'Entries loaded', value: String(limit), defaultValue: '200', onChange: (v) => setLimit(Number(v)), options: [{ value: '100', label: 'Last 100' }, { value: '200', label: 'Last 200' }, { value: '500', label: 'Last 500' }] },
+          ]} />
           <RefreshButton onClick={reload} busy={loading} />
         </div>
-        <div className="mt-4"><Pills value={method} onChange={setMethod} items={[{ key: 'all', label: 'All', count: entries.length }, ...Object.entries(counts).map(([m, c]) => ({ key: m, label: m, count: c }))]} /></div>
       </ATile>
 
       {error && <ErrorNote message={error} onRetry={reload} />}
@@ -75,14 +90,30 @@ const ActivityLog = () => {
         ) : (
           <div className="max-h-[62vh] overflow-y-auto scroll-y pr-1">
             {days.map(([day, list]) => (
-              <section key={day} className="mb-5 last:mb-0">
-                <h4 className="sticky top-0 z-10 -mx-1 px-1 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.16em] text-muted bg-white/60 rounded-lg">{day} <span className="text-ink/60">· {list.length}</span></h4>
-                <ol className="relative mt-2 ml-3 border-l-2 border-ink/10 space-y-1">
+              <section key={day} className="mb-8 last:mb-0 md:grid md:grid-cols-[5.5rem_minmax(0,1fr)] md:gap-4">
+                {(() => {
+                  const d = new Date(list[0].createdAt);
+                  const word = day === 'Today' || day === 'Yesterday' ? day : d.toLocaleDateString(undefined, { weekday: 'short' });
+                  return (
+                    <>
+                      {/* phones: a simple label above the rows */}
+                      <h4 className="md:hidden sticky top-1 z-20 w-fit flex items-center gap-2 rounded-full bg-white/95 border border-white shadow-[0_8px_18px_-12px_rgb(37_55_69/0.45)] pl-3.5 pr-1.5 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-ink-2">{day}<span className="min-w-6 h-6 px-1.5 rounded-full bg-ink/[0.08] text-ink grid place-items-center tabular-nums tracking-normal">{list.length}</span></h4>
+                      {/* wider screens: a date tile in its own column, pinned while that day's rows scroll */}
+                      <h4 className="hidden md:flex md:sticky md:top-1 md:self-start flex-col items-center rounded-2xl bg-white/85 border border-white shadow-[0_8px_18px_-12px_rgb(37_55_69/0.45)] py-2.5 px-2 text-center">
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted">{word}</span>
+                        <span className="text-2xl font-extrabold leading-none tabular-nums mt-1">{d.getDate()}</span>
+                        <span className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-muted mt-1">{d.toLocaleDateString(undefined, { month: 'short' })}</span>
+                        <span className="mt-2 min-w-6 h-5 px-1.5 rounded-full bg-ink/[0.08] text-[10px] font-bold tabular-nums grid place-items-center">{list.length}</span>
+                      </h4>
+                    </>
+                  );
+                })()}
+                <ol className="relative mt-3 md:mt-0 ml-3 border-l-2 border-ink/10 space-y-1 min-w-0">
                   {list.map((e) => {
                     const tone = statusTone(e.statusCode);
                     return (
-                      <li key={e.id} className="relative pl-5 py-2 group rounded-r-2xl hover:bg-white/40 transition-colors">
-                        <span className={`absolute -left-[7px] top-4 w-3 h-3 rounded-full ring-4 ring-white/70 ${DOT[tone]}`} />
+                      <li key={e.id} className="relative ml-4 pl-4 pr-3 py-2.5 group rounded-2xl hover:bg-white/55 transition-colors">
+                        <span className={`absolute -left-[23px] top-[1.15rem] w-3 h-3 rounded-full ring-4 ring-white/70 ${DOT[tone]}`} />
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                           <Badge tone={METHOD_TONE[e.method] || 'neutral'}>{e.method}</Badge>
                           <span className="font-mono text-xs text-ink-2 break-all min-w-0 flex-1">{e.path}</span>
@@ -92,7 +123,7 @@ const ActivityLog = () => {
                         <div className="flex items-center gap-2 mt-1 text-[11px] text-muted" title={fmtStamp(e.createdAt)}>
                           {e.userEmail ? <Avatar name={e.userEmail} size={18} /> : null}
                           <span className="truncate">{e.userEmail || <em>anonymous</em>}</span>
-                          <span>· {timeAgo(e.createdAt)}</span>
+                          <span className="tabular-nums">· {clockOf(e.createdAt)}</span><span>· {timeAgo(e.createdAt)}</span>
                         </div>
                       </li>
                     );
@@ -178,8 +209,8 @@ const Tickets = () => {
   const RAIL = { open: 'bg-bad', in_progress: 'bg-warn', resolved: 'bg-good' } as const;
   const GL: Record<Status, 'bad' | 'warn' | 'good'> = { open: 'bad', in_progress: 'warn', resolved: 'good' };
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="grid grid-cols-3 gap-4 sm:gap-5">
+    <div className="space-y-3 sm:space-y-5">
+      <div className="grid grid-cols-3 gap-3 sm:gap-5">
         {(['open', 'in_progress', 'resolved'] as Status[]).map((k) => {
           const n = k === 'open' ? c?.open : k === 'in_progress' ? c?.inProgress : c?.resolved;
           return (
@@ -192,9 +223,12 @@ const Tickets = () => {
       </div>
 
       <ATile glow="brand">
-        <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-          <Pills value={source} onChange={setSource} items={[{ key: 'all', label: 'All sources' }, { key: 'frontend', label: 'Frontend' }, { key: 'backend', label: 'Backend' }]} />
-          <Pills value={status} onChange={setStatus} items={[{ key: 'all', label: 'Any status' }, { key: 'open', label: 'Open' }, { key: 'in_progress', label: 'In progress' }, { key: 'resolved', label: 'Resolved' }]} />
+        <div className="flex items-center gap-3">
+          <FilterMenu title="Filter errors" groups={[
+            { id: 'source', kind: 'single', label: 'Source', value: source, defaultValue: 'all', onChange: (v) => setSource(v as typeof source), options: [{ value: 'all', label: 'All sources' }, { value: 'frontend', label: 'Frontend' }, { value: 'backend', label: 'Backend' }] },
+            { id: 'status', kind: 'single', label: 'Status', value: status, defaultValue: 'all', onChange: (v) => setStatus(v as typeof status), options: [{ value: 'all', label: 'Any status' }, { value: 'open', label: 'Open', count: c?.open }, { value: 'in_progress', label: 'In progress', count: c?.inProgress }, { value: 'resolved', label: 'Resolved', count: c?.resolved }] },
+          ]} />
+          <p className="text-xs text-muted truncate">Use the filter to narrow by source and status.</p>
           <RefreshButton className="ml-auto" busy={loading} onClick={() => { reload(); counts.reload(); }} />
         </div>
       </ATile>
@@ -288,7 +322,7 @@ const AdminLogs = () => {
   const { data: counts } = useAsync(() => getErrorLogCounts().catch(() => null), []);
   const items = [{ key: 'tickets' as const, label: 'Error tickets', count: counts?.open }, { key: 'activity' as const, label: 'Activity feed', count: undefined }];
   return (
-    <Stagger className="space-y-4 sm:space-y-5">
+    <Stagger className="space-y-3 sm:space-y-5">
       <div className="inline-flex rounded-full liquid p-1 gap-0.5" role="tablist">
         {items.map((t) => (
           <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)} className={`relative px-5 py-2.5 rounded-full text-sm font-bold transition-colors ${tab === t.key ? 'text-white' : 'text-muted hover:text-ink'}`}>

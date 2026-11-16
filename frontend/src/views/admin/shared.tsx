@@ -6,7 +6,7 @@ import { getSystemHealth, type AdminUserSummary, type SystemHealth } from '../..
 import { parseLocalDate } from '../../lib/date';
 
 /* ───────── Tabs ───────── */
-export type TabKey = 'overview' | 'people' | 'performance' | 'logs' | 'system' | 'setup';
+export type TabKey = 'overview' | 'people' | 'performance' | 'followup' | 'logs' | 'system' | 'setup';
 
 /* ───────── Palette (two-tone navy + one accent) ───────── */
 export const C = {
@@ -61,11 +61,13 @@ export const onTimeRate = (u: AdminUserSummary): number | null => {
   return total > 0 ? Math.round(((u.timeliness.early + u.timeliness.onTime) / total) * 100) : null;
 };
 export const scoreOf = (u: AdminUserSummary) => {
+  // Points only ever go up: 2 per finished task, 1 per work log, plus up to 10 for finishing on time and up to 10 for the log habit.
   const base = u.workLogsCount + u.tasksCompleted * 2;
+  if (base === 0) return 0;
   const otr = onTimeRate(u);
-  const timelinessBonus = otr !== null ? (otr - 50) / 10 : 0;
-  const complianceBonus = (u.workLogCompliance.rate - 50) / 10;
-  return Math.round(base + timelinessBonus + complianceBonus);
+  const timelinessBonus = otr !== null ? Math.round(otr / 10) : 0;
+  const complianceBonus = Math.round(u.workLogCompliance.rate / 10);
+  return base + timelinessBonus + complianceBonus;
 };
 export const rateTone = (rate: number | null, good = 80, warn = 50) =>
   rate === null ? 'var(--color-muted)' : rate >= good ? 'var(--color-good)' : rate >= warn ? 'var(--color-warn)' : 'var(--color-bad)';
