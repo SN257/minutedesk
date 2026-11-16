@@ -7,7 +7,7 @@ import { rise, spring, stagger } from '../lib/motion';
 type BtnVariant = 'primary' | 'soft' | 'ghost' | 'danger';
 const BTN: Record<BtnVariant, string> = {
   primary: 'bg-ink text-white hover:bg-ink-2 shadow-card',
-  soft: 'bg-white text-ink border border-line hover:border-ink/30',
+  soft: 'bg-white/60 glass-fill text-ink border border-line hover:border-ink/30',
   ghost: 'text-muted hover:text-ink hover:bg-ink/5',
   danger: 'bg-bad text-white hover:opacity-90',
 };
@@ -71,7 +71,7 @@ export const Avatar = ({ name, size = 36 }: { name?: string; size?: number }) =>
 };
 
 /* ───────── Form controls ───────── */
-const FIELD = 'w-full bg-white border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/70 outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/10';
+const FIELD = 'w-full bg-white/55 glass-fill border border-line rounded-xl px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/70 outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/10';
 export const Input = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputElement>>(({ className = '', ...p }, ref) => <input ref={ref} className={`${FIELD} ${className}`} {...p} />);
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className = '', ...p }, ref) => <textarea ref={ref} className={`${FIELD} resize-none ${className}`} {...p} />);
 type Opt = { value: string; label: string; disabled: boolean };
@@ -307,7 +307,7 @@ export const Tabs = <T extends string>({ value, onChange, items, id }: { value: 
   <div className="inline-flex bg-ink/[0.05] dark:bg-ink/[0.08] rounded-xl p-1 gap-0.5">
     {items.map((it) => (
       <button key={it.key} onClick={() => onChange(it.key)} className={`relative px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-colors ${value === it.key ? 'text-ink' : 'text-muted hover:text-ink'}`}>
-        {value === it.key && <motion.span layoutId={`tab-${id}`} transition={spring} className="absolute inset-0 bg-white dark:bg-ink/[0.16] rounded-lg shadow-card" />}
+        {value === it.key && <motion.span layoutId={`tab-${id}`} transition={spring} className="absolute inset-0 bg-white/80 glass-fill dark:bg-ink/[0.16] rounded-lg shadow-card" />}
         <span className="relative">{it.label}{it.count !== undefined && <span className="ml-1.5 text-[11px] text-muted">{it.count}</span>}</span>
       </button>
     ))}

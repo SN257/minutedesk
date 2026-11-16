@@ -16,7 +16,7 @@ import type { CardPatch, TaskPatch, TasksData } from './useTasksData';
 interface Comment { id: string; userId: string; text: string; createdAt: string }
 
 const Chip = ({ children, onClick, active }: { children: React.ReactNode; onClick: () => void; active?: boolean }) => (
-  <button type="button" onClick={onClick} className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${active ? 'bg-ink text-white border-ink' : 'bg-white border-line text-ink-2 hover:border-ink/30'}`}>{children}</button>
+  <button type="button" onClick={onClick} className={`px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${active ? 'bg-ink text-white border-ink' : 'bg-white/70 glass-fill border-line text-ink-2 hover:border-ink/30'}`}>{children}</button>
 );
 
 const STATUSES: { key: TaskStatus; label: string }[] = [
@@ -144,7 +144,7 @@ const Body = ({ item, data, onClose }: { item: Item; data: TasksData; onClose: (
           <div className="inline-flex bg-ink/[0.05] rounded-xl p-1 gap-0.5">
             {STATUSES.map((s) => (
               <button key={s.key} type="button" onClick={() => patch({ status: s.key })} className={`relative px-3.5 py-2 rounded-lg text-sm font-semibold ${item.status === s.key ? 'text-ink' : 'text-muted hover:text-ink'}`}>
-                {item.status === s.key && <motion.span layoutId="drawer-status" transition={spring} className="absolute inset-0 bg-white rounded-lg shadow-card" />}
+                {item.status === s.key && <motion.span layoutId="drawer-status" transition={spring} className="absolute inset-0 bg-white/70 glass-fill rounded-lg shadow-card" />}
                 <span className="relative">{s.label}</span>
               </button>
             ))}
@@ -171,7 +171,7 @@ const Body = ({ item, data, onClose }: { item: Item; data: TasksData; onClose: (
                 const on = item.priority === p.key;
                 return (
                   <button key={p.key} type="button" onClick={() => patch({ priority: on ? null : (p.key as Priority) })}
-                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${on ? 'bg-ink text-white border-ink' : 'bg-white border-line text-ink-2 hover:border-ink/30'}`}>
+                    className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold border transition-colors ${on ? 'bg-ink text-white border-ink' : 'bg-white/70 glass-fill border-line text-ink-2 hover:border-ink/30'}`}>
                     <span className={`w-2.5 h-2.5 rounded-full ${p.dot}`} />{p.label}
                   </button>
                 );

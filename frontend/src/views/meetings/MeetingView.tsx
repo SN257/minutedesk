@@ -155,7 +155,7 @@ const MeetingView = ({ id, go }: { id: string } & Pick<ViewProps, 'go'>) => {
             </div>
           </div>
           <div className="md-noprint relative flex flex-wrap items-center gap-2 mt-6">
-            <button type="button" onClick={() => go('meetings', `edit:${m.id}`)} className="inline-flex items-center gap-2 rounded-xl bg-white text-ink px-5 py-2.5 text-sm font-bold hover:opacity-90 transition-opacity"><Ico name="pencil" size={14} /> Edit</button>
+            <button type="button" onClick={() => go('meetings', `edit:${m.id}`)} className="inline-flex items-center gap-2 rounded-xl bg-white/70 glass-fill text-ink px-5 py-2.5 text-sm font-bold hover:opacity-90 transition-opacity"><Ico name="pencil" size={14} /> Edit</button>
             {[{ l: 'Copy', i: 'copy' as const, f: copy }, { l: 'Print', i: 'print' as const, f: () => window.print() }, { l: 'Delete', i: 'trash' as const, f: () => setConfirmDel(true) }].map((b) => (
               <button key={b.l} type="button" onClick={b.f} className="inline-flex items-center gap-2 rounded-xl bg-white/15 hover:bg-white/25 transition-colors px-4 py-2.5 text-sm font-bold"><Ico name={b.i} size={14} /> {b.l}</button>
             ))}

@@ -85,7 +85,7 @@ const MeetingCenter = ({ name, go }: { name: string } & Pick<ViewProps, 'go'>) =
             <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight mt-1 break-words">{name}</h1>
             <p className="mt-2 opacity-80">{all.length} {all.length === 1 ? 'meeting' : 'meetings'}{all[0] ? ` · last on ${longDate(all[0].date)}` : ''}</p>
           </div>
-          <button type="button" onClick={() => go('meetings', 'new')} className="inline-flex items-center gap-2 rounded-xl bg-white text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity">{Icon.plus(16)} Log minutes</button>
+          <button type="button" onClick={() => go('meetings', 'new')} className="inline-flex items-center gap-2 rounded-xl bg-white/70 glass-fill text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity">{Icon.plus(16)} Log minutes</button>
         </div>
       </div>
 

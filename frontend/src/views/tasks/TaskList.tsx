@@ -68,7 +68,7 @@ const DueCell = ({ item, today, onChange }: { item: Item; today: string; onChang
         onClick={(e) => e.stopPropagation()}
         onBlur={() => setEdit(false)}
         onChange={(e) => { onChange(e.target.value || null); setEdit(false); }}
-        className="w-full rounded-lg border border-line bg-white px-2 py-1 text-xs outline-none focus:border-brand"
+        className="w-full rounded-lg border border-line bg-white/70 glass-fill px-2 py-1 text-xs outline-none focus:border-brand"
       />
     );
   }

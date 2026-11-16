@@ -40,7 +40,7 @@ export const Chip = ({ active, onClick, children, count }: { active: boolean; on
     onClick={onClick}
     aria-pressed={active}
     className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-bold transition-colors ${
-      active ? 'bg-ink text-white border-ink' : 'bg-white text-ink-2 border-line hover:border-ink/30'
+      active ? 'bg-ink text-white border-ink' : 'bg-white/70 glass-fill text-ink-2 border-line hover:border-ink/30'
     }`}
   >
     {children}

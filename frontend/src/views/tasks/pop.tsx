@@ -19,7 +19,7 @@ export const Pop = ({ button, children, align = 'left', width = 'w-72' }: { butt
       <AnimatePresence>
         {open && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
-            className={`absolute top-full mt-2 z-50 ${align === 'right' ? 'right-0' : 'left-0'} ${width} max-w-[86vw] glass-pop !bg-white/[0.97] rounded-2xl p-3 text-ink`}>
+            className={`absolute top-full mt-2 z-50 ${align === 'right' ? 'right-0' : 'left-0'} ${width} max-w-[86vw] glass-pop rounded-2xl p-3 text-ink`}>
             {children(() => setOpen(false))}
           </motion.div>
         )}

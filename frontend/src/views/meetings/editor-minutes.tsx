@@ -32,7 +32,7 @@ const AssigneePicker = ({ value, people, onChange }: { value: string; people: Pe
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-2 bg-white border border-line rounded-xl pl-2.5 pr-3 py-2 text-sm text-left hover:border-ink/30 transition-colors min-h-[42px]"
+        className="w-full flex items-center gap-2 bg-white/70 glass-fill border border-line rounded-xl pl-2.5 pr-3 py-2 text-sm text-left hover:border-ink/30 transition-colors min-h-[42px]"
       >
         {value ? <Avatar name={value} size={22} /> : <span className="w-[22px] h-[22px] rounded-full border border-dashed border-muted/60 grid place-items-center text-muted text-xs">+</span>}
         <span className={`flex-1 truncate ${value ? 'font-semibold' : 'text-muted'}`}>{value || 'Assign to…'}</span>
@@ -42,7 +42,7 @@ const AssigneePicker = ({ value, people, onChange }: { value: string; people: Pe
         {open && (
           <motion.div
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.98 }} transition={spring}
-            className="absolute left-0 top-full mt-1.5 z-40 w-full min-w-[230px] bg-white border border-line rounded-2xl shadow-pop p-2"
+            className="absolute left-0 top-full mt-1.5 z-40 w-full min-w-[230px] bg-white/70 glass-fill border border-line rounded-2xl shadow-pop p-2"
           >
             <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search people…" className="!py-2 mb-1.5" />
             <div className="max-h-52 scroll-y">
@@ -69,7 +69,7 @@ const CategorySwitch = ({ id, value, onChange }: { id: string; value: Category; 
       const on = value === c.key;
       return (
         <button key={c.key} type="button" role="radio" aria-checked={on} title={c.hint} onClick={() => onChange(c.key)} className="relative px-2.5 py-1.5 rounded-[10px] text-[11px] font-bold">
-          {on && <motion.span layoutId={`cat-${id}`} transition={spring} className="absolute inset-0 bg-white rounded-[10px] shadow-card" />}
+          {on && <motion.span layoutId={`cat-${id}`} transition={spring} className="absolute inset-0 bg-white/70 glass-fill rounded-[10px] shadow-card" />}
           <span className={`relative flex items-center gap-1.5 ${on ? c.tone : 'text-muted'}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${on ? c.dot : 'bg-muted/40'}`} />
             {c.key === 'Information' ? 'Info' : c.key}
@@ -106,7 +106,7 @@ const PointRow = ({ point, canRemove, busy, people, setRef, onPatch, onRemove, o
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, x: -16, transition: { duration: 0.15 } }}
       transition={spring}
-      className="relative focus-within:z-20 rounded-xl border border-line bg-white px-3 py-2.5"
+      className="relative focus-within:z-20 rounded-xl border border-line bg-white/70 glass-fill px-3 py-2.5"
     >
       <div className="flex flex-wrap sm:flex-nowrap items-start gap-x-3 gap-y-2">
         <div className="order-2 sm:order-1 flex-1 min-w-0 basis-full sm:basis-0 flex items-start gap-2">
@@ -243,13 +243,13 @@ const SectionCard = ({ note, index, people, busyId, setRef, onChange, onRemove, 
           <div className="flex flex-wrap items-center gap-2 mt-1.5">
             <button
               type="button" onClick={() => onChange({ ...note, important: !note.important })} aria-pressed={note.important}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${note.important ? 'bg-warn/10 text-warn border-warn/30' : 'bg-white text-muted border-line hover:text-ink'}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${note.important ? 'bg-warn/10 text-warn border-warn/30' : 'bg-white/70 glass-fill text-muted border-line hover:text-ink'}`}
             >
               <motion.span animate={{ scale: note.important ? [1, 1.4, 1] : 1, rotate: note.important ? [0, 20, 0] : 0 }} transition={{ duration: 0.35 }}>★</motion.span> Important
             </button>
             <button
               type="button" onClick={() => onChange({ ...note, followUp: !note.followUp })} aria-pressed={note.followUp}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${note.followUp ? 'bg-brand-soft text-brand border-brand/30' : 'bg-white text-muted border-line hover:text-ink'}`}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${note.followUp ? 'bg-brand-soft text-brand border-brand/30' : 'bg-white/70 glass-fill text-muted border-line hover:text-ink'}`}
             >
               <motion.span animate={{ scale: note.followUp ? [1, 1.4, 1] : 1 }} transition={{ duration: 0.35 }}>⚑</motion.span> Follow-up
             </button>

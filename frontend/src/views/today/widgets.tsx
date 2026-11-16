@@ -70,9 +70,9 @@ export const Heading = ({ title, sub, onMeeting, onTask, filter }: { title: stri
       <p className="text-[13px] text-char/55 truncate max-w-[60vw]">{sub}</p>
     </div>
     <div className="flex items-center gap-2">
-      {filter}
-      <motion.button whileTap={{ scale: 0.96 }} onClick={onMeeting} className="rounded-xl h-9 px-3.5 text-[13px] font-medium inline-flex items-center gap-1.5 bg-white/80 border border-char/10 hover:bg-white transition-colors">{Icon.plus(14)} Log minutes</motion.button>
+      <motion.button whileTap={{ scale: 0.96 }} onClick={onMeeting} className="rounded-xl h-9 px-3.5 text-[13px] font-medium inline-flex items-center gap-1.5 bg-white/60 glass-fill border border-white/70 hover:brightness-105 transition">{Icon.plus(14)} Log minutes</motion.button>
       <motion.button whileTap={{ scale: 0.96 }} onClick={onTask} className="rounded-xl h-9 px-3.5 text-[13px] font-medium inline-flex items-center gap-1.5 bg-char text-white hover:opacity-90 transition">{Icon.tasks(14)} Review tasks</motion.button>
+      {filter}
     </div>
   </motion.div>
 );

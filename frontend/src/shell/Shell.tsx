@@ -9,6 +9,8 @@ import { spring, viewTransition } from '../lib/motion';
 import { getNotifications, markNotificationRead } from '../lib/api';
 import { formatLocalDate, getLocalDateString } from '../lib/date';
 import { Avatar } from '../ui';
+import { FloatPanel } from '../ui/float';
+import { ThemeToggle } from './ThemeToggle';
 import { type Command } from './CommandPalette';
 import { HeaderSearch } from './HeaderSearch';
 import { useExtraCrumbs } from '../lib/crumbs';
@@ -31,8 +33,6 @@ const DARK_FIELD = [
   'linear-gradient(160deg, #0e202c 0%, #06141b 100%)',
 ].join(',');
 
-const Moon = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z" /></svg>;
-const Sun = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>;
 
 // The dashboard must never create a scrollbar, so it fades in without sliding.
 const fadeOnly = { initial: { opacity: 0 }, animate: { opacity: 1, transition: { duration: 0.3 } }, exit: { opacity: 0, transition: { duration: 0.12 } } };
@@ -173,7 +173,10 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
       ] }]
         : null;
 
-  const menuBox = 'absolute z-50 rounded-2xl bg-white border border-char/10 shadow-[0_24px_50px_-20px_rgba(6,20,27,0.45)]';
+  const railUser = useRef<HTMLButtonElement>(null);
+  const phoneUser = useRef<HTMLButtonElement>(null);
+  const newBtn = useRef<HTMLButtonElement>(null);
+  const closePop = useCallback(() => setPop(null), []);
   const iconBtn = 'relative w-10 h-10 rounded-full grid place-items-center text-char/70 hover:bg-char/[0.07] hover:text-char transition-colors';
 
   return (
@@ -197,19 +200,15 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
         <div className="mt-auto flex flex-col items-center gap-1.5">
           <Tip label="Settings"><button onClick={() => go('settings')} aria-label="Settings" className={`w-11 h-11 rounded-full grid place-items-center transition-colors ${view === 'settings' ? 'bg-char text-white' : 'text-char/60 hover:text-char hover:bg-char/[0.07]'}`}>{Icon.settings(19)}</button></Tip>
           <div className="relative">
-            <Tip label={user?.name || 'Account'}><button onClick={() => setPop(pop === 'user' ? null : 'user')} aria-label="Account" className="relative mt-1">
+            <Tip label={user?.name || 'Account'}><button ref={railUser} onClick={() => setPop(pop === 'user' ? null : 'user')} aria-label="Account" className="relative mt-1">
               <Avatar name={user?.name || user?.email} size={40} />
               <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-good ring-2 ring-white/90" />
             </button></Tip>
-            <AnimatePresence>
-              {pop === 'user' && (
-                <motion.div initial={{ opacity: 0, x: -6 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className={`${menuBox} left-full bottom-0 ml-3 w-60 p-2`}>
-                  <div className="px-3 py-2"><p className="text-sm font-medium truncate">{user?.name || 'Account'}</p><p className="text-xs text-char/55 truncate">{user?.email}</p></div>
-                  <button onClick={() => { setPop(null); go('settings'); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-char/5">Settings & profile</button>
-                  <button onClick={signOut} className="w-full text-left px-3 py-2 rounded-xl text-sm text-bad hover:bg-bad/10">Sign out</button>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            <FloatPanel open={pop === 'user'} onClose={closePop} anchor={railUser} placement="right-end" width={240} className="p-2">
+              <div className="px-3 py-2"><p className="text-sm font-medium truncate">{user?.name || 'Account'}</p><p className="text-xs text-char/55 truncate">{user?.email}</p></div>
+              <button onClick={() => { setPop(null); go('settings'); }} className="w-full text-left px-3 py-2 rounded-xl text-sm hover:bg-char/5">Settings & profile</button>
+              <button onClick={signOut} className="w-full text-left px-3 py-2 rounded-xl text-sm text-bad hover:bg-bad/10">Sign out</button>
+            </FloatPanel>
           </div>
         </div>
       </aside>}
@@ -292,8 +291,7 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
 
           <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
             <HeaderSearch commands={commands} go={go} canSeePeople={canAdmin('people')} />
-            {can('meetings') && <span className="hidden sm:inline-flex"><Tip side="bottom" label="Schedule"><button onClick={() => go('meetings', 'schedule')} className={iconBtn} aria-label="Schedule">{Icon.meetings(18)}</button></Tip></span>}
-            <span className="hidden sm:inline-flex"><Tip side="bottom" label={dark ? 'Light theme' : 'Dark theme'}><button onClick={toggleTheme} className={iconBtn} aria-label={dark ? 'Switch to light theme' : 'Switch to dark theme'}>{dark ? <Sun /> : <Moon />}</button></Tip></span>
+            <span className="hidden sm:inline-flex"><Tip side="bottom" label={dark ? 'Light theme' : 'Dark theme'}><ThemeToggle dark={dark} onToggle={toggleTheme} /></Tip></span>
             <div className="relative">
               <Tip side="bottom" label="Notifications"><button onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setBellPos({ top: r.bottom + 12, right: Math.max(12, window.innerWidth - r.right - 8) }); setPop(pop === 'bell' ? null : 'bell'); }} className={iconBtn} aria-label="Notifications">
                 {Icon.bell(18)}
@@ -304,31 +302,23 @@ export const Shell = ({ render }: { render: (view: View, param: string | null, g
             </div>
             {/* phones have no side rail, so the account menu (settings, theme, sign out) lives here */}
             <div className={`relative ${single ? '' : 'sm:hidden'}`}>
-              <button onClick={() => setPop(pop === 'account' ? null : 'account')} aria-label="Account" className="relative block rounded-full"><Avatar name={user?.name || user?.email} size={40} /></button>
-              <AnimatePresence>
-                {pop === 'account' && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className={`${menuBox} right-0 mt-3 w-60 p-2`}>
-                    <div className="px-3 py-2"><p className="text-sm font-medium truncate">{user?.name || 'Account'}</p><p className="text-xs text-char/55 truncate">{user?.email}</p></div>
-                    {showBack
-                      ? <button onClick={() => { setPop(null); go(home); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Back to {homeLabel}</button>
-                      : <button onClick={() => { setPop(null); go('settings'); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Settings & profile</button>}
-                    <button onClick={() => { toggleTheme(); setPop(null); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">{dark ? 'Switch to light theme' : 'Switch to dark theme'}</button>
-                    <button onClick={signOut} className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-bad hover:bg-bad/10">Sign out</button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <button ref={phoneUser} onClick={() => setPop(pop === 'account' ? null : 'account')} aria-label="Account" className="relative block rounded-full"><Avatar name={user?.name || user?.email} size={40} /></button>
+              <FloatPanel open={pop === 'account'} onClose={closePop} anchor={phoneUser} width={240} className="p-2">
+                <div className="px-3 py-2"><p className="text-sm font-medium truncate">{user?.name || 'Account'}</p><p className="text-xs text-char/55 truncate">{user?.email}</p></div>
+                {showBack
+                  ? <button onClick={() => { setPop(null); go(home); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Back to {homeLabel}</button>
+                  : <button onClick={() => { setPop(null); go('settings'); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">Settings & profile</button>}
+                <button onClick={() => { toggleTheme(); setPop(null); }} className="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-char/5">{dark ? 'Switch to light theme' : 'Switch to dark theme'}</button>
+                <button onClick={signOut} className="w-full text-left px-3 py-2.5 rounded-xl text-sm text-bad hover:bg-bad/10">Sign out</button>
+              </FloatPanel>
             </div>
             {(create.length > 0 || can('worklog')) && <div className="relative">
-              <button onClick={() => setPop(pop === 'new' ? null : 'new')} className="h-10 rounded-xl bg-char text-white px-3.5 sm:px-4 text-[13.5px] font-medium inline-flex items-center gap-1.5 shadow-[0_10px_20px_-10px_rgba(6,20,27,0.55)] hover:opacity-90 transition">{Icon.plus(15)}<span className="hidden sm:inline">New</span></button>
-              <AnimatePresence>
-                {pop === 'new' && (
-                  <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className={`${menuBox} right-0 mt-2 w-56 p-1.5`}>
-                    {[...create, ...(can('worklog') ? [{ label: "Today's work log", icon: Icon.worklog(16), run: () => go('worklog') }] : [])].map((c) => (
-                      <button key={c.label} onClick={() => { setPop(null); c.run(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] hover:bg-char/[0.06]"><span className="text-char/55">{c.icon}</span>{c.label}</button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <button ref={newBtn} onClick={() => setPop(pop === 'new' ? null : 'new')} className="h-10 rounded-xl bg-char text-white px-3.5 sm:px-4 text-[13.5px] font-medium inline-flex items-center gap-1.5 shadow-[0_10px_20px_-10px_rgba(6,20,27,0.55)] hover:opacity-90 transition">{Icon.plus(15)}<span className="hidden sm:inline">New</span></button>
+              <FloatPanel open={pop === 'new'} onClose={closePop} anchor={newBtn} width={224} className="p-1.5">
+                {[...create, ...(can('worklog') ? [{ label: "Today's work log", icon: Icon.worklog(16), run: () => go('worklog') }] : [])].map((c) => (
+                  <button key={c.label} onClick={() => { setPop(null); c.run(); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13.5px] hover:bg-char/[0.06]"><span className="text-char/55">{c.icon}</span>{c.label}</button>
+                ))}
+              </FloatPanel>
             </div>}
           </div>
         </header>

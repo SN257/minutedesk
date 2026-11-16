@@ -154,7 +154,7 @@ export const HeaderSearch = ({ commands, go, canSeePeople }: { commands: Command
       {/* wider screens: the field itself */}
       <div
         ref={box}
-        className={`max-sm:hidden relative h-10 flex items-center gap-2.5 px-3.5 rounded-xl border transition-[width,background-color,box-shadow,border-color] duration-200 ${focused ? 'w-[26rem] bg-white border-brand/50 shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-brand)_15%,transparent)]' : 'w-[19rem] bg-white/55 border-white/80 hover:bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-none dark:border-white/15'}`}
+        className={`max-sm:hidden relative h-10 flex items-center gap-2.5 px-3.5 rounded-xl border transition-[width,background-color,box-shadow,border-color] duration-200 ${focused ? 'w-[26rem] bg-white/70 glass-fill border-brand/50 shadow-[0_0_0_4px_color-mix(in_srgb,var(--color-brand)_15%,transparent)]' : 'w-[19rem] bg-white/55 border-white/80 hover:bg-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:shadow-none dark:border-white/15'}`}
         onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
       >
         <span className={focused ? 'text-brand' : 'text-char/55'}>{Icon.search(16)}</span>
@@ -184,7 +184,7 @@ export const HeaderSearch = ({ commands, go, canSeePeople }: { commands: Command
           {focused && (
             <>
               {sheet && (
-                <motion.div key="bar" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="sm:hidden fixed inset-x-3 top-3 h-16 z-[310] rounded-full bg-white shadow-pop flex items-center gap-3 px-5">
+                <motion.div key="bar" initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="sm:hidden fixed inset-x-3 top-3 h-16 z-[310] rounded-full bg-white/70 glass-fill shadow-pop flex items-center gap-3 px-5">
                   <span className="text-brand">{Icon.search(18)}</span>
                   <input ref={sheetInput} value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} placeholder={placeholder} aria-label="Search" autoComplete="off" spellCheck={false} className="flex-1 min-w-0 bg-transparent outline-none text-base text-ink placeholder:text-char/55" />
                   <button type="button" aria-label="Close search" onClick={() => { setQ(''); close(); }} className="w-8 h-8 rounded-full grid place-items-center text-muted hover:bg-ink/10">✕</button>
@@ -193,7 +193,7 @@ export const HeaderSearch = ({ commands, go, canSeePeople }: { commands: Command
               <motion.div
                 key="list" ref={panel} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
                 style={sheet ? undefined : { top: pos.top, right: pos.right }}
-                className={`fixed z-[300] glass-pop !bg-white rounded-2xl overflow-hidden ${sheet ? 'inset-x-3 top-[5.25rem]' : 'w-[min(30rem,calc(100vw-1.5rem))]'}`}
+                className={`fixed z-[300] glass-pop rounded-2xl overflow-hidden ${sheet ? 'inset-x-3 top-[5.25rem]' : 'w-[min(30rem,calc(100vw-1.5rem))]'}`}
               >
                 {list}
               </motion.div>

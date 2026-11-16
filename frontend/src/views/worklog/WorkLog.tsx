@@ -6,6 +6,7 @@ import { Button, Card, Stagger } from '../../ui';
 import { isYesterdayWorkLogMissing } from '../../lib/api';
 import { formatLocalDate, getLocalDateString, parseLocalDate } from '../../lib/date';
 import { spring } from '../../lib/motion';
+import { DatePickerButton } from '../../ui/datepicker';
 import { DateStrip } from './DateStrip';
 import { Editor } from './Editor';
 import { HeatCalendar } from './HeatCalendar';
@@ -15,6 +16,9 @@ import { dayStatus, lastDays, loadLogs, peekLog, STREAK_WINDOW, useLogStore } fr
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const validDate = (s: string | null, today: string): s is string =>
   !!s && DATE_RE.test(s) && getLocalDateString(parseLocalDate(s)) === s && s <= today;
+
+/** One size for every button in this header, so "Back to today" and "Pick a date" always match. */
+const PILL = 'inline-flex items-center justify-center gap-2 liquid rounded-full h-10 px-4 text-sm font-bold whitespace-nowrap cursor-pointer hover:opacity-80 transition-opacity';
 
 const WorkLog = ({ param, go }: ViewProps) => {
   const t = useT();
@@ -50,21 +54,19 @@ const WorkLog = ({ param, go }: ViewProps) => {
           <p className="text-muted mt-1">{t('worklog.sub')}</p>
         </div>
         <div className="flex items-center gap-2">
-          {date !== today && <Button variant="soft" size="sm" onClick={() => select(today)} className="!rounded-full">Back to today</Button>}
-          <label className="relative inline-flex">
-            <span className="inline-flex items-center gap-2 liquid rounded-full px-4 py-2 text-sm font-bold cursor-pointer hover:opacity-80 transition-opacity">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" /></svg>
-              Pick a date
-            </span>
-            <input
-              type="date"
-              max={today}
-              value={date}
-              onChange={(e) => e.target.value && validDate(e.target.value, today) && select(e.target.value)}
-              aria-label="Pick a date"
-              className="absolute inset-0 opacity-0 cursor-pointer w-full"
-            />
-          </label>
+          {date !== today && <button type="button" onClick={() => select(today)} className={PILL}>Back to today</button>}
+          <DatePickerButton value={date} max={today} onChange={(d) => validDate(d, today) && select(d)}
+            className={PILL}
+            mark={(d) => { const st = dayStatus(peekLog(d)); return st === 'logged' ? 'logged' : st === 'leave' ? 'leave' : st === 'holiday' ? 'holiday' : null; }}
+            onMonth={(ym) => {
+              // fill in the dots: look up this month's days (never the future)
+              const days: string[] = [];
+              for (let n = 1; n <= 31; n++) { const d = `${ym}-${String(n).padStart(2, '0')}`; if (d.slice(0, 7) === ym && d <= today && getLocalDateString(parseLocalDate(d)) === d) days.push(d); }
+              void loadLogs(days.reverse(), 8, () => false);
+            }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" /></svg>
+            Pick a date
+          </DatePickerButton>
         </div>
       </div>
 

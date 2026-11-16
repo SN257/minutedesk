@@ -124,7 +124,7 @@ export const FilterMenu = ({ groups, title = 'Filters', size = 'md', variant = '
       setOpen(false);
     };
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') { setOpen(false); btn.current?.focus(); } };
-    const scroll = (e: Event) => { if (!panel.current?.contains(e.target as Node)) setOpen(false); };
+    const scroll = (e: Event) => { if (!panel.current?.contains(e.target as Node)) place(); }; // follow the button; never close on a stray scroll
     document.addEventListener('mousedown', down);
     document.addEventListener('keydown', key);
     window.addEventListener('resize', place);
@@ -133,14 +133,15 @@ export const FilterMenu = ({ groups, title = 'Filters', size = 'md', variant = '
   }, [open, place]);
 
   const host = typeof document !== 'undefined' ? (document.querySelector('[data-app-root]') ?? document.body) : null;
-  const dim = size === 'sm' ? 'h-9 w-9' : 'h-10 w-10';
+  // "md" stretches to the height of the row it sits in (the search box), so the two always line up.
+  const dim = size === 'sm' ? 'h-9 w-9' : 'self-stretch min-h-10 min-w-11';
 
   const body: ReactNode = (
     <AnimatePresence>
       {open && pos && (
         <motion.div ref={panel} role="dialog" aria-label={title} initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: Math.min(328, window.innerWidth - 24), maxHeight: pos.maxH }}
-          className="z-[180] flex flex-col rounded-2xl bg-white border border-ink/10 shadow-[0_24px_50px_-20px_rgba(6,20,27,0.45)] text-ink overflow-hidden">
+          className="z-[180] flex flex-col rounded-2xl glass-pop text-ink overflow-hidden">
           <div className="flex items-center justify-between gap-3 px-4 pt-3.5 pb-2.5 border-b border-ink/10">
             <p className="text-sm font-extrabold flex items-center gap-2">{title}{count > 0 && <span className="min-w-5 h-5 px-1.5 rounded-full bg-ink text-white text-[11px] font-bold grid place-items-center">{count}</span>}</p>
             <button type="button" disabled={count === 0} onClick={() => filters.forEach(reset)} className="text-[12.5px] font-semibold text-muted hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed">Reset all</button>
@@ -163,7 +164,7 @@ export const FilterMenu = ({ groups, title = 'Filters', size = 'md', variant = '
   return (
     <>
       <button ref={btn} type="button" onClick={() => setOpen((o) => !o)} aria-label={count ? `${title}, ${count} on` : title} aria-expanded={open} aria-haspopup="dialog" title={count ? `${title}: ${summary}` : title}
-        className={`relative shrink-0 ${dim} rounded-xl grid place-items-center transition-colors ${variant === 'bar' ? `tl-bar text-ink hover:opacity-80 ${open || count > 0 ? '!bg-ink !text-white' : ''}` : `border ${open || count > 0 ? 'bg-ink text-white border-ink' : 'bg-white/80 border-ink/10 text-ink hover:bg-white'}`} ${className}`}>
+        className={`relative shrink-0 ${dim} rounded-xl grid place-items-center transition-colors ${variant === 'bar' ? `tl-bar text-ink hover:opacity-80 ${open || count > 0 ? '!bg-ink !text-white' : ''}` : `border ${open || count > 0 ? 'bg-ink text-white border-ink' : 'bg-white/55 glass-fill border-white/70 text-ink shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] hover:brightness-105'}`} ${className}`}>
         <SlidersIcon />
         {count > 0 && <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand text-white text-[10px] font-bold grid place-items-center ring-2 ring-white">{count}</span>}
       </button>

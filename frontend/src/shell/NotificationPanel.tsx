@@ -58,7 +58,7 @@ export const NotificationPanel = ({ items, pos, onRead, onReadAll, onClose }: { 
         </div>
         <div className="mt-3 inline-flex rounded-full bg-char/[0.07] p-0.5 text-[12px]">
           {([['all', 'All'], ['unread', 'Unread']] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setTab(k)} className={`px-3.5 py-1.5 rounded-full font-medium transition-colors ${tab === k ? 'bg-white shadow-sm text-char' : 'text-char/55 hover:text-char'}`}>
+            <button key={k} onClick={() => setTab(k)} className={`px-3.5 py-1.5 rounded-full font-medium transition-colors ${tab === k ? 'bg-white/70 glass-fill shadow-sm text-char' : 'text-char/55 hover:text-char'}`}>
               {label}{k === 'unread' && unread > 0 && <span className="ml-1.5 text-char/50 tabular-nums">{unread}</span>}
             </button>
           ))}

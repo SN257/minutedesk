@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Icon } from '../../shell/icons';
 import { addDaysToDateString, formatLocalDate, getLocalDateString, parseLocalDate } from '../../lib/date';
@@ -123,18 +124,37 @@ const Month = ({ ym, lo, hi, today, onPick, onHover }: { ym: string; lo: string 
 export const DateRangeButton = ({ state, onChange, period }: { state: PeriodState; onChange: (s: PeriodState) => void; period: Period }) => {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const btn = useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; w: number } | null>(null);
   const wide = useWide();
   const today = getLocalDateString();
   const active = state.key !== DEFAULT.key;
+  const host = typeof document !== 'undefined' ? (document.querySelector('[data-app-root]') ?? document.body) : null;
 
   // The first month shown: the one before the end of the range, so the end is always visible.
   const [view, setView] = useState(() => addMonths((period.to < today ? period.to : today).slice(0, 7), -1));
   const [anchor, setAnchor] = useState<string | null>(null); // the first click of a new range
   const [hover, setHover] = useState<string | null>(null);
 
+  // The panel is drawn on top of the page (not inside it), so no container can clip it; it always stays on screen.
+  const place = useCallback(() => {
+    const r = btn.current?.getBoundingClientRect();
+    if (!r) return;
+    const w = wide ? Math.min(712, window.innerWidth - 24) : Math.min(344, window.innerWidth - 24);
+    setPos({ top: r.bottom + 8, left: Math.max(12, Math.min(r.right - w, window.innerWidth - w - 12)), w });
+  }, [wide]);
+  useLayoutEffect(() => { if (open) place(); }, [open, place]);
+
   useEffect(() => {
     if (!open) return;
-    const down = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => { window.removeEventListener('resize', place); window.removeEventListener('scroll', place, true); };
+  }, [open, place]);
+
+  useEffect(() => {
+    if (!open) return;
+    const down = (e: MouseEvent) => { const t = e.target as Node; if (box.current && !box.current.contains(t) && !btn.current?.contains(t)) setOpen(false); };
     const key = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
     document.addEventListener('mousedown', down);
     document.addEventListener('keydown', key);
@@ -164,16 +184,16 @@ export const DateRangeButton = ({ state, onChange, period }: { state: PeriodStat
 
   return (
     <div ref={box} className="relative">
-      <motion.button whileTap={{ scale: 0.96 }} type="button" onClick={openIt} aria-label="Choose a date range" aria-expanded={open} aria-haspopup="dialog" title={`Showing: ${period.label}`}
-        className={`relative rounded-xl h-9 w-9 grid place-items-center border transition-colors ${open || active ? 'bg-char text-white border-char' : 'bg-white/80 border-char/10 text-char hover:bg-white'}`}>
+      <motion.button ref={btn} whileTap={{ scale: 0.96 }} type="button" onClick={openIt} aria-label="Choose a date range" aria-expanded={open} aria-haspopup="dialog" title={`Showing: ${period.label}`}
+        className={`relative rounded-xl h-9 w-9 grid place-items-center border border-white/70 bg-white/60 glass-fill text-char transition hover:brightness-105 ${open ? 'ring-2 ring-char/25' : ''}`}>
         {Icon.meetings(17)}
         {active && !open && <span aria-hidden className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-good ring-2 ring-white" />}
       </motion.button>
 
-      <AnimatePresence>
-        {open && (
-          <motion.div role="dialog" aria-label="Date range" initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
-            className="absolute left-0 sm:left-auto sm:right-0 top-full mt-2 z-50 w-max max-w-[calc(100vw-1.5rem)] rounded-2xl bg-white border border-char/10 shadow-[0_24px_50px_-20px_rgba(6,20,27,0.45)] overflow-hidden">
+      {host && createPortal(<AnimatePresence>
+        {open && pos && (
+          <motion.div ref={box} role="dialog" aria-label="Date range" style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.w }} initial={{ opacity: 0, y: -6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.14 }}
+            className="z-[180] rounded-2xl glass-pop overflow-hidden text-char">
             <div className={wide ? 'flex' : 'block'}>
               {/* shortcuts */}
               <div className={wide ? 'w-[10.5rem] shrink-0 border-r border-char/10 p-2 max-h-[27rem] overflow-y-auto' : 'p-2 border-b border-char/10 flex gap-1.5 overflow-x-auto [scrollbar-width:none]'} role="radiogroup" aria-label="Shortcuts">
@@ -201,7 +221,7 @@ export const DateRangeButton = ({ state, onChange, period }: { state: PeriodStat
             </div>
           </motion.div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, host)}
     </div>
   );
 };

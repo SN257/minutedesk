@@ -98,7 +98,7 @@ const CardTile = ({ card, item, today, data, defs, dragging, labelsOpen, onLabel
         exit={{ opacity: 0, scale: 0.92, transition: { duration: 0.12 } }}
         transition={spring}
         onClick={onOpen}
-        className="group relative rounded-lg bg-white shadow-[0_1px_2px_rgb(9_30_66/0.22)] hover:ring-2 hover:ring-brand/50 cursor-pointer overflow-hidden"
+        className="group relative rounded-lg bg-white/70 glass-fill shadow-[0_1px_2px_rgb(9_30_66/0.22)] hover:ring-2 hover:ring-brand/50 cursor-pointer overflow-hidden"
       >
         {card.coverColor && <div className="h-8" style={{ background: card.coverColor }} />}
         <div className="px-3 py-2.5">
@@ -257,7 +257,7 @@ const Column = ({ list, cards, total, data, today, defs, labelsOpen, onLabels, d
               autoFocus value={text} rows={2} placeholder="Enter a title for this card…  (#fri sets a date)" aria-label="New card title"
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitCard(); } else if (e.key === 'Escape') { setAdding(false); setText(''); } }}
-              className="w-full resize-none rounded-xl bg-white border border-line shadow-card px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand/40 placeholder:text-muted/70"
+              className="w-full resize-none rounded-xl bg-white/70 glass-fill border border-line shadow-card px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-brand/40 placeholder:text-muted/70"
             />
             <div className="flex items-center gap-2">
               <Button size="sm" type="submit">Add card</Button>
@@ -442,7 +442,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
     await data.addTask(title, dueDate);
   };
   const miniCard = (i: Item) => (
-    <div key={i.key} role="button" tabIndex={0} onClick={() => onOpen(i.id)} onKeyDown={(e) => e.key === 'Enter' && onOpen(i.id)} className="group flex items-start gap-2 rounded-lg bg-white shadow-[0_1px_2px_rgb(9_30_66/0.22)] px-3 py-2.5 cursor-pointer hover:ring-2 hover:ring-brand/50">
+    <div key={i.key} role="button" tabIndex={0} onClick={() => onOpen(i.id)} onKeyDown={(e) => e.key === 'Enter' && onOpen(i.id)} className="group flex items-start gap-2 rounded-lg bg-white/70 glass-fill shadow-[0_1px_2px_rgb(9_30_66/0.22)] px-3 py-2.5 cursor-pointer hover:ring-2 hover:ring-brand/50">
       <div className="pt-px"><CheckCircle done={i.done} size={18} onToggle={() => data.toggleDone(i)} /></div>
       <div className="min-w-0 flex-1"><p className="text-sm leading-snug break-words">{i.title}</p>{i.dueDate && <p className={`text-[11px] font-bold mt-1 ${i.dueDate < today ? 'text-bad' : 'text-muted'}`}>{dueLabel(i.dueDate, today)}</p>}</div>
     </div>
@@ -612,7 +612,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
                 const bgk = readBg(b.id);
                 const css = (BACKGROUNDS.find((x) => x.key === bgk) ?? BACKGROUNDS[0]).css;
                 return (
-                  <button key={b.id} type="button" onClick={() => { setBoardId(b.id); setSwitcher(false); setBoardQ(''); }} className={`group text-left rounded-xl overflow-hidden border bg-white shadow-card hover:ring-2 hover:ring-brand/50 ${b.id === board.id ? 'border-brand' : 'border-line'}`}>
+                  <button key={b.id} type="button" onClick={() => { setBoardId(b.id); setSwitcher(false); setBoardQ(''); }} className={`group text-left rounded-xl overflow-hidden border bg-white/70 glass-fill shadow-card hover:ring-2 hover:ring-brand/50 ${b.id === board.id ? 'border-brand' : 'border-line'}`}>
                     <div className="h-20 bg-ink/10" style={{ backgroundImage: css }} />
                     <p className="px-3 py-2.5 text-sm font-bold truncate">{b.title}{b.id === board.id && <span className="ml-2 text-[10px] text-brand">Current</span>}</p>
                   </button>
@@ -637,7 +637,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
                 autoFocus value={quickTitle} onChange={(e) => setQuickTitle(e.target.value)} rows={3} aria-label="Card title"
                 onFocus={(e) => e.currentTarget.select()}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const t = quickTitle.trim(); if (t && t !== menu.title) data.patchCard(menu.id, { title: t }); setMenuCard(null); } else if (e.key === 'Escape') setMenuCard(null); }}
-                className="w-full resize-none rounded-lg bg-white shadow-pop px-3 py-2.5 text-sm outline-none ring-2 ring-brand/50"
+                className="w-full resize-none rounded-lg bg-white/70 glass-fill shadow-pop px-3 py-2.5 text-sm outline-none ring-2 ring-brand/50"
               />
               <Button className="mt-2" onClick={() => { const t = quickTitle.trim(); if (t && t !== menu.title) data.patchCard(menu.id, { title: t }); setMenuCard(null); }}>Save</Button>
               <div className="absolute left-full top-0 ml-2 w-44 space-y-1.5">
@@ -652,7 +652,7 @@ export const Boards = ({ data, onOpen, boardId, onBoard, ws }: { data: TasksData
                 ))}
                 <AnimatePresence>
                   {moveOpen && (
-                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-lg bg-white shadow-pop p-1.5 space-y-0.5">
+                    <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="rounded-lg bg-white/70 glass-fill shadow-pop p-1.5 space-y-0.5">
                       {moveLists.map((l) => (
                         <button key={l.id} type="button" disabled={l.id === menu.listId} onClick={() => { data.moveCard(menu.id, l.id, null); setMoveOpen(false); setMenuCard(null); toast(`Moved to ${l.title}`); }}
                           className="w-full text-left rounded-md px-2.5 py-1.5 text-sm font-semibold hover:bg-ink/[0.07] disabled:text-brand disabled:bg-brand-soft">{l.title}</button>

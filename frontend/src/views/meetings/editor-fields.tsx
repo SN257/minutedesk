@@ -48,7 +48,7 @@ export const Chip = ({ active, onClick, children, className = '' }: { active?: b
   <button
     type="button"
     onClick={onClick}
-    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${active ? 'bg-ink text-white border-ink' : 'bg-white text-ink-2 border-line hover:border-ink/30'} ${className}`}
+    className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${active ? 'bg-ink text-white border-ink' : 'bg-white/70 glass-fill text-ink-2 border-line hover:border-ink/30'} ${className}`}
   >
     {children}
   </button>

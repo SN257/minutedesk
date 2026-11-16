@@ -59,7 +59,7 @@ const AttendanceInput = ({ value, onChange, people, invalid }: { value: string[]
     <div>
       <div
         onClick={() => ref.current?.focus()}
-        className={`flex flex-wrap items-center gap-2 bg-white border rounded-xl px-2.5 py-2 min-h-[46px] cursor-text transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 ${invalid ? 'border-bad' : 'border-line'}`}
+        className={`flex flex-wrap items-center gap-2 bg-white/70 glass-fill border rounded-xl px-2.5 py-2 min-h-[46px] cursor-text transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/10 ${invalid ? 'border-bad' : 'border-line'}`}
       >
         <AnimatePresence initial={false}>
           {value.map((n) => (
@@ -150,7 +150,7 @@ export const BasicsStep = ({ data, patch, errors, centers, people, scheduled, ca
                 type="button"
                 whileTap={{ scale: 0.97 }}
                 onClick={() => patch({ meetingType: t.key })}
-                className={`relative text-left rounded-2xl border px-4 py-3.5 min-h-[64px] transition-colors ${on ? 'border-transparent' : errors.meetingType ? 'border-bad/50 bg-white' : 'border-line bg-white hover:border-ink/30'}`}
+                className={`relative text-left rounded-2xl border px-4 py-3.5 min-h-[64px] transition-colors ${on ? 'border-transparent' : errors.meetingType ? 'border-bad/50 bg-white/70 glass-fill' : 'border-line bg-white/70 glass-fill hover:border-ink/30'}`}
               >
                 {on && <motion.span layoutId="type-pill" transition={spring} className="absolute inset-0 rounded-2xl bg-ink shadow-card" />}
                 <span className={`relative block font-extrabold text-sm ${on ? 'text-white' : 'text-ink'}`}>{t.key}</span>
@@ -172,7 +172,7 @@ export const BasicsStep = ({ data, patch, errors, centers, people, scheduled, ca
                     key={m.id}
                     type="button"
                     onClick={() => onPickScheduled(m)}
-                    className={`shrink-0 text-left rounded-xl border px-3 py-2 text-xs transition-colors ${on ? 'bg-brand text-white border-brand' : 'bg-white border-line hover:border-brand/40'}`}
+                    className={`shrink-0 text-left rounded-xl border px-3 py-2 text-xs transition-colors ${on ? 'bg-brand text-white border-brand' : 'bg-white/70 glass-fill border-line hover:border-brand/40'}`}
                   >
                     <span className="block font-bold">{prettyDate(String(m.date).slice(0, 10))}</span>
                     <span className={`block ${on ? 'text-white/80' : 'text-muted'}`}>{prettyTime(m.startTime)} – {prettyTime(m.endTime)}{m.center ? ` · ${m.center}` : ''}</span>

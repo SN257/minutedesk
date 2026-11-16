@@ -308,7 +308,7 @@ export const CardBack = ({ item, data, onClose }: { item: Item; data: TasksData;
             <div className="sm:pl-9">
               {descOpen ? (
                 <div className="space-y-2">
-                  <textarea autoFocus value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} placeholder="Add a more detailed description…" aria-label="Description" className="w-full rounded-lg border border-brand bg-white px-3 py-2.5 text-sm outline-none ring-4 ring-brand/10 resize-y" />
+                  <textarea autoFocus value={desc} onChange={(e) => setDesc(e.target.value)} rows={5} placeholder="Add a more detailed description…" aria-label="Description" className="w-full rounded-lg border border-brand bg-white/70 glass-fill px-3 py-2.5 text-sm outline-none ring-4 ring-brand/10 resize-y" />
                   <div className="flex gap-2"><Button size="sm" onClick={saveDesc}>Save</Button><Button size="sm" variant="ghost" onClick={() => { setDesc(item.description); setDescOpen(false); }}>Cancel</Button></div>
                 </div>
               ) : item.description ? (
@@ -347,7 +347,7 @@ export const CardBack = ({ item, data, onClose }: { item: Item; data: TasksData;
                   <form onSubmit={addItem} className="mt-2 space-y-2">
                     <textarea autoFocus value={itemText} onChange={(e) => setItemText(e.target.value)} rows={2} placeholder="Add an item" aria-label="New checklist item"
                       onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addItem(); } else if (e.key === 'Escape') { setAddingItem(false); setItemText(''); } }}
-                      className="w-full rounded-lg border border-brand bg-white px-3 py-2 text-sm outline-none ring-4 ring-brand/10 resize-none" />
+                      className="w-full rounded-lg border border-brand bg-white/70 glass-fill px-3 py-2 text-sm outline-none ring-4 ring-brand/10 resize-none" />
                     <div className="flex gap-2"><Button size="sm" type="submit" disabled={!itemText.trim()}>Add</Button><Button size="sm" variant="ghost" type="button" onClick={() => { setAddingItem(false); setItemText(''); }}>Cancel</Button></div>
                   </form>
                 ) : (
@@ -366,7 +366,7 @@ export const CardBack = ({ item, data, onClose }: { item: Item; data: TasksData;
           </div>
           {commentOpen ? (
             <div className="space-y-2 mb-5">
-              <textarea autoFocus value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={3} placeholder="Write a comment…" aria-label="Comment" className="w-full rounded-lg border border-brand bg-white px-3 py-2 text-sm outline-none ring-4 ring-brand/10 resize-none" />
+              <textarea autoFocus value={commentText} onChange={(e) => setCommentText(e.target.value)} rows={3} placeholder="Write a comment…" aria-label="Comment" className="w-full rounded-lg border border-brand bg-white/70 glass-fill px-3 py-2 text-sm outline-none ring-4 ring-brand/10 resize-none" />
               <div className="flex gap-2"><Button size="sm" onClick={sendComment} disabled={!commentText.trim()}>Save</Button><Button size="sm" variant="ghost" onClick={() => { setCommentOpen(false); setCommentText(''); }}>Cancel</Button></div>
             </div>
           ) : (

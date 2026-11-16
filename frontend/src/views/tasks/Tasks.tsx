@@ -215,7 +215,7 @@ const Tasks = ({ param, go }: ViewProps) => {
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none">{Icon.search(16)}</span>
-            <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks, labels or boards   ( / )" aria-label="Search tasks" className="!pl-11 !rounded-full !py-2.5" />
+            <Input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search tasks, labels or boards   ( / )" aria-label="Search tasks" className="!pl-11 !rounded-full !py-[11px]" />
           </div>
           <FilterMenu title="Filter tasks" groups={[
             { id: 'status', kind: 'single', label: 'Status', value: scope, defaultValue: 'all', onChange: (v) => setScope(v as Scope), options: scopes.map((x) => ({ value: x.key, label: x.label, count: x.n })) },
@@ -298,7 +298,7 @@ const Tasks = ({ param, go }: ViewProps) => {
               </Select>
               <label className="inline-flex items-center gap-2 text-xs font-bold text-muted">
                 Due
-                <input type="date" aria-label="Set due date" onChange={(e) => e.target.value && bulkDue(e.target.value)} className="rounded-full border border-line bg-white px-3 py-1.5 text-xs outline-none focus:border-brand" />
+                <input type="date" aria-label="Set due date" onChange={(e) => e.target.value && bulkDue(e.target.value)} className="rounded-full border border-line bg-white/70 glass-fill px-3 py-1.5 text-xs outline-none focus:border-brand" />
               </label>
               <Button size="sm" variant="soft" onClick={() => setConfirmDel(true)} className="!rounded-full text-bad">Delete</Button>
               <button type="button" onClick={() => setSelected(new Set())} aria-label="Clear selection" className="w-8 h-8 rounded-full hover:bg-ink/[0.08] text-muted">✕</button>

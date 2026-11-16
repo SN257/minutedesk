@@ -34,7 +34,7 @@ const BoardTile = ({ b, stat, index, onOpen }: { b: BoardRec; stat: BoardStat; i
     <motion.button
       type="button" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(index, 8) * 0.04 }}
       whileHover={{ y: -4 }} onClick={onOpen}
-      className="group text-left rounded-2xl overflow-hidden bg-white border border-line/80 shadow-card hover:shadow-pop transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand flex flex-col items-stretch justify-start"
+      className="group text-left rounded-2xl overflow-hidden bg-white/70 glass-fill border border-line/80 shadow-card hover:shadow-pop transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand flex flex-col items-stretch justify-start"
     >
       <div className="relative h-28 shrink-0 overflow-hidden" style={cover(b)}>
         <span aria-hidden className="absolute -right-2 -bottom-6 text-[6.5rem] leading-none font-black text-white/35 select-none transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3">{(b.title.trim()[0] || '?').toUpperCase()}</span>
@@ -59,7 +59,7 @@ const BoardTile = ({ b, stat, index, onOpen }: { b: BoardRec; stat: BoardStat; i
 
 /** Small tile for the Recently viewed and Starred rows. */
 const MiniTile = ({ b, stat, onOpen }: { b: BoardRec; stat: BoardStat; onOpen: () => void }) => (
-  <button type="button" onClick={onOpen} className="group text-left rounded-xl overflow-hidden bg-white border border-line/80 hover:border-ink/30 hover:shadow-card transition flex flex-col items-stretch focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
+  <button type="button" onClick={onOpen} className="group text-left rounded-xl overflow-hidden bg-white/70 glass-fill border border-line/80 hover:border-ink/30 hover:shadow-card transition flex flex-col items-stretch focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand">
     <div className="relative h-14 shrink-0" style={cover(b)}>
       <span aria-hidden className="absolute right-2 -bottom-3 text-5xl leading-none font-black text-white/35 select-none">{(b.title.trim()[0] || '?').toUpperCase()}</span>
       {stat.starred && <span className="absolute top-1.5 left-2 text-warn" aria-label="Starred"><TIcon name="star" size={15} filled /></span>}

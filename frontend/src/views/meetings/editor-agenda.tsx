@@ -136,7 +136,7 @@ export const AgendaStep = ({ items, onChange }: { items: EAgendaItem[]; onChange
             {parsed.length > 0 && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
                 <p className="text-[11px] font-extrabold uppercase tracking-wider text-muted mt-4 mb-2">Preview · {parsed.length} item{parsed.length === 1 ? '' : 's'}</p>
-                <div className="max-h-64 scroll-y rounded-xl bg-white border border-line divide-y divide-line">
+                <div className="max-h-64 scroll-y rounded-xl bg-white/70 glass-fill border border-line divide-y divide-line">
                   {parsed.map((b, i) => (
                     <div key={i} className="px-3.5 py-2.5 flex gap-3">
                       <span className="w-6 h-6 rounded-md bg-brand-soft text-brand text-[11px] font-extrabold grid place-items-center shrink-0">{i + 1}</span>

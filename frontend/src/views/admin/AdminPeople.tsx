@@ -164,7 +164,7 @@ const UserForm = ({ editing, roles, selfId, onDone }: { editing: Editing; roles:
         {tabs.map((t) => (
           <button key={t.key} type="button" role="tab" aria-selected={tab === t.key} onClick={() => setTab(t.key)}
             className={`relative flex-1 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${tab === t.key ? 'text-ink' : 'text-muted hover:text-ink'}`}>
-            {tab === t.key && <motion.span layoutId="person-tab" transition={spring} className="absolute inset-0 rounded-xl bg-white shadow-[0_6px_16px_-8px_rgba(6,20,27,0.35)]" />}
+            {tab === t.key && <motion.span layoutId="person-tab" transition={spring} className="absolute inset-0 rounded-xl bg-white/70 glass-fill shadow-[0_6px_16px_-8px_rgba(6,20,27,0.35)]" />}
             <span className="relative">{t.label}</span>
           </button>
         ))}

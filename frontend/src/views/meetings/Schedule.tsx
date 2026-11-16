@@ -293,7 +293,7 @@ const Schedule = ({ go }: ViewProps) => {
                       <span className="relative tabular-nums">{Number(d.slice(8))}</span>
                       {count > 0 && (
                         <span className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                          {Array.from({ length: Math.min(count, 3) }).map((_, j) => <span key={j} className={`w-1 h-1 rounded-full ${sel ? 'bg-white' : 'bg-brand'}`} />)}
+                          {Array.from({ length: Math.min(count, 3) }).map((_, j) => <span key={j} className={`w-1 h-1 rounded-full ${sel ? 'bg-white/70 glass-fill' : 'bg-brand'}`} />)}
                         </span>
                       )}
                     </button>

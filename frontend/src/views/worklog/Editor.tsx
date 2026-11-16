@@ -27,7 +27,7 @@ const Switch = ({ checked, onChange, label }: { checked: boolean; onChange: (v: 
     role="switch"
     aria-checked={checked}
     onClick={() => onChange(!checked)}
-    className={`inline-flex items-center gap-2.5 pl-2 pr-3.5 py-2 min-h-[40px] rounded-full border text-sm font-semibold transition-colors ${checked ? 'bg-brand-soft border-brand/30 text-brand' : 'bg-white border-line text-muted hover:text-ink hover:border-ink/25'}`}
+    className={`inline-flex items-center gap-2.5 pl-2 pr-3.5 py-2 min-h-[40px] rounded-full border text-sm font-semibold transition-colors ${checked ? 'bg-brand-soft border-brand/30 text-brand' : 'bg-white/70 glass-fill border-line text-muted hover:text-ink hover:border-ink/25'}`}
   >
     <span className={`relative w-9 h-5 rounded-full transition-colors ${checked ? 'bg-brand' : 'bg-ink/15'}`}>
       <motion.span

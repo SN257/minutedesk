@@ -57,7 +57,7 @@ export const NewTaskModal = ({ open, onClose, data }: { open: boolean; onClose: 
           <div className="flex flex-wrap items-center gap-2">
             <Input type="date" value={due} onChange={(e) => setDue(e.target.value)} className="!w-auto" />
             {([['Today', today], ['Tomorrow', addDaysToDateString(today, 1)], ['Next week', parseWhen('nextweek', today)]] as const).map(([label, v]) => (
-              <button key={label} type="button" onClick={() => quick(v)} className={`px-3 py-2 rounded-lg text-xs font-bold border ${due === v ? 'bg-ink text-white border-ink' : 'bg-white border-line text-ink-2 hover:border-ink/30'}`}>{label}</button>
+              <button key={label} type="button" onClick={() => quick(v)} className={`px-3 py-2 rounded-lg text-xs font-bold border ${due === v ? 'bg-ink text-white border-ink' : 'bg-white/70 glass-fill border-line text-ink-2 hover:border-ink/30'}`}>{label}</button>
             ))}
           </div>
         </Field>

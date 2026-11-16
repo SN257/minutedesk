@@ -184,19 +184,35 @@ section[data-tone] .glass, section[data-tone] .glass-dark, footer[data-tone] .gl
 }
 .app-dark .glass-chrome.glass-bar { background: linear-gradient(145deg, rgb(255 255 255 / 0.12), rgb(255 255 255 / 0.04)); }
 
-/* Frosted popover (notifications and similar short-lived panels): only exists while open, so the blur is cheap. */
+/* Frosted popover (menus, filters, calendars, notifications, dialogs): see-through glass over a real blur, with a bright rim.
+   It only exists while open, so the blur is cheap. */
 .glass-pop {
-  -webkit-backdrop-filter: blur(26px) saturate(1.8);
-  backdrop-filter: blur(26px) saturate(1.8);
-  background: linear-gradient(150deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.70));
-  border: 1px solid rgb(255 255 255 / 0.9);
-  box-shadow: 0 40px 80px -30px rgb(37 55 69 / 0.55), 0 12px 28px -16px rgb(37 55 69 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.95);
+  isolation: isolate;
+  -webkit-backdrop-filter: blur(28px) saturate(1.9);
+  backdrop-filter: blur(28px) saturate(1.9);
+  background: linear-gradient(145deg, rgb(255 255 255 / 0.76), rgb(255 255 255 / 0.50));
+  border: 1px solid rgb(255 255 255 / 0.82);
+  box-shadow: 0 34px 70px -28px rgb(37 55 69 / 0.50), 0 12px 28px -16px rgb(37 55 69 / 0.30), inset 0 1px 0 rgb(255 255 255 / 0.95), inset 0 -1px 0 rgb(255 255 255 / 0.30);
+}
+.glass-pop:not(.absolute):not(.fixed):not(.sticky) { position: relative; }
+.glass-pop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(90% 50% at 12% 0%, rgb(255 255 255 / 0.55), transparent 60%), radial-gradient(60% 40% at 100% 100%, rgb(255 255 255 / 0.22), transparent 70%);
 }
 .app-dark .glass-pop {
-  background: linear-gradient(150deg, rgb(28 48 64 / 0.88), rgb(17 33 45 / 0.82));
-  border: 1px solid rgb(155 168 171 / 0.18);
-  box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.12);
+  background: linear-gradient(145deg, rgb(40 62 80 / 0.62), rgb(14 28 38 / 0.50));
+  border: 1px solid rgb(255 255 255 / 0.16);
+  box-shadow: 0 34px 70px -28px rgb(0 0 0 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.18), inset 0 -1px 0 rgb(255 255 255 / 0.04);
 }
+.app-dark .glass-pop::before { background: radial-gradient(90% 50% at 12% 0%, rgb(255 255 255 / 0.12), transparent 60%); }
+
+/* Fields, soft buttons and active tab pills: a glass fill instead of solid white. */
+.app-light .glass-fill { background: linear-gradient(145deg, rgb(255 255 255 / 0.70), rgb(255 255 255 / 0.38)); }
 
 /* Bordered white rows, panels and fields inside pages take the same glass fill as the cards.
    (Only the background: borders and focus rings are left alone.) Light theme only: in dark mode the

@@ -313,7 +313,7 @@ const MeetingList = ({ go }: Pick<ViewProps, 'go'>) => {
               </p>
               {(next.agenda || []).filter((a) => a?.trim())[0] && <p className="relative mt-3 text-sm opacity-70 line-clamp-2">Agenda: {(next.agenda || []).filter((a) => a?.trim()).slice(0, 2).map((a) => a.split('\n')[0]).join(' · ')}</p>}
               <div className="relative mt-auto pt-6 flex flex-wrap gap-2">
-                <button type="button" onClick={() => go('meetings', `start:${next.id}`)} className="inline-flex items-center gap-2 rounded-xl bg-white text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity"><Ico name="play" size={13} /> {next === waiting0 ? 'Add minutes' : 'Start meeting'}</button>
+                <button type="button" onClick={() => go('meetings', `start:${next.id}`)} className="inline-flex items-center gap-2 rounded-xl bg-white/70 glass-fill text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity"><Ico name="play" size={13} /> {next === waiting0 ? 'Add minutes' : 'Start meeting'}</button>
                 <button type="button" onClick={() => go('meetings', 'new')} className="rounded-xl bg-white/15 hover:bg-white/25 transition-colors px-5 py-3 text-sm font-bold">Log minutes</button>
               </div>
             </>
@@ -322,7 +322,7 @@ const MeetingList = ({ go }: Pick<ViewProps, 'go'>) => {
               <h1 className="relative text-3xl sm:text-4xl font-extrabold tracking-tight mt-2 leading-tight">{t('meetings.empty.title')}</h1>
               <p className="relative mt-2 opacity-75 max-w-sm">{t('meetings.empty.sub')}</p>
               <div className="relative mt-auto pt-6 flex flex-wrap gap-2">
-                <button type="button" onClick={() => openForm()} className="rounded-xl bg-white text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity">Schedule a meeting</button>
+                <button type="button" onClick={() => openForm()} className="rounded-xl bg-white/70 glass-fill text-ink px-5 py-3 text-sm font-bold hover:opacity-90 transition-opacity">Schedule a meeting</button>
                 <button type="button" onClick={() => go('meetings', 'new')} className="rounded-xl bg-white/15 hover:bg-white/25 transition-colors px-5 py-3 text-sm font-bold">Log minutes</button>
               </div>
             </>
@@ -367,7 +367,7 @@ const MeetingList = ({ go }: Pick<ViewProps, 'go'>) => {
           items={[{ key: 'logged', label: 'Logged minutes', count: logged.data ? meetings.length : undefined }, { key: 'scheduled', label: 'Scheduled', count: sched.data ? openCount : undefined }]}
         />
         <div className="flex items-center gap-2">
-          <Button variant="soft" onClick={() => openForm()} className="!bg-white !border !border-ink/15 shadow-card hover:!border-ink/40">{Icon.plus(16)} Schedule</Button>
+          <Button variant="soft" onClick={() => openForm()} className="!bg-white/70 !border !border-ink/15 shadow-card hover:!border-ink/40">{Icon.plus(16)} Schedule</Button>
           <Button onClick={() => go('meetings', 'new')} className="shadow-pop">{Icon.plus(16)} Log minutes</Button>
         </div>
       </div>
